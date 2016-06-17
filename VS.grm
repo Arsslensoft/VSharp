@@ -1,0 +1,1065 @@
+﻿"Name"    = 'V#' 
+"Version" = '2016'
+"Author"  = 'Arsslen Idadi' 
+"About"   = 'V.'
+
+"Case Sensitive" = True
+"Start Symbol"   = <COMPILATION UNIT>
+
+                    
+
+                                                              
+{Id Head}        = {Letter} + [_]
+{Id Tail}        = {Id Head} + {Digit}
+{Hex Digit}      = {Digit} + [abcdef] + [ABCDEF]
+{Oct Digit}      = [01234567]
+{Binary Digit}   = [01]                 
+{Separated Digit} = {Digit} + [_]  
+{Separated Hex Digit} = {Hex Digit} + [_]  
+{Separated Binary Digit} = {Binary Digit} + [_]  
+{Separated Oct Digit}   =  {Oct Digit}    + [_]   
+                        
+{String Ch}      = {Printable} - ["]
+{Char Ch}        = {Printable} - ['']         
+{Asm Char}     =  {Printable} - [}] + {CR} + {LF}                      
+! ----------------------------------------------------------------- Terminals
+
+RealLiteral       =  {Digit}*'.'{Digit} + ([eE] + [+-]?)? {Digit}*[FfDd]?
+                    | {Digit} + ([eE] + [+-]? {Digit}+ [FfDd]? |  [FfDd])
+           
+
+DecLiteral        = ({Digit} | {Digit}{Separated Digit}*{Digit}) + ( [UuLl] | [Uu][Ll] | [Ll][Uu] )?
+BinaryLiteral     = '0'[bB]({Binary Digit} | {Binary Digit}{Separated Binary Digit}*{Binary Digit}) + ( [UuLl] | [Uu][Ll] | [Ll][Uu] )? 
+OctalLiteral      = '0'[oO]({Oct Digit} | {Oct Digit}{Separated Oct Digit}*{Oct Digit}) + ( [UuLl] | [Uu][Ll] | [Ll][Uu] )?
+HexLiteral        = '0'[xX]({Hex Digit} | {Hex Digit}{Separated Hex Digit}*{Hex Digit}) + ( [UuLl] | [Uu][Ll] | [Ll][Uu] )?                                      
+                 
+Identifier        = [@]?{Id Head}{Id Tail}* 
+RegularStringLiteral  =  '"'( {String Ch} | '\'{Printable} )* '"'  
+VerbatimStringLiteral =  '@"'{String Ch}* '"'  
+CharLiteral      = '' ( {Char Ch} | '\'{Printable} )''                      
+BooleanLiteral   = true | false
+NullLiteral      = null                                                           
+OperatorLiteralUnary  =  '@' [!&%*+-/<>=?\^|~£¤µ]+
+OperatorLiteralBinary  =  '@@' [!&%*+-/<>=?\^|~£¤µ]+ 
+ASMCodeLiteral = 'asm' {Whitespace}* '{' {Asm Char} '}'
+                       
+                                                                 
+! ===================================================================
+! Comments
+! ===================================================================
+
+Comment Start = '/*'
+Comment End   = '*/'
+Comment Line  = '//'  
+        
+! ===================================================================
+! Types
+! ===================================================================
+<package or type expr> ::= Identifier '::'   <simple name expr> 
+                        |  <simple name expr>
+                        | <package or type expr> '.' <simple name expr>                                          
+<simple name expr> ::=  Identifier <opt type argument list>               
+
+<opt type argument list>
+        ::= 
+         |  '!<' <type arguments> '>'
+         
+<type arguments>
+        ::= <type> 
+         |  <type arguments> ',' <type> 
+
+<opt type parameter list>
+        ::= 
+         |  '<' <type parameters> '>' 
+
+<type parameters>
+        ::= Identifier
+         |  <type parameters> ',' Identifier
+
+<type> ::= <type expression or array>
+<member type> ::= <type expression or array>
+               | void       
+
+<type expression or array> ::= <type expression>
+        | <type expression> <rank specifiers>
+
+
+<rank specifiers>
+        ::= <rank specifier> 
+         |  <rank specifier> <rank specifiers> 
+
+<rank specifier>
+        ::= '[]' 
+         |  '[,' <dim separators> ']' 
+
+<dim separators>
+        ::= ',' 
+         |  <dim separators> ',' 
+         
+<type expression>  ::= <package or type expr>      
+                   | <package or type expr>     '&?' ! conflict warning
+                   | <package or type expr>     <pointer stars>   
+                    | <builtin type expression>
+                    
+<builtin type expression> ::= <builtin type>
+                           | <builtin type> '&?' ! conflict warning
+                           | <builtin type> <pointer stars>  
+  
+<builtin type> ::=   float
+         |  double
+         |  bool 
+         |  object
+         |  string
+         | <integral type>
+
+<integral type> ::= sbyte 
+         |  byte 
+         |  short
+         |  ushort
+         |  int
+         |  uint 
+         |  long 
+         |  ulong
+         |  char
+
+<pointer stars> ::= '&*' ! conflict warning
+                 | <pointer stars> '&*'  ! conflict warning
+                                                                         
+
+  
+<opt type parameter constraints clauses>
+        ::= 
+         |  <type parameter constraints clauses> 
+
+<type parameter constraints clauses>
+        ::= <type parameter constraints clause> 
+         |  <type parameter constraints clauses> <type parameter constraints clause> 
+
+<type parameter constraints clause>
+        ::= where Identifier ':' <type parameter constraints> 
+
+
+<type parameter constraints>
+        ::= <type parameter constraint> 
+         |  <type parameter constraints> ',' <type parameter constraint> 
+
+<type parameter constraint>
+        ::= <type> 
+         |  class 
+         
+<opt class base>
+        ::= 
+         |  <class base> 
+
+<type list>
+        ::= <type>
+         |  <type list> ',' <type>
+         
+<class base>
+        ::= ':' <type list> 
+         
+! ===================================================================
+! Arguments, Parameters, Initializers & Modifiers
+! =================================================================== 
+
+<opt formal parameter list>
+        ::= 
+         |  <formal parameter list> 
+
+
+<formal parameter list>
+        ::= <fixed parameters> 
+         |  <fixed parameters> ',' <parameter array> 
+  
+
+<fixed parameters>
+        ::= <fixed parameter> 
+         |  <fixed parameters> ',' <fixed parameter> 
+
+<fixed parameter>
+        ::= <opt attributes> <opt parameter modifier> <member type> Identifier
+         |  <opt attributes> <opt parameter modifier> <member type> Identifier '=' <expression> 
+    
+<opt parameter modifier>
+        ::= 
+         |  <parameter modifier>
+         
+<parameter modifier>
+        ::= ref 
+         |  out 
+         |  self 
+         
+<parameter array>
+        ::= <opt attributes> params <type> Identifier 
+         |  <opt attributes> params <type> Identifier '='  <expression>  
+         
+<opt argument list>
+        ::= 
+         |  <argument list> 
+
+<argument list>
+        ::= <argument> 
+         |  <argument list> ',' <argument> 
+          
+         
+
+<argument>
+        ::= <expression> 
+         |  <non simple argument> 
+
+<non simple argument>
+        ::= ref <expression> 
+         |  out <expression> 
+ 
+
+<opt array initializer>
+        ::= 
+         |  <array initializer> 
+
+<array initializer>
+        ::= '{' '}'
+         |  '{' <variable initializer list> <opt comma> '}' 
+
+<variable initializer list>
+        ::= <variable initializer> 
+         |  <variable initializer list> ',' <variable initializer> 
+      
+<variable initializer>
+        ::= <expression> 
+         |  <array initializer>
+         
+ <opt rank specifier>
+        ::= 
+         |  <rank specifiers>            
+ <opt comma> ::= ','
+              | 
+              
+<opt modifiers>
+        ::= 
+         |  <modifiers> 
+
+<modifiers>
+        ::= <modifier> 
+         |  <modifiers> <modifier> 
+
+<modifier>
+       ::= abstract
+        |  extern
+        |  new
+        |  override
+        |  sync 
+        |  readonly
+        |  sealed
+        |  static
+        |  unsafe
+        |  virtual
+        |  private
+        |  protected
+        |  public
+        |  internal      !Friend
+         
+
+! ===================================================================
+! Attributes
+! =================================================================== 
+<opt attributes> ::= 
+                          | <attribute sections>    
+                          
+<attribute sections>
+        ::= <attribute section> 
+         |  <attribute sections> <attribute section> 
+         
+<attribute section>
+       ::= '[' <opt attribute target>  <attribute list> ']'
+        |  '[' <opt attribute target>  <attribute list> ',' ']'
+        
+ <opt attribute target> 
+       ::= assembly ':'
+        |  return   ':'
+        |  type     ':'
+        |  ! Nothing
+        
+<attribute list>
+       ::= <attribute>
+        |  <attribute list>',' <attribute>
+
+<attribute>
+       ::= <package or type expr> '(' <expression List> ')'
+        |  <package or type expr> '(' ')'
+        |  <package or type expr>                         
+! ===================================================================
+! Expressions
+! =================================================================== 
+<expression list>
+        ::= <expression>
+         |  <expression list> ',' <expression>
+
+<expression>
+        ::= <assignment expression> 
+         |  <non assignment expression> 
+         
+<assignment expression>
+        ::= <prefixed unary expression> '=' <expression> 
+         |  <prefixed unary expression> '*=' <expression> 
+         |  <prefixed unary expression> '/=' <expression> 
+         |  <prefixed unary expression> '%=' <expression> 
+         |  <prefixed unary expression> '+=' <expression> 
+         |  <prefixed unary expression> '-=' <expression> 
+         |  <prefixed unary expression> '<<=' <expression> 
+         |  <prefixed unary expression> '>>=' <expression> 
+         |  <prefixed unary expression> '&=' <expression> 
+         |  <prefixed unary expression> '|=' <expression> 
+         |  <prefixed unary expression> '^=' <expression> 
+         
+
+<non assignment expression>
+        ::= <conditional expression> 
+         |  <lambda expression> 
+         
+<lambda expression>
+        ::= Identifier '=>' <lambda expression body> 
+         |  '(' <opt lambda parameter list> ')' '=>' <lambda expression body> 
+        
+<lambda parameter list>
+        ::= <lambda parameter> 
+         |  <lambda parameter list> ',' <lambda parameter> 
+
+<lambda parameter>
+        ::= <member type> Identifier 
+
+ 
+
+<opt lambda parameter list>
+        ::= 
+         |  <lambda parameter list> 
+
+<lambda expression body>
+        ::= <expression> 
+         |  <block> 
+
+<conditional expression>
+        ::= <null coalescing expression> 
+         |  <null coalescing expression> '?' <expression> ':' <expression>   
+       
+<null coalescing expression>
+        ::= <null coalescing expression> '??' <Binary Operation Expression>
+         |  <Binary Operation Expression>
+     
+<Binary Operation Expression>
+        ::= <Binary Operation Expression> OperatorLiteralBinary <conditional or expression>
+         |  <conditional or expression>
+             
+<conditional or expression>
+        ::= <conditional or expression> '||' <conditional and expression> 
+         | <conditional and expression> 
+         
+<conditional and expression>
+        ::= <conditional and expression> '&&' <inclusive or expression> 
+         |  <inclusive or expression> 
+         
+<inclusive or expression>
+        ::= <inclusive or expression> '|' <exclusive or expression>
+         |  <exclusive or expression>
+         
+<exclusive or expression>
+        ::= <exclusive or expression> '^' <and expression> 
+         |  <and expression> 
+         
+<and expression>
+        ::= <and expression> '&' <equality expression> 
+         |  <equality expression> 
+         
+<equality expression>
+        ::= <relational expression> 
+         |  <equality expression> '==' <relational expression> 
+         |  <equality expression> '!=' <relational expression>
+         
+<relational expression>
+        ::= <shift expression> 
+         |  <relational expression> '<' <shift expression> 
+         |  <relational expression> '>' <shift expression> 
+         |  <relational expression> '<=' <shift expression> 
+         |  <relational expression> '>=' <shift expression> 
+         
+<shift expression>
+        ::= <shift expression> '<<' <additive expression> 
+         |  <shift expression> '>>' <additive expression> 
+         |  <additive expression> 
+         
+
+<additive expression>
+        ::= <additive expression> '+' <multiplicative expression> 
+         |  <additive expression> '-' <multiplicative expression> 
+       !  |  <additive expression> as <type>
+       !  |  <additive expression> is <type>
+         |  <multiplicative expression> 
+         
+<multiplicative expression>
+        ::= <multiplicative expression> '*' <prefixed unary expression> 
+         |  <multiplicative expression> '/' <prefixed unary expression> 
+         |  <multiplicative expression> '%' <prefixed unary expression> 
+         |  <prefixed unary expression> 
+         
+<prefixed unary expression>
+        ::= '&' <unary expression> 
+         |  '+' <unary expression> 
+         |  '-' <unary expression> 
+         |  '*' <unary expression> 
+         |  '++' <unary expression> 
+         |  '--' <unary expression> 
+         |  OperatorLiteralUnary <unary expression> 
+         |  <unary expression> 
+         
+<unary expression>
+        ::= <primary expression> 
+         | '!' <prefixed unary expression> 
+         |  '~' <prefixed unary expression> 
+         |  cast '(' <type> ')' <prefixed unary expression> ! conflict
+  
+<Constant Expression>  ::= <Multiline String Literals> 
+                        | CharLiteral  
+                        | <Integral Constant> 
+                        | BooleanLiteral
+                        | NullLiteral   
+                        | RealLiteral
+                        
+<Integral Constant> ::= OctalLiteral   
+                   | HexLiteral
+                   | DecLiteral  
+                   | BinaryLiteral
+                                        
+<Multiline String Literals> ::= RegularStringLiteral
+                    | RegularStringLiteral <Multiline String Literals> 
+                    | VerbatimStringLiteral
+                    | VerbatimStringLiteral <Multiline String Literals>       
+<default value expression>
+        ::= default '(' <type> ')'  
+<typeof expression>
+        ::= typeof '(' <member type> ')' 
+<sizeof expression>
+        ::= sizeof '(' <type> ')' 
+<checked expression>
+        ::= checked '(' <expression> ')'    
+<unchecked expression>
+        ::= unchecked '(' <expression> ')' 
+<pointer member access>
+        ::= <primary expression> '->' <simple name expr> 
+<super access>
+        ::= super '[' <expression list> ']' 
+                  
+<post increment expression>
+        ::= <primary expression> '++' 
+<post decrement expression>
+        ::= <primary expression> '--' 
+<element access>
+        ::= <primary expression> '[' <expression list> ']'         
+<parenthesized expression>
+        ::= '(' <expression> ')'
+
+<member access>
+        ::= <accessible primary expression> '.' Identifier <opt type argument list> 
+        | <package or type expr>
+        |  super '.' Identifier <opt type argument list>           
+          
+<invocation expression>
+        ::= <primary expression> '(' <opt argument list> ')'
+         
+<anonymous type expression>
+        ::= new '{' <anonymous type parameters opt comma> '}' 
+<anonymous type parameters opt comma>
+        ::= <anonymous type parameters opt> 
+         |  <anonymous type parameters> ',' 
+<anonymous type parameters opt>
+        ::= 
+         |  <anonymous type parameters> 
+<anonymous type parameters>
+        ::= <anonymous type parameter> 
+         |  <anonymous type parameters> ',' <anonymous type parameter> 
+<anonymous type parameter>
+        ::= Identifier '=' <variable initializer> 
+ 
+<object or delegate creation expression>
+        ::= new <type expression> '(' <opt argument list> ')'
+
+<array creation expression>
+        ::= new <type expression> '[' <expression list> ']' <opt rank specifier> <opt array initializer> 
+         |  new <type expression> <rank specifiers>
+         |  new <rank specifier> <array initializer>         
+
+
+        
+<primary expression>
+        ::=  <member access> 
+         |   <accessible primary expression>
+         | <Constant Expression> 
+         
+<accessible primary expression>
+         ::=   <parenthesized expression> 
+         |  <default value expression> 
+         |  <invocation expression> 
+         |  <element access> 
+         |  self 
+         |  <super access> 
+         |  <post increment expression> 
+         |  <post decrement expression> 
+         |  <typeof expression> 
+         |  <sizeof expression> 
+         |  <checked expression> 
+         |  <unchecked expression> 
+         |  <pointer member access> 
+         |  <object or delegate creation expression> 
+         |  <anonymous type expression> 
+         |  <array creation expression> 
+ 
+<Expression Statement> ::=  <invocation expression>   
+                         |  <post increment expression> 
+                         |  <post decrement expression>   
+                         |  '++' <unary expression> 
+                         |  '--' <unary expression>  
+                         | <assignment expression> 
+! ===================================================================
+! Registers Operations
+! ===================================================================  
+
+<REGISTER> ::=   '$' Identifier           
+<Register Expression> ::= <REGISTER> ':=' <REGISTER Target Expression>  ! Register Assign
+                        | <Expression> ':=' <REGISTER> ! Var Assign
+                        | '+' <REGISTER> ! Push
+                        | '-' <REGISTER>  ! Pop
+                        | <REGISTER> ':='  <Register Operation> '?' <REGISTER Target Expression>  ':' <REGISTER Target Expression>  ! If Expr
+                        | <Register Operation> 
+<Register Operation> ::= <REGISTER> <Register Binary Operator> <REGISTER>
+                         | <Register Unary Operator> <REGISTER>
+                         
+<REGISTER Target Expression> ::= <Expression>                      
+                              | <REGISTER>
+                              
+
+<Register Binary Operator> ::= '=='
+                   | '!='
+                   | '<='
+                   | '>='
+                   | '>'
+                   | '<'
+                   | '+'
+                   | '-'
+                   | '*'
+                   | '/'
+                   | '%'
+                   | '^'
+                   | '&'
+                   | '|'
+                   | '<<'
+                   | '>>'
+                   | '<~'
+                   | '~>'
+                                      
+<Register Unary Operator> ::= '++'
+                  | '--'
+                  | '~'
+                  | '!'
+                  | '?!'
+                  | '??'
+                  | '&'
+                  | '*'
+! ===================================================================
+! Statements
+! ===================================================================          
+<block>
+        ::= '{' <opt statement list> '}'
+
+<Expression Opt> ::= <expression>
+                  |
+<opt statement list>
+        ::= 
+         |  <statement list> 
+
+<statement list>
+        ::= <statement> 
+         |  <statement list> <statement> 
+         
+<statement>
+        ::= <block variable declaration> 
+         |  <labeled statement> 
+          |  if       '(' <Expression> ')' <Statement>
+        |  if       '(' <Expression> ')' <Then Stm> else <Statement>        
+        |  for      '(' <For Init Opt> ';' <For Condition Opt> ';' <For Iterator Opt> ')' <Statement>
+        |  foreach  '(' <Type> Identifier in <Expression> ')' <Statement>  
+        |  while    '(' <Expression> ')' <Statement>
+        |  lock     '(' <Expression> ')' <Statement>
+        |  using    '(' <Resource>   ')' <Statement>     
+        |  delegate '(' <opt formal parameter list>  ')' <Statement>  
+        |  <Normal Stm>   
+
+
+<Then Stm>   
+       ::= if       '(' <Expression> ')' <Then Stm> else <Then Stm>        
+        |  for      '(' <For Init Opt> ';' <For Condition Opt> ';' <For Iterator Opt> ')' <Then Stm>
+        |  foreach  '(' <Type> Identifier in <Expression> ')' <Then Stm>  
+        |  while    '(' <Expression> ')' <Then Stm>
+        |  lock     '(' <Expression> ')' <Then Stm>
+        |  using    '(' <Resource>   ')' <Then Stm>           
+        |  <Normal Stm>   
+          
+          
+          
+<Normal Stm>                   
+       ::= switch '(' <Expression> ')' '{' <Switch Sections Opt> '}'
+        |  do <Normal Stm> while '(' <Expression> ')' ';'
+        |  try <Block> <Catch Clauses> <Finally Clause Opt>
+        |  checked <Block>
+        |  unchecked <Block>
+        |  unsafe <Block>            
+        |  break ';'
+        |  continue ';'
+        |  if continue ';'
+        |  break <expression> ';'
+        |  goto Identifier ';'
+        |  goto case <Expression> ';'
+        |  goto default ';'
+        |  return <Expression Opt> ';'
+        |  throw <Expression Opt> ';'
+        |  <Expression Statement>  ';'        
+        |  <Register Expression>  ';'     
+        |  interrupt  <Integral Constant>  ';'
+        |  interrupt <Integral Constant> '(' <expression list> ')' ';'
+        |  delete <expression> ';'
+        |  ASMCodeLiteral
+        |  ';'
+        |  <Block>     
+ 
+
+
+<labeled statement>
+        ::= Identifier ':' <statement> 
+         
+<block variable declaration>
+        ::= <type> Identifier <opt local variable initializer> <opt variable declarators> ';'  
+         |  const <type> Identifier <const variable initializer> <opt const declarators> ';'  
+
+<opt local variable initializer>
+        ::= 
+         |  '=' <block variable initializer> 
+   
+
+<opt variable declarators>
+        ::= 
+         |  <variable declarators> 
+
+
+<variable declarators>
+        ::= <variable declarator> 
+         |  <variable declarators> <variable declarator> 
+
+<variable declarator>
+        ::= ',' Identifier 
+         |  ',' Identifier '=' <block variable initializer> 
+
+
+<const variable initializer>
+        ::= 
+         |  '=' <variable initializer> 
+
+<opt const declarators>
+        ::= 
+         |  <const declarators> 
+
+<const declarators>
+        ::= <const declarator> 
+         |  <const declarators> <const declarator> 
+
+<const declarator>
+        ::= ',' Identifier '=' <variable initializer> 
+<block variable initializer>
+        ::= <variable initializer> 
+         |  stackalloc <type expression> '[' <expression> ']' 
+         |  stackalloc <type expression> 
+
+! ===========================================================================
+! Switch Clauses
+! ===========================================================================
+
+<Switch Sections Opt>
+        ::= <Switch Sections Opt> <Switch Section>
+         |  !Nothing
+
+<Switch Section>
+        ::= <Switch Labels> <statement list>
+
+<Switch Labels>
+        ::= <Switch Label>
+         |  <Switch Labels> <Switch Label>
+
+<Switch Label>
+        ::= case <Expression> ':'
+         |  default ':'
+         
+
+! ===========================================================================
+! For Clauses
+! ===========================================================================
+
+<For Init Opt>
+        ::= <block variable declaration>
+         |  <Statement Exp List>
+         |  !Nothing
+
+<For Iterator Opt>
+        ::= <Statement Exp List>
+         |  !Nothing 
+
+<For Condition Opt>
+        ::= <Expression>
+         |  !Nothing 
+
+<Statement Exp List>
+        ::= <Statement Exp List> ',' <Expression>
+         |  <Expression>
+
+! ===========================================================================
+! Catch Clauses
+! ===========================================================================
+
+<Catch Clauses>
+        ::= <Catch Clause> <Catch Clauses>
+         |  !Nothing
+
+<Catch Clause>
+        ::= catch '(' <package or type expr> Identifier ')' <Block>
+         |  catch <Block>
+
+<Finally Clause Opt>
+        ::= finally <Block>
+         |  !Nothing
+
+! ===========================================================================
+! Using Clauses
+! ===========================================================================
+
+<Resource>
+        ::= <block variable declaration>
+         |  <expression>
+         
+! ===================================================================
+! Declarations
+! ===================================================================   
+
+<compilation unit>
+       ::=  <import directives> <package or type declarations>     
+                 
+<import directives>
+       ::= <import directives> <import directive>
+        |  !Nothing 
+     
+<import directive>
+       ::= import Identifier '=' <package or type expr> ';'
+        |  import <package or type expr> ';'
+    
+<opt semicolon> ::= ';'
+                 | 
+                                  
+<package declaration> ::= <opt attributes> package <package or type expr> '{' <import directives> <package or type declarations> '}' <opt semicolon>  
+    
+                                    
+<package or type declarations>  
+       ::= <package or type declarations> <package or type declaration>  
+        |  ! Zero or more
+
+<package or type declaration>  
+       ::= <package declaration>
+        |  <type declaration>   !Default package
+        |  <global member declaration> 
+
+
+<type declaration>
+        ::= <class declaration> 
+         |  <struct declaration> 
+         |  <union declaration>
+         |  <interface declaration> 
+         |  <enum declaration> 
+         |  <delegate declaration> 
+         
+ 
+<global member declaration>      ::= <constant declaration> 
+                                |  <field declaration> 
+                                |  <method declaration> 
+                                |  <property declaration> 
+                                |  <event declaration> 
+                                |  <indexer declaration> 
+                                |  <operator declaration>        
+<opt class member declarations>
+        ::= 
+         |  <class member declarations> 
+
+<class member declarations>
+        ::= <class member declaration> 
+         |  <class member declarations> <class member declaration> 
+
+<class member declaration>
+        ::= <constant declaration> 
+         |  <field declaration> 
+         |  <method declaration> 
+         |  <property declaration> 
+         |  <event declaration> 
+         |  <indexer declaration> 
+         |  <operator declaration> 
+         |  <constructor declaration> 
+         |  <destructor declaration> 
+         
+
+<struct declaration>
+        ::= <opt attributes> <opt modifiers> struct <type declaration name><opt class base> <opt type parameter constraints clauses> '{' <opt class member declarations> '}' <opt semicolon> 
+<union declaration>
+        ::= <opt attributes> <opt modifiers> union <type declaration name><opt class base> <opt type parameter constraints clauses> '{' <opt class member declarations> '}' <opt semicolon> 
+        
+
+<constant declaration>
+        ::= <opt attributes> <opt modifiers> const <type> Identifier <constant initializer> <opt constant declarators> ';' 
+
+<opt constant declarators>
+        ::= 
+         |  <constant declarators> 
+
+<constant declarators>
+        ::= <constant declarator> 
+         |  <constant declarators> <constant declarator> 
+
+<constant declarator>
+        ::= ',' Identifier <constant initializer> 
+
+<constant initializer>
+        ::= '=' <constant initializer expr> 
+
+
+<constant initializer expr>
+        ::= <expression> 
+         |  <array initializer> 
+         
+
+<field declaration>
+        ::= <opt attributes> <opt modifiers> <member type> Identifier <opt field initializer> <opt field declarators> ';'  
+    
+<opt field initializer>
+        ::= 
+         |  '=' <variable initializer> 
+
+<opt field declarators>
+        ::= 
+         |  <field declarators> 
+
+<field declarators>
+        ::= <field declarator> 
+         |  <field declarators> <field declarator> 
+
+<field declarator>
+        ::= ',' Identifier 
+         |  ',' Identifier '=' <variable initializer> 
+         
+<method declaration>
+        ::= <method header> <method body expression block> 
+         
+<method header>
+        ::= <opt attributes> <opt modifiers> <member type> <method declaration name> '(' <opt formal parameter list> ')' <opt type parameter constraints clauses> 
+         |  <opt attributes> <opt modifiers> <member type> <modifiers> <method declaration name> '(' <opt formal parameter list> ')' 
+      
+<method body expression block>
+        ::= <block or semicolon>
+         |  <expression block> 
+
+<block or semicolon>
+        ::= <block> 
+         |  ';' 
+
+<expression block>
+        ::= '=>' <expression> ';' 
+         
+<property declaration>
+        ::= <opt attributes> <opt modifiers> <member type> <member declaration name> '{' <accessor declarations> '}' <opt property initializer> 
+         |  <opt attributes> <opt modifiers> <member type> <member declaration name> <expression block> 
+
+<opt property initializer>
+        ::= 
+         |  '=' <property initializer> ';' 
+
+<property initializer>
+        ::= <expression> 
+         |  <array initializer> 
+
+<indexer declaration>
+        ::= <opt attributes> <opt modifiers> <member type> <indexer declaration name> '[' <opt formal parameter list> ']' <indexer body> 
+
+<indexer body>
+        ::= '{' <accessor declarations> '}' 
+         |  <expression block> 
+
+<accessor declarations>
+        ::= <get accessor declaration> 
+         |  <get accessor declaration> <accessor declarations> 
+         |  <set accessor declaration> 
+         |  <set accessor declaration> <accessor declarations> 
+         
+<get accessor declaration>
+        ::= <opt attributes> <opt modifiers> get <block or semicolon> 
+
+<set accessor declaration>
+        ::= <opt attributes> <opt modifiers> set <block or semicolon> 
+         
+<interface declaration>
+        ::= <opt attributes> <opt modifiers> interface <type declaration name> <opt class base> <opt type parameter constraints clauses> '{' <opt interface member declarations> '}' <opt semicolon> 
+
+<opt interface member declarations>
+        ::= 
+         |  <interface member declarations> 
+
+<interface member declarations>
+        ::= <interface member declaration> 
+         |  <interface member declarations> <interface member declaration> 
+
+<interface member declaration>
+        ::= <constant declaration> 
+         |  <field declaration> 
+         |  <method declaration> 
+         |  <property declaration> 
+         |  <event declaration> 
+         |  <indexer declaration> 
+         |  <operator declaration> 
+         |  <constructor declaration> 
+         |  <type declaration> 
+
+<operator declaration>
+        ::= <opt attributes> <opt modifiers> <operator declarator> <method body expression block> 
+
+<operator type>
+        ::= <type expression or array> 
+         |  void 
+
+<operator declarator>
+        ::= <operator type> operator <overloadable operator> '(' <opt formal parameter list> ')' 
+         |  <conversion operator declarator> 
+         
+<overloadable operator>
+        ::= '^' ! TODO
+  
+
+<conversion operator declarator>
+        ::= implicit operator <type> '(' <opt formal parameter list> ')' 
+         |  explicit operator <type> '(' <opt formal parameter list> ')'   
+         
+ <constructor declaration>
+        ::= <constructor declarator> <constructor body> 
+
+<constructor declarator>
+        ::= <opt attributes> <opt modifiers> self '(' <opt formal parameter list> ')' <opt constructor initializer> 
+
+<constructor body>
+        ::= <block> 
+         |  ';' 
+<constructor initializer>
+        ::= ':' super '(' <opt argument list> ')' 
+         |  ':' self '(' <opt argument list> ')'
+         
+ 
+<opt constructor initializer>
+        ::= 
+         |  <constructor initializer>   
+         
+<destructor declaration>
+        ::= <opt attributes> <opt modifiers> '~' self '(' ')' <block or semicolon> 
+
+<event declaration>
+        ::= <opt attributes> <opt modifiers> event <type> <member declaration name> <opt event initializer> <opt event declarators> ';' 
+         |  <opt attributes> <opt modifiers> event <type> <member declaration name> '{' <event accessor declarations> '}' 
+
+
+<opt event initializer>
+        ::= 
+         |  '=' <event variable initializer> 
+
+<opt event declarators>
+        ::= 
+         |  <event declarators>   
+         
+<event declarators>
+        ::= <event declarator> 
+         |  <event declarators> <event declarator> 
+
+<event declarator>
+        ::= ',' Identifier 
+         |  ',' Identifier '=' <event variable initializer> 
+
+<event variable initializer>
+        ::= <variable initializer> 
+
+<event accessor declarations>
+        ::= <add accessor declaration> <remove accessor declaration> <raise accessor declaration opt>
+         |  <remove accessor declaration> <add accessor declaration> <raise accessor declaration opt>
+         |  <add accessor declaration>  <raise accessor declaration opt>
+         |  <remove accessor declaration> <raise accessor declaration opt>
+         |  <raise accessor declaration>
+  
+
+<add accessor declaration>
+        ::= <opt attributes> <opt modifiers> add  <block or semicolon>
+
+<remove accessor declaration>
+        ::= <opt attributes> <opt modifiers> remove <block or semicolon>
+
+<raise accessor declaration opt> ::= <raise accessor declaration>
+                                  |
+                                  
+
+<raise accessor declaration>
+        ::= <opt attributes> <opt modifiers> raise  <block or semicolon>
+         
+<enum declaration>
+        ::= <opt attributes> <opt modifiers> enum <type declaration name> <opt enum base> '{' <opt enum member declarations> '}' <opt semicolon> 
+
+<opt enum base>
+        ::= 
+         |  ':' <type> 
+
+
+<opt enum member declarations>
+        ::= 
+         |  <enum member declarations> 
+         |  <enum member declarations> ',' 
+
+<enum member declarations>
+        ::= <enum member declaration> 
+         |  <enum member declarations> ',' <enum member declaration> 
+
+<enum member declaration>
+        ::= <opt attributes> Identifier 
+         |  <opt attributes> Identifier '='  <expression>  
+         |  <attribute sections>
+
+<delegate declaration>
+        ::= <opt attributes> <opt modifiers> delegate <member type> <type declaration name> '(' <opt formal parameter list> ')' <opt type parameter constraints clauses> ';' 
+
+
+
+<type declaration name>
+        ::= Identifier <opt type parameter list> 
+
+<member declaration name>
+        ::= <method declaration name> 
+
+<method declaration name>
+        ::= <type declaration name> 
+         |  <explicit interface> Identifier <opt type parameter list>
+         
+<indexer declaration name>
+        ::= self 
+         |  <explicit interface> self 
+
+<explicit interface>
+        ::= <explicit interface> Identifier <opt type argument list> '.' 
+         |  Identifier <opt type argument list> '.' 
+         
+
+
+
+<class declaration>
+        ::= <opt attributes> <opt modifiers> class <type declaration name> <opt class base> <opt type parameter constraints clauses> '{' <opt class member declarations> '}' <opt semicolon> 
+
+       
