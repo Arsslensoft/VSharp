@@ -1,0 +1,20 @@
+AST
+	* Expressions (herite IEmitExpression, IResolve, IFlow, IClonable)
+	* Statements (IEmit, IResolve, IFlow,IClonable)
+	* Declarations (IEmit, IResolve, IFlow,IClonable)
+	* Literals
+	* Constants
+	
+TypeSystem
+	* All types
+	* Generics
+	* BuiltinTypes
+	* Structs,Unions, Classes, Interfaces, Enums
+	* Namespace
+Member lookup
+	* Variable lookup
+	* Type lookup
+	* Methods, Events, Properties lookup
+	* Type Parameters lookup
+	* Extension methods lookup
+	* Namespace lookup

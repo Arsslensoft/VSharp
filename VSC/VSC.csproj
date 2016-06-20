@@ -1,0 +1,141 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{83F85271-A4E3-448A-8B49-63FB00BC1BD3}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>VSC</RootNamespace>
+    <AssemblyName>VSC</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AST\IClonable.cs" />
+    <Compile Include="AST\IEmit.cs" />
+    <Compile Include="AST\IFlow.cs" />
+    <Compile Include="AST\IResolve.cs" />
+    <Compile Include="Base\ComandLine\Attributes\AssemblyLicenseAttribute.cs" />
+    <Compile Include="Base\ComandLine\Attributes\AssemblyUsageAttribute.cs" />
+    <Compile Include="Base\ComandLine\Attributes\BaseOptionAttribute.cs" />
+    <Compile Include="Base\ComandLine\Attributes\HelpOptionAttribute.cs" />
+    <Compile Include="Base\ComandLine\Attributes\HelpVerbOptionAttribute.cs" />
+    <Compile Include="Base\ComandLine\Attributes\MultiLineTextAttribute.cs" />
+    <Compile Include="Base\ComandLine\Attributes\OptionArrayAttribute.cs" />
+    <Compile Include="Base\ComandLine\Attributes\OptionAttribute.cs" />
+    <Compile Include="Base\ComandLine\Attributes\OptionListAttribute.cs" />
+    <Compile Include="Base\ComandLine\Attributes\ParserStateAttribute.cs" />
+    <Compile Include="Base\ComandLine\Attributes\ValueListAttribute.cs" />
+    <Compile Include="Base\ComandLine\Attributes\ValueOptionAttribute.cs" />
+    <Compile Include="Base\ComandLine\Attributes\VerbOptionAttribute.cs" />
+    <Compile Include="Base\ComandLine\BadOptionInfo.cs" />
+    <Compile Include="Base\ComandLine\Extensions\CharExtensions.cs" />
+    <Compile Include="Base\ComandLine\Extensions\StringExtensions.cs" />
+    <Compile Include="Base\ComandLine\GlobalSuppressions.cs" />
+    <Compile Include="Base\ComandLine\Infrastructure\Assumes.cs" />
+    <Compile Include="Base\ComandLine\Infrastructure\Pair.cs" />
+    <Compile Include="Base\ComandLine\Infrastructure\PopsicleSetter.cs" />
+    <Compile Include="Base\ComandLine\Infrastructure\ReflectionCache.cs" />
+    <Compile Include="Base\ComandLine\Infrastructure\ReflectionHelper.cs" />
+    <Compile Include="Base\ComandLine\Infrastructure\SR1.strings.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>SR.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Base\ComandLine\IParserState.cs" />
+    <Compile Include="Base\ComandLine\Parser.cs" />
+    <Compile Include="Base\ComandLine\ParserException.cs" />
+    <Compile Include="Base\ComandLine\ParserSettings.cs" />
+    <Compile Include="Base\ComandLine\ParserState.cs" />
+    <Compile Include="Base\ComandLine\ParsingError.cs" />
+    <Compile Include="Base\ComandLine\Parsing\ArgumentParser.cs" />
+    <Compile Include="Base\ComandLine\Parsing\IArgumentEnumerator.cs" />
+    <Compile Include="Base\ComandLine\Parsing\LongOptionParser.cs" />
+    <Compile Include="Base\ComandLine\Parsing\OneCharStringEnumerator.cs" />
+    <Compile Include="Base\ComandLine\Parsing\OptionGroupParser.cs" />
+    <Compile Include="Base\ComandLine\Parsing\OptionInfo.cs" />
+    <Compile Include="Base\ComandLine\Parsing\OptionMap.cs" />
+    <Compile Include="Base\ComandLine\Parsing\PresentParserState.cs" />
+    <Compile Include="Base\ComandLine\Parsing\PropertyWriter.cs" />
+    <Compile Include="Base\ComandLine\Parsing\StringArrayEnumerator.cs" />
+    <Compile Include="Base\ComandLine\Parsing\TargetCapabilitiesExtensions.cs" />
+    <Compile Include="Base\ComandLine\Parsing\ValueMapper.cs" />
+    <Compile Include="Base\ComandLine\Text\BaseSentenceBuilder.cs" />
+    <Compile Include="Base\ComandLine\Text\CopyrightInfo.cs" />
+    <Compile Include="Base\ComandLine\Text\EnglishSentenceBuilder.cs" />
+    <Compile Include="Base\ComandLine\Text\FormatOptionHelpTextEventArgs.cs" />
+    <Compile Include="Base\ComandLine\Text\HeadingInfo.cs" />
+    <Compile Include="Base\ComandLine\Text\HelpText.cs" />
+    <Compile Include="Base\ComandLine\Text\_ParsingErrorsHandler.cs" />
+    <Compile Include="Base\Report.cs" />
+    <Compile Include="Base\LanguageVersion.cs" />
+    <Compile Include="Base\Settings.cs" />
+    <Compile Include="Context\CloneContext.cs" />
+    <Compile Include="Context\CompilerContext.cs" />
+    <Compile Include="Context\EmitContext.cs" />
+    <Compile Include="Context\FlowAnalysisContext.cs" />
+    <Compile Include="Context\ResolveContext.cs" />
+    <Compile Include="TypeSystem\Modifiers.cs" />
+    <Compile Include="TypeSystem\TypeSpec.cs" />
+    <Compile Include="TypeSystem\VariableInfo.cs" />
+    <Compile Include="Base\location.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="Base\ComandLine\Infrastructure\SR.strings" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Base\ComandLine\CustomDictionary.xml" />
+    <Content Include="Base\ComandLine\Infrastructure\SR.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>SR1.strings.cs</LastGenOutput>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>$(ProjectDir)\..\jay -ctv &lt; $(ProjectDir)\..\skeleton.cs $(ProjectDir)\VSharpParser.jay &gt; $(ProjectDir)\VSharpParser.cs</PreBuildEvent>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
