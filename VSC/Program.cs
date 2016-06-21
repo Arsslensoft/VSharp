@@ -10,6 +10,7 @@ namespace VSC
     {
         static void Main(string[] args)
         {
+            Nullable<int> a;
         }
     }
 }

@@ -329,7 +329,7 @@ namespace VSC {
 		}
 	}
 
-	sealed class WarningMessage : AbstractMessage
+    public  sealed class WarningMessage : AbstractMessage
 	{
 		public WarningMessage (int code, Location loc, string message)
 			: base (code, loc, message)
@@ -347,7 +347,7 @@ namespace VSC {
 		}
 	}
 
-	sealed class ErrorMessage : AbstractMessage
+	public sealed class ErrorMessage : AbstractMessage
 	{
 		public ErrorMessage (int code, Location loc, string message)
 			: base (code, loc, message)

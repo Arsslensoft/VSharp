@@ -45,6 +45,7 @@
     <Compile Include="AST\IEmit.cs" />
     <Compile Include="AST\IFlow.cs" />
     <Compile Include="AST\IResolve.cs" />
+    <Compile Include="Base\CacheManager.cs" />
     <Compile Include="Base\ComandLine\Attributes\AssemblyLicenseAttribute.cs" />
     <Compile Include="Base\ComandLine\Attributes\AssemblyUsageAttribute.cs" />
     <Compile Include="Base\ComandLine\Attributes\BaseOptionAttribute.cs" />
@@ -97,6 +98,8 @@
     <Compile Include="Base\ComandLine\Text\HeadingInfo.cs" />
     <Compile Include="Base\ComandLine\Text\HelpText.cs" />
     <Compile Include="Base\ComandLine\Text\_ParsingErrorsHandler.cs" />
+    <Compile Include="Base\EmptyList.cs" />
+    <Compile Include="Base\ReferenceComparer.cs" />
     <Compile Include="Base\Report.cs" />
     <Compile Include="Base\LanguageVersion.cs" />
     <Compile Include="Base\Settings.cs" />
@@ -104,7 +107,11 @@
     <Compile Include="Context\CompilerContext.cs" />
     <Compile Include="Context\EmitContext.cs" />
     <Compile Include="Context\FlowAnalysisContext.cs" />
+    <Compile Include="Context\Interfaces.cs" />
     <Compile Include="Context\ResolveContext.cs" />
+    <Compile Include="TypeSystem\Interfaces\Interfaces.cs" />
+    <Compile Include="TypeSystem\Interfaces\ReflectionHelper.cs" />
+    <Compile Include="TypeSystem\Interfaces\ReflectionNameParseException.cs" />
     <Compile Include="TypeSystem\Modifiers.cs" />
     <Compile Include="TypeSystem\TypeSpec.cs" />
     <Compile Include="TypeSystem\VariableInfo.cs" />

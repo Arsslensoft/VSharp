@@ -1,471 +1,971 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VSC.Base;
+using VSC.Context;
+using VSC.TypeSystem.Interfaces;
 
 namespace VSC.TypeSystem
 {
-    [Flags]
-    public enum MemberKind
+
+    /// <summary>
+    /// Default implementation for IType interface.
+    /// </summary>
+    [Serializable]
+    public abstract class TypeSpec : IType
     {
-        Constructor = 1,
-        Event = 1 << 1,
-        Field = 1 << 2,
-        Method = 1 << 3,
-        Property = 1 << 4,
-        Indexer = 1 << 5,
-        Operator = 1 << 6,
-        Destructor = 1 << 7,
-
-        Class = 1 << 11,
-        Struct = 1 << 12,
-        Delegate = 1 << 13,
-        Enum = 1 << 14,
-        Interface = 1 << 15,
-        TypeParameter = 1 << 16,
-
-        ArrayType = 1 << 19,
-        PointerType = 1 << 20,
-        InternalCompilerType = 1 << 21,
-        MissingType = 1 << 22,
-        Void = 1 << 23,
-        Namespace = 1 << 24,
-
-        NestedMask = Class | Struct | Delegate | Enum | Interface,
-        GenericMask = Method | Class | Struct | Delegate | Interface,
-        MaskType = Constructor | Event | Field | Method | Property | Indexer | Operator | Destructor | NestedMask
-    }
-
-    class InternalType : TypeSpec
-    {
-        public static readonly InternalType AnonymousMethod = new InternalType("anonymous method");
-        public static readonly InternalType NullLiteral = new InternalType("null");
-        public static readonly InternalType FakeInternalType = new InternalType("<fake$type>");
-        public static readonly InternalType Namespace = new InternalType("<namespace>");
-        public static readonly InternalType ErrorType = new InternalType("<error>");
-        public static readonly InternalType VarOutType = new InternalType("var out");
-
-        readonly string name;
-
-        InternalType(string name)
-            : base(MemberKind.InternalCompilerType, null, Modifiers.PUBLIC)
-        {
-            this.name = name;
-        }
-
-        #region Properties
-
-        public override int Arity
+        public virtual string FullName
         {
             get
             {
-                return 0;
+                string ns = this.Namespace;
+                string name = this.Name;
+                if (string.IsNullOrEmpty(ns))
+                {
+                    return name;
+                }
+                else
+                {
+                    return ns + "." + name;
+                }
             }
         }
-     
+
+        public abstract string Name { get; }
+
+        public virtual string Namespace
+        {
+            get { return string.Empty; }
+        }
+
+        public virtual string ReflectionName
+        {
+            get { return this.FullName; }
+        }
+
+        public abstract bool? IsReferenceType { get; }
+
+        public abstract TypeKind Kind { get; }
+
+        public virtual int TypeParameterCount
+        {
+            get { return 0; }
+        }
+
+        readonly static IList<IType> emptyTypeArguments = new IType[0];
+        public virtual IList<IType> TypeArguments
+        {
+            get { return emptyTypeArguments; }
+        }
+
+        public virtual IType DeclaringType
+        {
+            get { return null; }
+        }
+
+        public virtual bool IsParameterized
+        {
+            get { return false; }
+        }
+
+        public virtual ITypeDefinition GetDefinition()
+        {
+            return null;
+        }
+
+        public virtual IEnumerable<IType> DirectBaseTypes
+        {
+            get { return EmptyList<IType>.Instance; }
+        }
+
+        public abstract ITypeReference ToTypeReference();
+
+        public virtual IEnumerable<IMethod> GetMethods(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+        {
+            return EmptyList<IMethod>.Instance;
+        }
+
+        public virtual IEnumerable<IMethod> GetMethods(IList<IType> typeArguments, Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+        {
+            return EmptyList<IMethod>.Instance;
+        }
+
+        public virtual IEnumerable<IMethod> GetConstructors(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
+        {
+            return EmptyList<IMethod>.Instance;
+        }
+
+        public virtual IEnumerable<IProperty> GetProperties(Predicate<IUnresolvedProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
+        {
+            return EmptyList<IProperty>.Instance;
+        }
+
+        public virtual IEnumerable<IField> GetFields(Predicate<IUnresolvedField> filter = null, GetMemberOptions options = GetMemberOptions.None)
+        {
+            return EmptyList<IField>.Instance;
+        }
+
+        public virtual IEnumerable<IEvent> GetEvents(Predicate<IUnresolvedEvent> filter = null, GetMemberOptions options = GetMemberOptions.None)
+        {
+            return EmptyList<IEvent>.Instance;
+        }
+
+        public virtual IEnumerable<IMember> GetMembers(Predicate<IUnresolvedMember> filter = null, GetMemberOptions options = GetMemberOptions.None)
+        {
+            IEnumerable<IMember> members = GetMethods(filter, options);
+            return members
+                .Concat(GetProperties(filter, options))
+                .Concat(GetFields(filter, options))
+                .Concat(GetEvents(filter, options));
+        }
+        public virtual IEnumerable<IMethod> GetAccessors(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+        {
+            return EmptyList<IMethod>.Instance;
+        }
+
+
+        public override sealed bool Equals(object obj)
+        {
+            return Equals(obj as IType);
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
+        public virtual bool Equals(IType other)
+        {
+            return this == other; // use reference equality by default
+        }
+
+        public override string ToString()
+        {
+            return this.ReflectionName;
+        }
+
+    }
+    [Serializable]
+    public abstract class TypeReferenceSpec : ITypeReference, ISupportsInterning
+    {
+        public virtual IType Resolve(ITypeResolveContext context)
+        {
+            throw new NotSupportedException();
+        }
+
+
+    public    virtual int GetHashCodeForInterning()
+        {
+            throw new NotSupportedException();
+        }
+
+    public virtual bool EqualsForInterning(ISupportsInterning other)
+        {
+            throw new NotSupportedException();
+        }
+    }
+    public abstract class ElementTypeSpec : TypeSpec
+    {
+        [CLSCompliant(false)]
+		protected IType elementType;
+
+        protected ElementTypeSpec(IType elementType)
+		{
+			if (elementType == null)
+				throw new ArgumentNullException("elementType");
+			this.elementType = elementType;
+		}
+		
+		public override string Name {
+			get { return elementType.Name + NameSuffix; }
+		}
+		
+		public override string Namespace {
+			get { return elementType.Namespace; }
+		}
+		
+		public override string FullName {
+			get { return elementType.FullName + NameSuffix; }
+		}
+		
+		public override string ReflectionName {
+			get { return elementType.ReflectionName + NameSuffix; }
+		}
+		
+		public abstract string NameSuffix { get; }
+		
+		public IType ElementType {
+			get { return elementType; }
+		}
+    }
+    public sealed class PointerTypeSpec : ElementTypeSpec
+    {
+        public PointerTypeSpec(IType elementType)
+            : base(elementType)
+        {
+        }
+
+        public override TypeKind Kind
+        {
+            get { return TypeKind.Pointer; }
+        }
+
+        public override string NameSuffix
+        {
+            get
+            {
+                return "*";
+            }
+        }
+
+        public override bool? IsReferenceType
+        {
+            get { return null; }
+        }
+
+        public override int GetHashCode()
+        {
+            return elementType.GetHashCode() ^ 91725811;
+        }
+
+        public override bool Equals(IType other)
+        {
+            PointerTypeSpec a = other as PointerTypeSpec;
+            return a != null && elementType.Equals(a.elementType);
+        }
+ 
+        public override ITypeReference ToTypeReference()
+        {
+            return new PointerTypeReferenceSpec(elementType.ToTypeReference());
+        }
+    }
+    public sealed class NullableTypeSpec : ElementTypeSpec
+    {
+        public NullableTypeSpec(IType elementType)
+            : base(elementType)
+        {
+        }
+
+        public override TypeKind Kind
+        {
+            get { return TypeKind.ByReference; }
+        }
+
+        public override string NameSuffix
+        {
+            get
+            {
+                return "?";
+            }
+        }
+
+        public override bool? IsReferenceType
+        {
+            get { return true; }
+        }
+
+        public override int GetHashCode()
+        {
+            return elementType.GetHashCode() ^ 91725813;
+        }
+
+        public override bool Equals(IType other)
+        {
+            NullableTypeSpec a = other as NullableTypeSpec;
+            return a != null && elementType.Equals(a.elementType);
+        }
+
+        public override ITypeReference ToTypeReference()
+        {
+            return new NullableTypeReferenceSpec(elementType.ToTypeReference());
+        }
+    }
+    /// <summary>
+    /// Represents an array type.
+    /// </summary>
+    public sealed class ArrayTypeSpec : ElementTypeSpec, ICompilationProvider
+    {
+        readonly int dimensions;
+        readonly ICompilation compilation;
+
+        public ArrayTypeSpec(ICompilation compilation, IType elementType, int dimensions = 1)
+            : base(elementType)
+        {
+            if (compilation == null)
+                throw new ArgumentNullException("compilation");
+            if (dimensions <= 0)
+                throw new ArgumentOutOfRangeException("dimensions", dimensions, "dimensions must be positive");
+            this.compilation = compilation;
+            this.dimensions = dimensions;
+
+            ICompilationProvider p = elementType as ICompilationProvider;
+            if (p != null && p.Compilation != compilation)
+                throw new InvalidOperationException("Cannot create an array type using a different compilation from the element type.");
+        }
+
+        public override TypeKind Kind
+        {
+            get { return TypeKind.Array; }
+        }
+
+        public ICompilation Compilation
+        {
+            get { return compilation; }
+        }
+
+        public int Dimensions
+        {
+            get { return dimensions; }
+        }
+
+        public override string NameSuffix
+        {
+            get
+            {
+                return "[" + new string(',', dimensions - 1) + "]";
+            }
+        }
+
+        public override bool? IsReferenceType
+        {
+            get { return true; }
+        }
+
+        public override int GetHashCode()
+        {
+            return unchecked(elementType.GetHashCode() * 71681 + dimensions);
+        }
+
+        public override bool Equals(IType other)
+        {
+            ArrayTypeSpec a = other as ArrayTypeSpec;
+            return a != null && elementType.Equals(a.elementType) && a.dimensions == dimensions;
+        }
+
+        public override ITypeReference ToTypeReference()
+        {
+            return new ArrayTypeReferenceSpec(elementType.ToTypeReference(), dimensions);
+        }
+    }
+    /// <summary>
+    /// ParameterizedType represents an instance of a generic type.
+    /// Example: List&lt;string&gt;
+    /// </summary>
+    /// <remarks>
+    /// When getting the members, this type modifies the lists so that
+    /// type parameters in the signatures of the members are replaced with
+    /// the type arguments.
+    /// </remarks>
+    [Serializable]
+    public sealed class ParameterizedTypeSpec : TypeSpec, ICompilationProvider
+    {
+        readonly ITypeDefinition genericType;
+        readonly IType[] typeArguments;
+
+        public ParameterizedTypeSpec(ITypeDefinition genericType, IEnumerable<IType> typeArguments)
+        {
+            if (genericType == null)
+                throw new ArgumentNullException("genericType");
+            if (typeArguments == null)
+                throw new ArgumentNullException("typeArguments");
+            this.genericType = genericType;
+            this.typeArguments = typeArguments.ToArray(); // copy input array to ensure it isn't modified
+            if (this.typeArguments.Length == 0)
+                throw new ArgumentException("Cannot use ParameterizedType with 0 type arguments.");
+            if (genericType.TypeParameterCount != this.typeArguments.Length)
+                throw new ArgumentException("Number of type arguments must match the type definition's number of type parameters");
+            for (int i = 0; i < this.typeArguments.Length; i++)
+            {
+                if (this.typeArguments[i] == null)
+                    throw new ArgumentNullException("typeArguments[" + i + "]");
+                ICompilationProvider p = this.typeArguments[i] as ICompilationProvider;
+                if (p != null && p.Compilation != genericType.Compilation)
+                    throw new InvalidOperationException("Cannot parameterize a type with type arguments from a different compilation.");
+            }
+        }
+
+        /// <summary>
+        /// Fast internal version of the constructor. (no safety checks)
+        /// Keeps the array that was passed and assumes it won't be modified.
+        /// </summary>
+        internal ParameterizedTypeSpec(ITypeDefinition genericType, IType[] typeArguments)
+        {
+            Debug.Assert(genericType.TypeParameterCount == typeArguments.Length);
+            this.genericType = genericType;
+            this.typeArguments = typeArguments;
+        }
+
+        public override TypeKind Kind
+        {
+            get { return genericType.Kind; }
+        }
+
+        public ICompilation Compilation
+        {
+            get { return genericType.Compilation; }
+        }
+
+
+
+        public override bool? IsReferenceType
+        {
+            get { return genericType.IsReferenceType; }
+        }
+
+        public override IType DeclaringType
+        {
+            get
+            {
+                ITypeDefinition declaringTypeDef = genericType.DeclaringTypeDefinition;
+                if (declaringTypeDef != null && declaringTypeDef.TypeParameterCount > 0
+                    && declaringTypeDef.TypeParameterCount <= genericType.TypeParameterCount)
+                {
+                    IType[] newTypeArgs = new IType[declaringTypeDef.TypeParameterCount];
+                    Array.Copy(this.typeArguments, 0, newTypeArgs, 0, newTypeArgs.Length);
+                    return new ParameterizedTypeSpec(declaringTypeDef, newTypeArgs);
+                }
+                return declaringTypeDef;
+            }
+        }
+
+        public override int TypeParameterCount
+        {
+            get { return typeArguments.Length; }
+        }
+
+        public override string FullName
+        {
+            get { return genericType.FullName; }
+        }
+
         public override string Name
         {
+            get { return genericType.Name; }
+        }
+
+        public override string Namespace
+        {
+            get { return genericType.Namespace; }
+        }
+
+        public override string ReflectionName
+        {
             get
             {
-                return name;
+                StringBuilder b = new StringBuilder(genericType.ReflectionName);
+                b.Append('[');
+                for (int i = 0; i < typeArguments.Length; i++)
+                {
+                    if (i > 0)
+                        b.Append(',');
+                    b.Append('[');
+                    b.Append(typeArguments[i].ReflectionName);
+                    b.Append(']');
+                }
+                b.Append(']');
+                return b.ToString();
             }
         }
-        #endregion
 
-     
+        public override string ToString()
+        {
+            return ReflectionName;
+        }
+
+        public override IList<IType> TypeArguments
+        {
+            get
+            {
+                return typeArguments;
+            }
+        }
+
+        public override bool IsParameterized
+        {
+            get
+            {
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Same as 'parameterizedType.TypeArguments[index]', but is a bit more efficient (doesn't require the read-only wrapper).
+        /// </summary>
+        public IType GetTypeArgument(int index)
+        {
+            return typeArguments[index];
+        }
+
+        /// <summary>
+        /// Gets the definition of the generic type.
+        /// For <c>ParameterizedType</c>, this method never returns null.
+        /// </summary>
+        public override ITypeDefinition GetDefinition()
+        {
+            return genericType;
+        }
+
+        public override ITypeReference ToTypeReference()
+        {
+            return new ParameterizedTypeReference(genericType.ToTypeReference(), typeArguments.Select(t => t.ToTypeReference()));
+        }
+
+
+
+        public override IEnumerable<IType> DirectBaseTypes
+        {
+            get
+            {
+                return genericType.DirectBaseTypes;
+            }
+        }
+
+
+        public override IEnumerable<IMethod> GetConstructors(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
+        {
+            //if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)
+            //    return genericType.GetConstructors(filter, options);
+            //else
+            //    return GetMembersHelper.GetConstructors(this, filter, options);
+            throw new NotSupportedException();
+        }
+
+        public override IEnumerable<IMethod> GetMethods(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+        {
+            //if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)
+            //    return genericType.GetMethods(filter, options);
+            //else
+            //    return GetMembersHelper.GetMethods(this, filter, options);
+            throw new NotSupportedException();
+        }
+
+        public override IEnumerable<IMethod> GetMethods(IList<IType> typeArguments, Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+        {
+            //if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)
+            //    return genericType.GetMethods(typeArguments, filter, options);
+            //else
+            //    return GetMembersHelper.GetMethods(this, typeArguments, filter, options);
+
+            throw new NotSupportedException();
+        }
+
+        public override IEnumerable<IProperty> GetProperties(Predicate<IUnresolvedProperty> filter = null, GetMemberOptions options = GetMemberOptions.None)
+        {
+            //if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)
+            //    return genericType.GetProperties(filter, options);
+            //else
+            //    return GetMembersHelper.GetProperties(this, filter, options);
+
+            throw new NotSupportedException();
+        }
+
+        public override IEnumerable<IField> GetFields(Predicate<IUnresolvedField> filter = null, GetMemberOptions options = GetMemberOptions.None)
+        {
+            //if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)
+            //    return genericType.GetFields(filter, options);
+            //else
+            //    return GetMembersHelper.GetFields(this, filter, options);
+
+            throw new NotSupportedException();
+        }
+
+        public override IEnumerable<IEvent> GetEvents(Predicate<IUnresolvedEvent> filter = null, GetMemberOptions options = GetMemberOptions.None)
+        {
+            //if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)
+            //    return genericType.GetEvents(filter, options);
+            //else
+            //    return GetMembersHelper.GetEvents(this, filter, options);
+
+            throw new NotSupportedException();
+        }
+
+        public override IEnumerable<IMember> GetMembers(Predicate<IUnresolvedMember> filter = null, GetMemberOptions options = GetMemberOptions.None)
+        {
+            //if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)
+            //    return genericType.GetMembers(filter, options);
+            //else
+            //    return GetMembersHelper.GetMembers(this, filter, options);
+
+            throw new NotSupportedException();
+        }
+
+        public override IEnumerable<IMethod> GetAccessors(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+        {
+            //if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)
+            //    return genericType.GetAccessors(filter, options);
+            //else
+            //    return GetMembersHelper.GetAccessors(this, filter, options);
+
+            throw new NotSupportedException();
+        }
+
+
+        public override bool Equals(IType other)
+        {
+            ParameterizedTypeSpec c = other as ParameterizedTypeSpec;
+            if (c == null || !genericType.Equals(c.genericType) || typeArguments.Length != c.typeArguments.Length)
+                return false;
+            for (int i = 0; i < typeArguments.Length; i++)
+            {
+                if (!typeArguments[i].Equals(c.typeArguments[i]))
+                    return false;
+            }
+            return true;
+        }
+
+        public override int GetHashCode()
+        {
+            int hashCode = genericType.GetHashCode();
+            unchecked
+            {
+                foreach (var ta in typeArguments)
+                {
+                    hashCode *= 1000000007;
+                    hashCode += 1000000009 * ta.GetHashCode();
+                }
+            }
+            return hashCode;
+        }
+
+ 
+    }
+    /// <summary>
+    /// Contains static implementations of special types.
+    /// </summary>
+    [Serializable]
+    public sealed class SpecialTypeSpec : TypeSpec, ITypeReference
+    {
+        /// <summary>
+        /// Gets the type representing resolve errors.
+        /// </summary>
+        public readonly static SpecialTypeSpec UnknownType = new SpecialTypeSpec(TypeKind.Unknown, "?", isReferenceType: null);
+
+        /// <summary>
+        /// The null type is used as type of the null literal. It is a reference type without any members; and it is a subtype of all reference types.
+        /// </summary>
+        public readonly static SpecialTypeSpec NullType = new SpecialTypeSpec(TypeKind.Null, "null", isReferenceType: true);
+
+
+        /// <summary>
+        /// A type used for unbound type arguments in partially parameterized types.
+        /// </summary>
+        /// <see cref="IType.GetNestedTypes(Predicate{ITypeDefinition}, GetMemberOptions)"/>
+        public readonly static SpecialTypeSpec UnboundTypeArgument = new SpecialTypeSpec(TypeKind.UnboundTypeArgument, "", isReferenceType: null);
+
+        readonly TypeKind kind;
+        readonly string name;
+        readonly bool? isReferenceType;
+
+        private SpecialTypeSpec(TypeKind kind, string name, bool? isReferenceType)
+        {
+            this.kind = kind;
+            this.name = name;
+            this.isReferenceType = isReferenceType;
+        }
+
+        public override ITypeReference ToTypeReference()
+        {
+            return this;
+        }
+
+        public override string Name
+        {
+            get { return name; }
+        }
+
+        public override TypeKind Kind
+        {
+            get { return kind; }
+        }
+
+        public override bool? IsReferenceType
+        {
+            get { return isReferenceType; }
+        }
+
+        IType ITypeReference.Resolve(ITypeResolveContext context)
+        {
+            if (context == null)
+                throw new ArgumentNullException("context");
+            return this;
+        }
+
+#pragma warning disable 809
+        [Obsolete("Please compare special types using the kind property instead.")]
+        public override bool Equals(IType other)
+        {
+            // We consider a special types equal when they have equal types.
+            // However, an unknown type with additional information is not considered to be equal to the SpecialType with TypeKind.Unknown.
+            return other is SpecialTypeSpec && other.Kind == kind;
+        }
+
+        public override int GetHashCode()
+        {
+            return 81625621 ^ (int)kind;
+        }
+    }
 
     
+    
+    /// <summary>
+    /// ParameterizedTypeReference is a reference to generic class that specifies the type parameters.
+    /// Example: List&lt;string&gt;
+    /// </summary>
+    [Serializable]
+    public sealed class ParameterizedTypeReference : TypeReferenceSpec
+    {
+        readonly ITypeReference genericType;
+        readonly ITypeReference[] typeArguments;
+
+        public ParameterizedTypeReference(ITypeReference genericType, IEnumerable<ITypeReference> typeArguments)
+        {
+            if (genericType == null)
+                throw new ArgumentNullException("genericType");
+            if (typeArguments == null)
+                throw new ArgumentNullException("typeArguments");
+            this.genericType = genericType;
+            this.typeArguments = typeArguments.ToArray();
+            for (int i = 0; i < this.typeArguments.Length; i++)
+            {
+                if (this.typeArguments[i] == null)
+                    throw new ArgumentNullException("typeArguments[" + i + "]");
+            }
+        }
+
+        public ITypeReference GenericType
+        {
+            get { return genericType; }
+        }
+
+        public ReadOnlyCollection<ITypeReference> TypeArguments
+        {
+            get
+            {
+                return Array.AsReadOnly(typeArguments);
+            }
+        }
+
+        public IType Resolve(ITypeResolveContext context)
+        {
+            IType baseType = genericType.Resolve(context);
+            ITypeDefinition baseTypeDef = baseType.GetDefinition();
+            if (baseTypeDef == null)
+                return baseType;
+            int tpc = baseTypeDef.TypeParameterCount;
+            if (tpc == 0)
+                return baseTypeDef;
+            IType[] resolvedTypes = new IType[tpc];
+            for (int i = 0; i < resolvedTypes.Length; i++)
+            {
+                if (i < typeArguments.Length)
+                    resolvedTypes[i] = typeArguments[i].Resolve(context);
+                else
+                    resolvedTypes[i] = SpecialTypeSpec.UnknownType;
+            }
+            return new ParameterizedTypeSpec(baseTypeDef, resolvedTypes);
+        }
+
+        public override string ToString()
+        {
+            StringBuilder b = new StringBuilder(genericType.ToString());
+            b.Append('[');
+            for (int i = 0; i < typeArguments.Length; i++)
+            {
+                if (i > 0)
+                    b.Append(',');
+                b.Append('[');
+                b.Append(typeArguments[i].ToString());
+                b.Append(']');
+            }
+            b.Append(']');
+            return b.ToString();
+        }
+
+        public override int GetHashCodeForInterning()
+        {
+            int hashCode = genericType.GetHashCode();
+            unchecked
+            {
+                foreach (ITypeReference t in typeArguments)
+                {
+                    hashCode *= 27;
+                    hashCode += t.GetHashCode();
+                }
+            }
+            return hashCode;
+        }
+
+        public override bool EqualsForInterning(ISupportsInterning other)
+        {
+            ParameterizedTypeReference o = other as ParameterizedTypeReference;
+            if (o != null && genericType == o.genericType && typeArguments.Length == o.typeArguments.Length)
+            {
+                for (int i = 0; i < typeArguments.Length; i++)
+                {
+                    if (typeArguments[i] != o.typeArguments[i])
+                        return false;
+                }
+                return true;
+            }
+            return false;
+        }
     }
+    [Serializable]
+    public sealed class PointerTypeReferenceSpec : TypeReferenceSpec
+    {
+        readonly ITypeReference elementType;
+
+        public PointerTypeReferenceSpec(ITypeReference elementType)
+        {
+            if (elementType == null)
+                throw new ArgumentNullException("elementType");
+            this.elementType = elementType;
+        }
+
+        public ITypeReference ElementType
+        {
+            get { return elementType; }
+        }
+
+        public IType Resolve(ITypeResolveContext context)
+        {
+            return new PointerTypeSpec(elementType.Resolve(context));
+        }
+
+        public override string ToString()
+        {
+            return elementType.ToString() + "*";
+        }
+
+        public override int GetHashCodeForInterning()
+        {
+            return elementType.GetHashCode() ^ 91725812;
+        }
+
+        public override bool EqualsForInterning(ISupportsInterning other)
+        {
+            PointerTypeReferenceSpec o = other as PointerTypeReferenceSpec;
+            return o != null && this.elementType == o.elementType;
+        }
+    }
+    [Serializable]
+    public sealed class NullableTypeReferenceSpec : TypeReferenceSpec
+    {
+        readonly ITypeReference elementType;
+
+        public NullableTypeReferenceSpec(ITypeReference elementType)
+        {
+            if (elementType == null)
+                throw new ArgumentNullException("elementType");
+            this.elementType = elementType;
+        }
+
+        public ITypeReference ElementType
+        {
+            get { return elementType; }
+        }
+
+        public IType Resolve(ITypeResolveContext context)
+        {
+            return new NullableTypeSpec(elementType.Resolve(context));
+        }
+
+        public override string ToString()
+        {
+            return elementType.ToString() + "?";
+        }
+
+        public override int GetHashCodeForInterning()
+        {
+            return elementType.GetHashCode() ^ 91725814;
+        }
+
+        public override bool EqualsForInterning(ISupportsInterning other)
+        {
+            NullableTypeReferenceSpec o = other as NullableTypeReferenceSpec;
+            return o != null && this.elementType == o.elementType;
+        }
+    }
+    [Serializable]
+    public sealed class ArrayTypeReferenceSpec : TypeReferenceSpec
+    {
+        readonly ITypeReference elementType;
+        readonly int dimensions;
+
+        public ArrayTypeReferenceSpec(ITypeReference elementType, int dimensions = 1)
+        {
+            if (elementType == null)
+                throw new ArgumentNullException("elementType");
+            if (dimensions <= 0)
+                throw new ArgumentOutOfRangeException("dimensions", dimensions, "dimensions must be positive");
+            this.elementType = elementType;
+            this.dimensions = dimensions;
+        }
+
+        public ITypeReference ElementType
+        {
+            get { return elementType; }
+        }
+
+        public int Dimensions
+        {
+            get { return dimensions; }
+        }
+
+        public IType Resolve(ITypeResolveContext context)
+        {
+            return new ArrayTypeSpec(context.Compilation, elementType.Resolve(context), dimensions);
+        }
+
+        public override string ToString()
+        {
+            return elementType.ToString() + "[" + new string(',', dimensions - 1) + "]";
+        }
+
+        public override int GetHashCodeForInterning()
+        {
+            return elementType.GetHashCode() ^ dimensions;
+        }
+
+        public override bool EqualsForInterning(ISupportsInterning other)
+        {
+            ArrayTypeReferenceSpec o = other as ArrayTypeReferenceSpec;
+            return o != null && elementType == o.elementType && dimensions == o.dimensions;
+        }
+    }
+
+
+
     public class BuiltinTypes
     {
-        public readonly BuiltinTypeSpec Object;
-        public readonly BuiltinTypeSpec ValueType;
-        public readonly BuiltinTypeSpec Attribute;
+        //public readonly BuiltinTypeSpec Object;
+        //public readonly BuiltinTypeSpec ValueType;
+        //public readonly BuiltinTypeSpec Attribute;
 
-        public readonly BuiltinTypeSpec Int;
-        public readonly BuiltinTypeSpec UInt;
-        public readonly BuiltinTypeSpec Long;
-        public readonly BuiltinTypeSpec ULong;
-        public readonly BuiltinTypeSpec Float;
-        public readonly BuiltinTypeSpec Double;
-        public readonly BuiltinTypeSpec Char;
-        public readonly BuiltinTypeSpec Short;
-        public readonly BuiltinTypeSpec Decimal;
-        public readonly BuiltinTypeSpec Bool;
-        public readonly BuiltinTypeSpec SByte;
-        public readonly BuiltinTypeSpec Byte;
-        public readonly BuiltinTypeSpec UShort;
-        public readonly BuiltinTypeSpec String;
+        //public readonly BuiltinTypeSpec Int;
+        //public readonly BuiltinTypeSpec UInt;
+        //public readonly BuiltinTypeSpec Long;
+        //public readonly BuiltinTypeSpec ULong;
+        //public readonly BuiltinTypeSpec Float;
+        //public readonly BuiltinTypeSpec Double;
+        //public readonly BuiltinTypeSpec Char;
+        //public readonly BuiltinTypeSpec Short;
+        //public readonly BuiltinTypeSpec Decimal;
+        //public readonly BuiltinTypeSpec Bool;
+        //public readonly BuiltinTypeSpec SByte;
+        //public readonly BuiltinTypeSpec Byte;
+        //public readonly BuiltinTypeSpec UShort;
+        //public readonly BuiltinTypeSpec String;
 
-        public readonly BuiltinTypeSpec Enum;
-        public readonly BuiltinTypeSpec Delegate;
-        public readonly BuiltinTypeSpec MulticastDelegate;
-        public readonly BuiltinTypeSpec Void;
-        public readonly BuiltinTypeSpec Array;
-        public readonly BuiltinTypeSpec Type;
-        public readonly BuiltinTypeSpec IEnumerator;
-        public readonly BuiltinTypeSpec IEnumerable;
-        public readonly BuiltinTypeSpec IDisposable;
-        public readonly BuiltinTypeSpec IntPtr;
-        public readonly BuiltinTypeSpec UIntPtr;
-        public readonly BuiltinTypeSpec RuntimeFieldHandle;
-        public readonly BuiltinTypeSpec RuntimeTypeHandle;
-        public readonly BuiltinTypeSpec Exception;
-
-        //
-        // These are internal buil-in types which depend on other
-        // build-in type (mostly object)
-        //
-        public readonly BuiltinTypeSpec Dynamic;
-
-        // Predefined operators tables
-        public readonly TypeSpec[][] OperatorsUnary;
-        public readonly TypeSpec[] OperatorsUnaryMutator;
-
-        public readonly TypeSpec[] BinaryPromotionsTypes;
-
-        readonly BuiltinTypeSpec[] types;
-
-        public BuiltinTypes()
-        {
-            Object = new BuiltinTypeSpec(MemberKind.Class, "System", "Object", BuiltinTypeSpec.Type.Object);
-            ValueType = new BuiltinTypeSpec(MemberKind.Class, "System", "ValueType", BuiltinTypeSpec.Type.ValueType);
-            Attribute = new BuiltinTypeSpec(MemberKind.Class, "System", "Attribute", BuiltinTypeSpec.Type.Attribute);
-
-            Int = new BuiltinTypeSpec(MemberKind.Struct, "System", "Int32", BuiltinTypeSpec.Type.Int);
-            Long = new BuiltinTypeSpec(MemberKind.Struct, "System", "Int64", BuiltinTypeSpec.Type.Long);
-            UInt = new BuiltinTypeSpec(MemberKind.Struct, "System", "UInt32", BuiltinTypeSpec.Type.UInt);
-            ULong = new BuiltinTypeSpec(MemberKind.Struct, "System", "UInt64", BuiltinTypeSpec.Type.ULong);
-            Byte = new BuiltinTypeSpec(MemberKind.Struct, "System", "Byte", BuiltinTypeSpec.Type.Byte);
-            SByte = new BuiltinTypeSpec(MemberKind.Struct, "System", "SByte", BuiltinTypeSpec.Type.SByte);
-            Short = new BuiltinTypeSpec(MemberKind.Struct, "System", "Int16", BuiltinTypeSpec.Type.Short);
-            UShort = new BuiltinTypeSpec(MemberKind.Struct, "System", "UInt16", BuiltinTypeSpec.Type.UShort);
-
-            IEnumerator = new BuiltinTypeSpec(MemberKind.Interface, "System.Collections", "IEnumerator", BuiltinTypeSpec.Type.IEnumerator);
-            IEnumerable = new BuiltinTypeSpec(MemberKind.Interface, "System.Collections", "IEnumerable", BuiltinTypeSpec.Type.IEnumerable);
-            IDisposable = new BuiltinTypeSpec(MemberKind.Interface, "System", "IDisposable", BuiltinTypeSpec.Type.IDisposable);
-
-            Char = new BuiltinTypeSpec(MemberKind.Struct, "System", "Char", BuiltinTypeSpec.Type.Char);
-            String = new BuiltinTypeSpec(MemberKind.Class, "System", "String", BuiltinTypeSpec.Type.String);
-            Float = new BuiltinTypeSpec(MemberKind.Struct, "System", "Single", BuiltinTypeSpec.Type.Float);
-            Double = new BuiltinTypeSpec(MemberKind.Struct, "System", "Double", BuiltinTypeSpec.Type.Double);
-            Bool = new BuiltinTypeSpec(MemberKind.Struct, "System", "Boolean", BuiltinTypeSpec.Type.Bool);
-            IntPtr = new BuiltinTypeSpec(MemberKind.Struct, "System", "IntPtr", BuiltinTypeSpec.Type.IntPtr);
-            UIntPtr = new BuiltinTypeSpec(MemberKind.Struct, "System", "UIntPtr", BuiltinTypeSpec.Type.UIntPtr);
-
-            MulticastDelegate = new BuiltinTypeSpec(MemberKind.Class, "System", "MulticastDelegate", BuiltinTypeSpec.Type.MulticastDelegate);
-            Delegate = new BuiltinTypeSpec(MemberKind.Class, "System", "Delegate", BuiltinTypeSpec.Type.Delegate);
-            Enum = new BuiltinTypeSpec(MemberKind.Class, "System", "Enum", BuiltinTypeSpec.Type.Enum);
-            Array = new BuiltinTypeSpec(MemberKind.Class, "System", "Array", BuiltinTypeSpec.Type.Array);
-            Void = new BuiltinTypeSpec(MemberKind.Void, "System", "Void", BuiltinTypeSpec.Type.Other);
-            Type = new BuiltinTypeSpec(MemberKind.Class, "System", "Type", BuiltinTypeSpec.Type.Type);
-            Exception = new BuiltinTypeSpec(MemberKind.Class, "System", "Exception", BuiltinTypeSpec.Type.Exception);
-            RuntimeFieldHandle = new BuiltinTypeSpec(MemberKind.Struct, "System", "RuntimeFieldHandle", BuiltinTypeSpec.Type.Other);
-            RuntimeTypeHandle = new BuiltinTypeSpec(MemberKind.Struct, "System", "RuntimeTypeHandle", BuiltinTypeSpec.Type.Other);
-       
-
-            types = new BuiltinTypeSpec[] {
-				Object, ValueType, Attribute,
-				Int, UInt, Long, ULong, Float, Double, Char, Short, Decimal, Bool, SByte, Byte, UShort, String,
-				Enum, Delegate, MulticastDelegate, Void, Array, Type, IEnumerator, IEnumerable, IDisposable,
-				IntPtr, UIntPtr, RuntimeFieldHandle, RuntimeTypeHandle, Exception };
-        }
-
-        public BuiltinTypeSpec[] AllTypes
-        {
-            get
-            {
-                return types;
-            }
-        }
+    
 
     
     }
-    public class BuiltinTypeSpec : TypeSpec
-    {
-        public enum Type
-        {
-            None = 0,
-
-            // Ordered carefully for fast compares
-            FirstPrimitive = 1,
-            Bool = 1,
-            Byte = 2,
-            SByte = 3,
-            Char = 4,
-            Short = 5,
-            UShort = 6,
-            Int = 7,
-            UInt = 8,
-            Long = 9,
-            ULong = 10,
-            Float = 11,
-            Double = 12,
-            LastPrimitive = 12,
-
-            IntPtr = 14,
-            UIntPtr = 15,
-
-            Object = 16,
-            Dynamic = 17,
-            String = 18,
-            Type = 19,
-
-            ValueType = 20,
-            Enum = 21,
-            Delegate = 22,
-            MulticastDelegate = 23,
-            Array = 24,
-
-            IEnumerator,
-            IEnumerable,
-            IDisposable,
-            Exception,
-            Attribute,
-            Other,
-        }
-
-
-        readonly Type type;
-        readonly string ns;
-        readonly string name;
-
-
-        public BuiltinTypeSpec(MemberKind kind, string ns, string name, Type builtinKind)
-            : base(kind, null, Modifiers.PUBLIC)
-        {
-            this.type = builtinKind;
-            this.ns = ns;
-            this.name = name;
-        }
-
-        #region Properties
-
-        public override int Arity
-        {
-            get
-            {
-                return 0;
-            }
-        }
-
-        public override BuiltinTypeSpec.Type BuiltinType
-        {
-            get
-            {
-                return type;
-            }
-        }
-
-        public string FullName
-        {
-            get
-            {
-                return ns + '.' + name;
-            }
-        }
-
-        public override string Name
-        {
-            get
-            {
-                return name;
-            }
-        }
-
-        public string Namespace
-        {
-            get
-            {
-                return ns;
-            }
-        }
-
-        #endregion
-        public static bool IsPrimitiveType(TypeSpec type)
-        {
-            return type.BuiltinType >= Type.FirstPrimitive && type.BuiltinType <= Type.LastPrimitive;
-        }
-
-
-    }
-
-    //
-    // Member details which are same between all member
-    // specifications
-    //
-    public interface IMemberDefinition
-    {
  
-        string Name { get; }
-        bool IsImported { get; }
-
-        string[] ConditionalConditions();
-        ObsoleteAttribute GetAttributeObsolete();
-        void SetIsAssigned();
-        void SetIsUsed();
-    }
-    	//
-	// Base member specification. A member specification contains
-	// member details which can alter in the context (e.g. generic instances)
-	//
-    public abstract class MemberSpec
-    {
-        [Flags]
-        public enum StateFlags
-        {
-
-            IsAccessor = 1 ,		// Method is an accessor
-            IsGeneric = 1 << 1,		// Member contains type arguments
-
-        }
 
 
-        protected Modifiers modifiers;
-        public StateFlags state;
-        protected IMemberDefinition definition;
-        public readonly MemberKind Kind;
-        protected TypeSpec declaringType;
-
-#if DEBUG
-        static int counter;
-        public int ID = counter++;
-#endif
-
-        protected MemberSpec(MemberKind kind, TypeSpec declaringType, IMemberDefinition definition, Modifiers modifiers)
-        {
-            this.Kind = kind;
-            this.declaringType = declaringType;
-            this.definition = definition;
-            this.modifiers = modifiers;
-
-        }
-
-        #region Properties
-
-        public virtual int Arity
-        {
-            get
-            {
-                return 0;
-            }
-        }
-
-        public TypeSpec DeclaringType
-        {
-            get
-            {
-                return declaringType;
-            }
-            set
-            {
-                declaringType = value;
-            }
-        }
-
-        public IMemberDefinition MemberDefinition
-        {
-            get
-            {
-                return definition;
-            }
-        }
-
-        public Modifiers Modifiers
-        {
-            get
-            {
-                return modifiers;
-            }
-            set
-            {
-                modifiers = value;
-            }
-        }
-
-        public virtual string Name
-        {
-            get
-            {
-                return definition.Name;
-            }
-        }
-
-        public bool IsAbstract
-        {
-            get { return (modifiers & Modifiers.ABSTRACT) != 0; }
-        }
-
-        public bool IsAccessor
-        {
-            get
-            {
-                return (state & StateFlags.IsAccessor) != 0;
-            }
-            set
-            {
-                state = value ? state | StateFlags.IsAccessor : state & ~StateFlags.IsAccessor;
-            }
-        }
-
-        //
-        // Return true when this member is a generic in C# terms
-        // A nested non-generic type of generic type will return false
-        //
-        public bool IsGeneric
-        {
-            get
-            {
-                return (state & StateFlags.IsGeneric) != 0;
-            }
-            set
-            {
-                state = value ? state | StateFlags.IsGeneric : state & ~StateFlags.IsGeneric;
-            }
-        }
-
-     
-
-        public bool IsPrivate
-        {
-            get { return (modifiers & Modifiers.PRIVATE) != 0; }
-        }
-
-        public bool IsPublic
-        {
-            get { return (modifiers & Modifiers.PUBLIC) != 0; }
-        }
-
-        public bool IsStatic
-        {
-            get
-            {
-                return (modifiers & Modifiers.STATIC) != 0;
-            }
-        }
-
-        #endregion
-
-    }
-
-  public  class TypeSpec : MemberSpec
-    {
-      public bool IsPointer { get; set; }
-      public bool IsNullableType;
-
-      public TypeSpec(MemberKind kind, TypeSpec declaringType, Modifiers modifiers)
-          : base(kind, declaringType,null, modifiers)
-      {
-          this.declaringType = declaringType;
-
-      }
-        public virtual BuiltinTypeSpec.Type BuiltinType
-        {
-            get
-            {
-                return BuiltinTypeSpec.Type.None;
-            }
-        }
-    }
 }
