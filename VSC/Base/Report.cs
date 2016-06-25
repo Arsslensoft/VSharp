@@ -95,12 +95,12 @@ namespace VSC {
 				regions = null;
 				warning_regions_table = new Dictionary<int, WarningRegions> ();
 			} else {
-				warning_regions_table.TryGetValue (location.File, out regions);
+				warning_regions_table.TryGetValue (location.File.Index, out regions);
 			}
 
 			if (regions == null) {
 				regions = new WarningRegions ();
-				warning_regions_table.Add (location.File, regions);
+				warning_regions_table.Add (location.File.Index, regions);
 			}
 
 			return regions;
@@ -139,7 +139,7 @@ namespace VSC {
 
 			if (warning_regions_table != null && !loc.IsNull) {
 				WarningRegions regions;
-				if (warning_regions_table.TryGetValue (loc.File, out regions) && !regions.IsWarningEnabled (code, loc.Row))
+				if (warning_regions_table.TryGetValue (loc.File.Index, out regions) && !regions.IsWarningEnabled (code, loc.Line))
 					return;
 			}
 
@@ -667,7 +667,7 @@ namespace VSC {
 		public void WarningDisable (Location location, int code, Report Report)
 		{
 			if (Report.CheckWarningCode (code, location))
-				regions.Add (new Disable (location.Row, code));
+				regions.Add (new Disable (location.Line, code));
 		}
 
 		public void WarningEnable (int line)
@@ -683,7 +683,7 @@ namespace VSC {
 			if (context.Report.IsWarningDisabledGlobally (code))
 				context.Report.Warning (1635, 1, location, "Cannot restore warning `VS{0:0000}' because it was disabled globally", code);
 
-			regions.Add (new Enable (location.Row, code));
+			regions.Add (new Enable (location.Line, code));
 		}
 
 		public bool IsWarningEnabled (int code, int src_line)

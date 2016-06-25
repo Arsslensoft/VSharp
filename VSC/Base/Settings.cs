@@ -29,7 +29,10 @@ namespace VSC
         obj
     }
    public class CompilerSettings
-    {
+   {
+       [Option("ovfc", Required = false, DefaultValue = false,
+HelpText = "Enable overflow checking")]
+       public bool CheckForOverflow { get; set; }
 
        [Option( "warnlevel", HelpText = "Warning level", DefaultValue =0)]
        public int WarningLevel { get; set; }
