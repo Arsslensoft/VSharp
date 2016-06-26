@@ -15,7 +15,7 @@ namespace VSC.AST {
             {
                 return FlowState.Valid;
             }
-            public virtual bool Resolve(ResolveContext rc)
+            public virtual bool Resolve(SymbolResolveContext rc)
             {
                 return true;
             }

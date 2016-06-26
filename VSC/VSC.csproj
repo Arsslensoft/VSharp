@@ -43,6 +43,19 @@
   <ItemGroup>
     <Compile Include="AST\Classes\AccessorDeclarations.cs" />
     <Compile Include="AST\Classes\AddAccessorDeclaration.cs" />
+    <Compile Include="AST\Constants\DoubleConstant.cs" />
+    <Compile Include="AST\Constants\ShortConstant.cs" />
+    <Compile Include="AST\Constants\LongConstant.cs" />
+    <Compile Include="AST\Constants\BoolConstant.cs" />
+    <Compile Include="AST\Constants\ByteConstant.cs" />
+    <Compile Include="AST\Constants\ULongConstant.cs" />
+    <Compile Include="AST\Constants\FloatConstant.cs" />
+    <Compile Include="AST\Constants\IntConstant.cs" />
+    <Compile Include="AST\Constants\NullConstant.cs" />
+    <Compile Include="AST\Constants\UShortConstant.cs" />
+    <Compile Include="AST\Constants\SByteConstant.cs" />
+    <Compile Include="AST\Constants\StringConstant.cs" />
+    <Compile Include="AST\Constants\UIntConstant.cs" />
     <Compile Include="AST\Expression\AdditiveExpression.cs" />
     <Compile Include="AST\Expression\AddressOfExpression.cs" />
     <Compile Include="AST\Expression\AndExpression.cs" />

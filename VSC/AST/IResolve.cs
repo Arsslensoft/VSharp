@@ -10,6 +10,6 @@ namespace VSC.AST
    public interface IResolve
     {
        object DoResolve(ResolveContext rc);
-       bool Resolve(ResolveContext rc);
+       bool Resolve(SymbolResolveContext rc);
     }
 }

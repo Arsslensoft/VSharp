@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using VSC.Base.GoldParser.Semantic;
+using VSC.Context;
 namespace VSC.AST {
     [Terminal("(EOF)")]
     [Terminal("(Error)")]
@@ -177,5 +178,9 @@ namespace VSC.AST {
         private Location _loc;
         public Location Location { get { _loc = TranslateLocation(position); return _loc; } }
         public virtual string Name { get { return symbol.Name; } }
+
+        public virtual void EmitComment(string comment, EmitContext ec)
+        {
+        }
     }
 }
