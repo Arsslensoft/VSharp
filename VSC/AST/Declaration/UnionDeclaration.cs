@@ -1,7 +1,8 @@
 using System;
 using VSC.Base.GoldParser.Semantic;
-namespace VSC.AST { 
-	public class UnionDeclaration : Semantic {
+namespace VSC.AST {
+    public class UnionDeclaration : Declaration
+    {
  			public OptAttributes _opt_attributes;
 			public OptModifiers _opt_modifiers;
 			public TypeDeclarationName _type_declaration_name;

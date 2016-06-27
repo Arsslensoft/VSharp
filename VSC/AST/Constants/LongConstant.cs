@@ -6,7 +6,7 @@ using System.Text;
 
 namespace VSC.AST
 {
-	 public class LongConstant : ConstantExpression
+    public class LongConstant : PrimitiveConstantExpression
     {
          long _value;
         public LongConstant(long value, VSC.Base.GoldParser.Parser.LineInfo loc)

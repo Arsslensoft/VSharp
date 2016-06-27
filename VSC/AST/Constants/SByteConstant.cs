@@ -7,8 +7,8 @@ using System.Text;
 
 namespace VSC.AST
 {
-	
-	public class SByteConstant : ConstantExpression
+
+    public class SByteConstant : PrimitiveConstantExpression
     {
         internal sbyte _value;
         public SByteConstant(sbyte value, VSC.Base.GoldParser.Parser.LineInfo loc)

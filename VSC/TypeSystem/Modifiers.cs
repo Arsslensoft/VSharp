@@ -6,6 +6,14 @@ using System.Threading.Tasks;
 
 namespace VSC.TypeSystem
 {
+    public enum ParameterModifier
+    {
+        None,
+        Ref,
+        Out,
+        Params,
+        This
+    }
     [Flags]
     public enum Modifiers
     {

@@ -1,7 +1,8 @@
 using System;
 using VSC.Base.GoldParser.Semantic;
-namespace VSC.AST { 
-	public class BooleanLiteral : Semantic {
+namespace VSC.AST {
+    public class BooleanLiteral : LiteralExpression
+    {
         bool val = false;
         string literal;
 			[Rule("<Boolean Constant> ::= true")]

@@ -218,12 +218,15 @@ Comment Line  = '//'
 
 <argument>
         ::= <expression> 
+         |  <named argument expression>
          |  <non simple argument> 
 
 <non simple argument>
         ::= ref <expression> 
          |  out <expression> 
  
+<named argument expression> ::= <identifier> ':' <expression>
+                             
 
 <opt array initializer>
         ::= 
@@ -295,8 +298,7 @@ Comment Line  = '//'
         |  <attribute list>',' <attribute>
 
 <attribute>
-       ::= <package or type expr> '(' <expression List> ')'
-        |  <package or type expr> '(' ')'
+       ::= <package or type expr> '(' <opt argument List> ')'
         |  <package or type expr>                         
 ! ===================================================================
 ! Expressions

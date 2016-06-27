@@ -1,7 +1,7 @@
 using System;
 using VSC.Base.GoldParser.Semantic;
 namespace VSC.AST { 
-	public class GlobalMemberDeclaration : Semantic {
+	public class GlobalMemberDeclaration : Declaration {
  			public ConstantDeclaration _constant_declaration;
 			public FieldDeclaration _field_declaration;
 			public MethodDeclaration _method_declaration;

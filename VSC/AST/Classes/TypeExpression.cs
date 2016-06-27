@@ -5,7 +5,7 @@ namespace VSC.AST {
  			public PackageOrTypeExpr _package_or_type_expr;
 			public PointerStars _pointer_stars;
 			public BuiltinTypeExpression _builtin_type_expression;
-
+            public bool _isnullable = false;
 			[Rule("<type expression> ::= <package or type expr>")]
 			public TypeExpression(PackageOrTypeExpr _PackageOrTypeExpr)
 				{
@@ -14,7 +14,7 @@ namespace VSC.AST {
 			[Rule("<type expression> ::= <package or type expr> '?'")]
 			public TypeExpression(PackageOrTypeExpr _PackageOrTypeExpr, Semantic _symbol32)
 				{
-				_package_or_type_expr = _PackageOrTypeExpr;
+                    _package_or_type_expr = _PackageOrTypeExpr; _isnullable = true;
 				}
 			[Rule("<type expression> ::= <package or type expr> <pointer stars>")]
 			public TypeExpression(PackageOrTypeExpr _PackageOrTypeExpr,PointerStars _PointerStars)

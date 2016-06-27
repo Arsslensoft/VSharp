@@ -8,8 +8,8 @@ using System.Text;
 
 namespace VSC.AST
 {
-	
-	public class FloatConstant : ConstantExpression
+
+    public class FloatConstant : PrimitiveConstantExpression
     {
         internal float _value;
         public FloatConstant(float value, VSC.Base.GoldParser.Parser.LineInfo loc)

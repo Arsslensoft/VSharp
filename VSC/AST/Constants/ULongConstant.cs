@@ -7,8 +7,8 @@ using System.Text;
 
 namespace VSC.AST
 {
-	
-	public class ULongConstant : ConstantExpression
+
+    public class ULongConstant : PrimitiveConstantExpression
     {
         ulong _value;
         public ULongConstant(uint value, VSC.Base.GoldParser.Parser.LineInfo loc)

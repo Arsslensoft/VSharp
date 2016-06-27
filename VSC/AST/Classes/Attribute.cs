@@ -3,19 +3,15 @@ using VSC.Base.GoldParser.Semantic;
 namespace VSC.AST { 
 	public class Attribute : Semantic {
  			public PackageOrTypeExpr _package_or_type_expr;
-			public ExpressionList _expression_list;
+			public OptArgumentList _opt_argument_list;
 
-			[Rule("<attribute> ::= <package or type expr> '(' <expression list> ')'")]
-			public Attribute(PackageOrTypeExpr _PackageOrTypeExpr, Semantic _symbol20,ExpressionList _ExpressionList, Semantic _symbol21)
+			[Rule("<attribute> ::= <package or type expr> '(' <opt argument list> ')'")]
+            public Attribute(PackageOrTypeExpr _PackageOrTypeExpr, Semantic _symbol20, OptArgumentList arglist, Semantic _symbol21)
 				{
 				_package_or_type_expr = _PackageOrTypeExpr;
-				_expression_list = _ExpressionList;
+                _opt_argument_list = arglist;
 				}
-			[Rule("<attribute> ::= <package or type expr> '(' ')'")]
-			public Attribute(PackageOrTypeExpr _PackageOrTypeExpr, Semantic _symbol20, Semantic _symbol21)
-				{
-				_package_or_type_expr = _PackageOrTypeExpr;
-				}
+	
 			[Rule("<attribute> ::= <package or type expr>")]
 			public Attribute(PackageOrTypeExpr _PackageOrTypeExpr)
 				{

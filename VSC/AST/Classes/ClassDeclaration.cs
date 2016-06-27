@@ -1,7 +1,7 @@
 using System;
 using VSC.Base.GoldParser.Semantic;
 namespace VSC.AST { 
-	public class ClassDeclaration : Semantic {
+	public class ClassDeclaration : Declaration {
  			public OptAttributes _opt_attributes;
 			public OptModifiers _opt_modifiers;
 			public TypeDeclarationName _type_declaration_name;

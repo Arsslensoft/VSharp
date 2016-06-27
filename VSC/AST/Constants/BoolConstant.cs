@@ -8,7 +8,7 @@ using VSC.TypeSystem;
 
 namespace VSC.AST
 {
-	 public class BoolConstant : ConstantExpression
+    public class BoolConstant : PrimitiveConstantExpression
     {
         internal bool _value;
         public BoolConstant(bool value, LineInfo loc)

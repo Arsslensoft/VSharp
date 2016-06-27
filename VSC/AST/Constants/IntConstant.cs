@@ -6,8 +6,8 @@ using System.Text;
 
 namespace VSC.AST
 {
-	
-	public class IntConstant : ConstantExpression
+
+    public class IntConstant : PrimitiveConstantExpression
     {
         internal int _value;
         public IntConstant(int value, VSC.Base.GoldParser.Parser.LineInfo loc)

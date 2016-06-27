@@ -1,7 +1,8 @@
 using System;
 using VSC.Base.GoldParser.Semantic;
-namespace VSC.AST { 
-	public class IntegralLiteral : Semantic {
+namespace VSC.AST {
+    public class IntegralLiteral : LiteralExpression
+    {
  
 			[Rule("<Integral Constant> ::= OctalLiteral")]
 			[Rule("<Integral Constant> ::= HexLiteral")]

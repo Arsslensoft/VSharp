@@ -1,7 +1,7 @@
 using System;
 using VSC.Base.GoldParser.Semantic;
 namespace VSC.AST { 
-	public class PackageOrTypeDeclaration : Semantic {
+	public class PackageOrTypeDeclaration : Declaration {
  			public PackageDeclaration _package_declaration;
 			public TypeDeclaration _type_declaration;
 			public GlobalMemberDeclaration _global_member_declaration;
@@ -21,5 +21,10 @@ namespace VSC.AST {
 				{
 				_global_member_declaration = _GlobalMemberDeclaration;
 				}
+
+            public override bool Resolve(Context.SymbolResolveContext rc)
+            {
+                return rc.ResolveOne(_global_member_declaration, _type_declaration, _package_declaration);
+            }
 }
 }

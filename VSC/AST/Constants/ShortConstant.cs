@@ -7,8 +7,8 @@ using System.Text;
 
 namespace VSC.AST
 {
-	
-	public class ShortConstant : ConstantExpression
+
+    public class ShortConstant : PrimitiveConstantExpression
     {
         short _value;
         public ShortConstant(short value, VSC.Base.GoldParser.Parser.LineInfo loc)

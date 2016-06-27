@@ -1,7 +1,8 @@
 using System;
 using VSC.Base.GoldParser.Semantic;
-namespace VSC.AST { 
-	public class DelegateDeclaration : Semantic {
+namespace VSC.AST {
+    public class DelegateDeclaration : Declaration
+    {
  			public OptAttributes _opt_attributes;
 			public OptModifiers _opt_modifiers;
 			public MemberType _member_type;

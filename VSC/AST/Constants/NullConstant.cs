@@ -7,8 +7,8 @@ using System.Text;
 
 namespace VSC.AST
 {
-	
-	public class NullConstant : ConstantExpression
+
+    public class NullConstant : PrimitiveConstantExpression
     {
         int _value;
         public NullConstant(VSC.Base.GoldParser.Parser.LineInfo loc)

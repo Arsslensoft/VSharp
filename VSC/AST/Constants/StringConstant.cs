@@ -7,7 +7,7 @@ using VSC.Base.GoldParser.Parser;
 
 namespace VSC.AST
 {
-	 public class StringConstant : ConstantExpression
+    public class StringConstant : PrimitiveConstantExpression
     {
 
         string _value;

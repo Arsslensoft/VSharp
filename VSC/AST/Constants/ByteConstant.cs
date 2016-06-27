@@ -7,8 +7,8 @@ using System.Text;
 
 namespace VSC.AST
 {
-	
-	public class ByteConstant : ConstantExpression
+
+    public class ByteConstant : PrimitiveConstantExpression
     {
         internal byte _value;
         public ByteConstant(byte value, VSC.Base.GoldParser.Parser.LineInfo loc)

@@ -5,8 +5,8 @@ using System.Linq;
 using System.Text;
 namespace VSC.AST
 {
-	
-	public class UIntConstant : ConstantExpression
+
+    public class UIntConstant : PrimitiveConstantExpression
     {
         internal uint _value;
         public UIntConstant(uint value, VSC.Base.GoldParser.Parser.LineInfo loc)

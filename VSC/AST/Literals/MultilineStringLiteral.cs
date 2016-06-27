@@ -1,7 +1,8 @@
 using System;
 using VSC.Base.GoldParser.Semantic;
-namespace VSC.AST { 
-	public class MultilineStringLiteral : Semantic {
+namespace VSC.AST {
+    public class MultilineStringLiteral : LiteralExpression
+    {
  			public MultilineStringLiteral _multiline_string_constant;
 
 			[Rule("<Multiline String Constant> ::= RegularStringLiteral")]
