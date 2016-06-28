@@ -8,11 +8,11 @@ using System.Text;
 namespace VSC.AST
 {
 
-    public class ULongConstant : PrimitiveConstantExpression
+    public class CharConstant : PrimitiveConstantExpression
     {
-        ulong _value;
-        public ULongConstant(ulong value, VSC.Base.GoldParser.Parser.LineInfo loc)
-            : base(VSC.TypeSystem.KnownTypeReference.UInt64, value, loc)
+        internal char _value;
+        public CharConstant(char value, VSC.Base.GoldParser.Parser.LineInfo loc)
+            : base(VSC.TypeSystem.KnownTypeReference.Char, value, loc)
         {
             _value = value;
         }

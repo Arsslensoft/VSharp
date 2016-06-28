@@ -1,15 +1,16 @@
 using System;
 using VSC.Base.GoldParser.Semantic;
-namespace VSC.AST { 
-	public class ConstantDeclarator : Semantic {
- 			public Identifier _identifier;
-			public ConstantInitializer _constant_initializer;
+namespace VSC.AST {
+    public class ConstantDeclarator : Semantic
+    {
+        public Identifier _identifier;
+        public VariableInitializer _variable_initializer;
 
-			[Rule("<constant declarator> ::= ',' <Identifier> <constant initializer>")]
-			public ConstantDeclarator( Semantic _symbol24,Identifier _Identifier,ConstantInitializer _ConstantInitializer)
-				{
-				_identifier = _Identifier;
-				_constant_initializer = _ConstantInitializer;
-				}
-}
+        [Rule("<constant declarator> ::= ',' <Identifier> '=' <variable initializer>")]
+        public ConstantDeclarator(Semantic _symbol24, Identifier _Identifier, Semantic _symbol60, VariableInitializer _VariableInitializer)
+        {
+            _identifier = _Identifier;
+            _variable_initializer = _VariableInitializer;
+        }
+    }
 }

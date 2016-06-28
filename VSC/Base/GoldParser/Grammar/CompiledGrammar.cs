@@ -42,7 +42,7 @@ namespace VSC.Base.GoldParser.Grammar {
 	/// <summary>
 	/// Contains grammar tables required for parsing.
 	/// </summary>
-	/// <remarks>The code is inspired by the GOLD C# engine by Vladimir Morozov (vmoroz@hotmail.com)</remarks>
+	/// <remarks>The code is inspired by the GOLD V# engine by Vladimir Morozov (vmoroz@hotmail.com)</remarks>
 	public class CompiledGrammar {
 		/// <summary>
 		/// Edge between DFA states.

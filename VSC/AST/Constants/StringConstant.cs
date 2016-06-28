@@ -11,12 +11,10 @@ namespace VSC.AST
     {
 
         string _value;
-        public bool Verbatim { get; set; }
-        public StringConstant(string value, LineInfo loc,bool verb = false)
+        public StringConstant(string value, LineInfo loc)
             : base(VSC.TypeSystem.KnownTypeReference.String, value,loc)
         {
             _value = value;
-            Verbatim = verb;
         }
        
 

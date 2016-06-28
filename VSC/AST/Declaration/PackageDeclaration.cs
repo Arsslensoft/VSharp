@@ -7,11 +7,11 @@ namespace VSC.AST {
  			public OptAttributes _opt_attributes;
 			public PackageOrTypeExpr _package_or_type_expr;
 			public ImportDirectives _import_directives;
-			public PackageOrTypeDeclarations _package_or_type_declarations;
+			public DeclaratonSequence _package_or_type_declarations;
 			public OptSemicolon _opt_semicolon;
 
 			[Rule("<package declaration> ::= <opt attributes> package <package or type expr> '{' <import directives> <package or type declarations> '}' <opt semicolon>")]
-			public PackageDeclaration(OptAttributes _OptAttributes, Semantic _symbol124,PackageOrTypeExpr _PackageOrTypeExpr, Semantic _symbol43,ImportDirectives _ImportDirectives,PackageOrTypeDeclarations _PackageOrTypeDeclarations, Semantic _symbol47,OptSemicolon _OptSemicolon)
+			public PackageDeclaration(OptAttributes _OptAttributes, Semantic _symbol124,PackageOrTypeExpr _PackageOrTypeExpr, Semantic _symbol43,ImportDirectives _ImportDirectives,DeclaratonSequence _PackageOrTypeDeclarations, Semantic _symbol47,OptSemicolon _OptSemicolon)
 				{
 				_opt_attributes = _OptAttributes;
 				_package_or_type_expr = _PackageOrTypeExpr;
@@ -30,14 +30,13 @@ namespace VSC.AST {
                     rc.usingScope.Region = region;
                 }
 
-                if (_opt_attributes._attribute_sections != null)
-                    rc.ConvertAttributes(rc.unresolvedFile.AssemblyAttributes,_opt_attributes._attribute_sections);
+             rc.ConvertAttributes(rc.unresolvedFile.AssemblyAttributes,_opt_attributes._Attributes);
 
 
                 foreach (ImportDirective imp in _import_directives)
                     imp.Resolve(rc);
 
-                foreach (PackageOrTypeDeclaration ptd in _package_or_type_declarations)
+                foreach (Declaration ptd in _package_or_type_declarations)
                     ptd.Resolve(rc);
 
 

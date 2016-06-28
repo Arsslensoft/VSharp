@@ -1,20 +1,28 @@
 using System;
 using VSC.Base.GoldParser.Semantic;
 namespace VSC.AST {
+
     public class MultilineStringLiteral : LiteralExpression
     {
- 			public MultilineStringLiteral _multiline_string_constant;
-
 			[Rule("<Multiline String Constant> ::= RegularStringLiteral")]
+            public MultilineStringLiteral(RegularStringTerminal _symbol133)
+            {
+                ConstantExpr = new StringConstant(GetString(_symbol133.Name),_symbol133.position);
+            }
 			[Rule("<Multiline String Constant> ::= VerbatimStringLiteral")]
-			public MultilineStringLiteral( Semantic _symbol133)
-				{
-				}
+			public MultilineStringLiteral( VerbatimStringTerminal _symbol133)
+            {
+                ConstantExpr = new StringConstant(GetString(_symbol133.Name.Remove(0,1), true), _symbol133.position);
+			}
 			[Rule("<Multiline String Constant> ::= RegularStringLiteral <Multiline String Constant>")]
+            public MultilineStringLiteral(RegularStringTerminal _symbol133, MultilineStringLiteral _MultilineStringConstant)
+            {
+                ConstantExpr = new StringConstant(GetString(_symbol133.Name) + _MultilineStringConstant.ConstantExpr.Value, _symbol133.position);
+            }
 			[Rule("<Multiline String Constant> ::= VerbatimStringLiteral <Multiline String Constant>")]
-			public MultilineStringLiteral( Semantic _symbol133,MultilineStringLiteral _MultilineStringConstant)
+            public MultilineStringLiteral(VerbatimStringTerminal _symbol133, MultilineStringLiteral _MultilineStringConstant)
 				{
-				_multiline_string_constant = _MultilineStringConstant;
+                    ConstantExpr = new StringConstant(GetString(_symbol133.Name.Remove(0, 1) , true) + _MultilineStringConstant.ConstantExpr.Value, _symbol133.position);
 				}
 }
 }

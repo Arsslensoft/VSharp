@@ -26,6 +26,7 @@ using VSC.TypeSystem.Implementation;
 
 namespace VSC.TypeSystem.Resolver
 {
+    //TODO:Support custom operators
     public enum OperatorType
     {
 
@@ -55,6 +56,8 @@ namespace VSC.TypeSystem.Resolver
         ExclusiveOr ,
         LeftShift,
         RightShift,
+        LeftRotate,
+        RightRotate,
         Equality ,
         Inequality,
         GreaterThan,
@@ -67,6 +70,8 @@ namespace VSC.TypeSystem.Resolver
         Explicit,
 			// Pattern matching
 			Is,
+        //BinaryOperatorConstant,
+        //UnaryOperatorConstant,
 			// Just because of enum
 			TOP
     }
@@ -90,6 +95,12 @@ namespace VSC.TypeSystem.Resolver
         ShiftLeft,
         /// <summary>left >>= right</summary>
         ShiftRight,
+
+        /// <summary>left <~= right</summary>
+        RotateLeft,
+        /// <summary>left ~>= right</summary>
+        RotateRight,
+
 
         /// <summary>left &= right</summary>
         BitwiseAnd,
@@ -152,8 +163,16 @@ namespace VSC.TypeSystem.Resolver
         /// <summary>left &gt;&gt; right</summary>
         ShiftRight,
 
+
+        /// <summary>left &lt;~ right</summary>
+        RotateLeft,
+        /// <summary>left ~&gt; right</summary>
+        RotateRight,
+
         /// <summary>left ?? right</summary>
-        NullCoalescing
+        NullCoalescing,
+          /// <summary>left is right</summary>
+        Is
     }
 
     public enum UnaryOperatorType
@@ -183,8 +202,10 @@ namespace VSC.TypeSystem.Resolver
         Dereference,
         /// <summary>Get address (&a)</summary>
         AddressOf,
-        /// <summary>V# 5.0 await</summary>
-        Await
+
+
+        ///// <summary>Custom operator (@+-...a)</summary>
+        //UnaryOperator,
     }
 
     /// <summary>
@@ -238,6 +259,8 @@ namespace VSC.TypeSystem.Resolver
             names[(int)OperatorType.ExclusiveOr] = new string[] { "^", "op_ExclusiveOr" };
             names[(int)OperatorType.LeftShift] = new string[] { "<<", "op_LeftShift" };
             names[(int)OperatorType.RightShift] = new string[] { ">>", "op_RightShift" };
+            names[(int)OperatorType.LeftRotate] = new string[] { "<~", "op_LeftRotate" };
+            names[(int)OperatorType.RightRotate] = new string[] { "~>", "op_RightRotate" };
             names[(int)OperatorType.Equality] = new string[] { "==", "op_Equality" };
             names[(int)OperatorType.Inequality] = new string[] { "!=", "op_Inequality" };
             names[(int)OperatorType.GreaterThan] = new string[] { ">", "op_GreaterThan" };
@@ -247,6 +270,8 @@ namespace VSC.TypeSystem.Resolver
             names[(int)OperatorType.Implicit] = new string[] { "implicit", "op_Implicit" };
             names[(int)OperatorType.Explicit] = new string[] { "explicit", "op_Explicit" };
             names[(int)OperatorType.Is] = new string[] { "is", "op_Is" };
+            //names[(int)OperatorType.BinaryOperatorConstant] = new string[] { "@@", "op_B_" };
+            //names[(int)OperatorType.UnaryOperatorConstant] = new string[] { "@", "op_U_" };
         }
 		static readonly ResolveResult ErrorResult = ErrorResolveResult.UnknownError;
 		readonly ICompilation compilation;
@@ -621,6 +646,15 @@ namespace VSC.TypeSystem.Resolver
                     return ExpressionType.LeftShift;
                 case BinaryOperatorType.ShiftRight:
                     return ExpressionType.RightShift;
+
+                    // special implementation
+                case BinaryOperatorType.RotateLeft:
+                    return ExpressionType.LeftShift;
+                case BinaryOperatorType.RotateRight:
+                    return ExpressionType.RightShift;
+                case BinaryOperatorType.Is:
+                    return ExpressionType.TypeIs;
+
                 case BinaryOperatorType.NullCoalescing:
                     return ExpressionType.Coalesce;
                 default:
@@ -679,7 +713,7 @@ namespace VSC.TypeSystem.Resolver
                     return ExpressionType.PostDecrementAssign;
                 case UnaryOperatorType.Dereference:
                 case UnaryOperatorType.AddressOf:
-                case UnaryOperatorType.Await:
+              //  case UnaryOperatorType.UnaryOperator:
                     return ExpressionType.Extension;
                 default:
                     throw new NotSupportedException("Invalid value for UnaryOperatorType");
@@ -853,6 +887,8 @@ namespace VSC.TypeSystem.Resolver
 				case UnaryOperatorType.Decrement:
 				case UnaryOperatorType.PostDecrement:
 					return "op_Decrement";
+                //case UnaryOperatorType.UnaryOperator:
+                //    return "op_U_";
 				default:
 					return null;
 			}
@@ -1049,6 +1085,14 @@ namespace VSC.TypeSystem.Resolver
 				case BinaryOperatorType.ShiftRight:
 					methodGroup = operators.ShiftRightOperators;
 					break;
+                case BinaryOperatorType.RotateRight:
+                    methodGroup = operators.RotateRightOperators;
+                    break;
+                case BinaryOperatorType.RotateLeft:
+                    methodGroup = operators.RotateLeftOperators;
+                    break;
+
+
 				case BinaryOperatorType.Equality:
 				case BinaryOperatorType.InEquality:
 				case BinaryOperatorType.LessThan:
@@ -1401,6 +1445,12 @@ namespace VSC.TypeSystem.Resolver
 					return "op_LeftShift";
 				case BinaryOperatorType.ShiftRight:
 					return "op_RightShift";
+                case BinaryOperatorType.RotateLeft:
+                    return "op_LeftRotate";
+                case BinaryOperatorType.RotateRight:
+                    return "op_RightRotate";
+                case BinaryOperatorType.Is:
+                    return "op_Is";
 				case BinaryOperatorType.Equality:
 					return "op_Equality";
 				case BinaryOperatorType.InEquality:
@@ -1492,6 +1542,24 @@ namespace VSC.TypeSystem.Resolver
             }
             return null;
 
+        }
+        public static string GetMetadataName(OperatorType ot)
+        {
+            return names[(int)ot][1];
+        }
+        public static string GetMetadataName(string opsymbol, ref OperatorType opt)
+        {
+            for (int i = 0; i < names.Length; ++i)
+            {
+
+                if (names[i][0] == opsymbol)
+                {
+                    opt = (OperatorType)i;
+                    return names[i][1];
+                }
+            }
+            opt = OperatorType.TOP;
+            return null;
         }
 		static bool IsComparisonOperator(IMethod m)
 		{
@@ -2915,6 +2983,11 @@ namespace VSC.TypeSystem.Resolver
                     return BinaryOperatorType.ShiftLeft;
                 case AssignmentOperatorType.ShiftRight:
                     return BinaryOperatorType.ShiftRight;
+                case AssignmentOperatorType.RotateLeft:
+                    return BinaryOperatorType.RotateLeft;
+                case AssignmentOperatorType.RotateRight:
+                    return BinaryOperatorType.RotateRight;
+
                 case AssignmentOperatorType.BitwiseAnd:
                     return BinaryOperatorType.BitwiseAnd;
                 case AssignmentOperatorType.BitwiseOr:

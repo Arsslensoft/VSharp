@@ -29,7 +29,63 @@ namespace VSC.AST
             return new ErrorResolveResult(type.Resolve(context));
         }
     }
+    /// <summary>
+    /// Increments an integer <see cref="IConstantValue"/> by a fixed amount without changing the type.
+    /// </summary>
+    [Serializable]
+    public sealed class IncrementConstantValue : IConstantValue, ISupportsInterning
+    {
+        readonly IConstantValue baseValue;
+        readonly int incrementAmount;
 
+        public IncrementConstantValue(IConstantValue baseValue, int incrementAmount = 1)
+        {
+            if (baseValue == null)
+                throw new ArgumentNullException("baseValue");
+            IncrementConstantValue icv = baseValue as IncrementConstantValue;
+            if (icv != null)
+            {
+                this.baseValue = icv.baseValue;
+                this.incrementAmount = icv.incrementAmount + incrementAmount;
+            }
+            else
+            {
+                this.baseValue = baseValue;
+                this.incrementAmount = incrementAmount;
+            }
+        }
+
+        public ResolveResult Resolve(ITypeResolveContext context)
+        {
+            ResolveResult rr = baseValue.Resolve(context);
+            if (rr.IsCompileTimeConstant && rr.ConstantValue != null)
+            {
+                object val = rr.ConstantValue;
+                TypeCode typeCode = System.Type.GetTypeCode(val.GetType());
+                if (typeCode >= TypeCode.SByte && typeCode <= TypeCode.UInt64)
+                {
+                    long intVal = (long)VSharpPrimitiveCast.Cast(TypeCode.Int64, val, false);
+                    object newVal = VSharpPrimitiveCast.Cast(typeCode, unchecked(intVal + incrementAmount), false);
+                    return new ConstantResolveResult(rr.Type, newVal);
+                }
+            }
+            return new ErrorResolveResult(rr.Type);
+        }
+
+        int ISupportsInterning.GetHashCodeForInterning()
+        {
+            unchecked
+            {
+                return baseValue.GetHashCode() * 33 ^ incrementAmount;
+            }
+        }
+
+        bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
+        {
+            IncrementConstantValue o = other as IncrementConstantValue;
+            return o != null && baseValue == o.baseValue && incrementAmount == o.incrementAmount;
+        }
+    }
     [Serializable]
     public sealed class ConstantCast : ConstantExpression, ISupportsInterning
     {

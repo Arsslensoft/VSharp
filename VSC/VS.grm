@@ -190,8 +190,8 @@ Comment Line  = '//'
          |  <fixed parameters> ',' <fixed parameter> 
 
 <fixed parameter>
-        ::= <opt attributes> <opt parameter modifier> <member type> <Identifier> 
-         |  <opt attributes> <opt parameter modifier> <member type> <Identifier>  '=' <expression> 
+        ::= <opt attributes> <opt parameter modifier> <type> <Identifier> 
+         |  <opt attributes> <opt parameter modifier> <type> <Identifier>  '=' <expression> 
     
 <opt parameter modifier>
         ::= 
@@ -929,7 +929,7 @@ Comment Line  = '//'
          
 <method header>
         ::= <opt attributes> <opt modifiers> <member type> <method declaration name> '(' <opt formal parameter list> ')' <opt type parameter constraints clauses> 
-         |  <opt attributes> <opt modifiers> <member type> <modifiers> <method declaration name> '(' <opt formal parameter list> ')' 
+         |  <opt attributes> <opt modifiers> <member type> <modifiers> <method declaration name> '(' <opt formal parameter list> ')' <opt type parameter constraints clauses> 
       
 <method body expression block>
         ::= <block or semicolon>
@@ -943,8 +943,8 @@ Comment Line  = '//'
         ::= '=>' <expression> ';' 
          
 <property declaration>
-        ::= <opt attributes> <opt modifiers> <member type> <member declaration name> '{' <accessor declarations> '}' <opt property initializer> 
-         |  <opt attributes> <opt modifiers> <member type> <member declaration name> <expression block> 
+        ::= <opt attributes> <opt modifiers> <member type> <method declaration name>  '{' <accessor declarations> '}' <opt property initializer> 
+         |  <opt attributes> <opt modifiers> <member type> <method declaration name>  <expression block> 
 
 <opt property initializer>
         ::= 
@@ -993,7 +993,7 @@ Comment Line  = '//'
          |  <indexer declaration> 
          |  <operator declaration> 
          |  <constructor declaration> 
-         |  <type declaration> 
+
 
 
 <interrupt declaration> ::= interrupt  <Integral Constant>  <block statement>
@@ -1001,31 +1001,47 @@ Comment Line  = '//'
 <operator declaration>
         ::= <opt attributes> <opt modifiers> <operator declarator> <method body expression block> 
 
-<operator type>
-        ::= <type expression or array> 
-         |  void 
-
 <operator declarator>
-        ::= <operator type> operator <overloadable operator> '(' <opt formal parameter list> ')' 
-         |  <conversion operator declarator> 
+        ::= <type> operator <overloadable operator> '(' <opt formal parameter list> ')' 
+         |  implicit operator <type> '(' <opt formal parameter list> ')' 
+         |  explicit operator <type> '(' <opt formal parameter list> ')'
          
 <overloadable operator>
-        ::= '^' ! TODO
-  
-
-<conversion operator declarator>
-        ::= implicit operator <type> '(' <opt formal parameter list> ')' 
-         |  explicit operator <type> '(' <opt formal parameter list> ')'   
+        ::= '!' 
+         | '~'
+         | '++'
+         | '--'
+         | true
+         | false
+         | '+'
+         | '-'
+         | '*'
+         | '/'
+         | '%'
+         | '&'
+         | '^'
+         | '|'
+         | '<<'
+         | '>>'
+         | '<~'
+         | '~>'
+         | '=='
+         | '!='
+         | '<'
+         | '>'
+         | '>='
+         | '<='
+         |  is
+         | <Unary Operator Constant>   
+         | <Binary Operator Constant>
          
+
  <constructor declaration>
-        ::= <constructor declarator> <constructor body> 
+        ::= <constructor declarator> <block or semicolon>
 
 <constructor declarator>
         ::= <opt attributes> <opt modifiers> self '(' <opt formal parameter list> ')' <opt constructor initializer> 
 
-<constructor body>
-        ::= <block statement> 
-         |  ';' 
 <constructor initializer>
         ::= ':' super '(' <opt argument list> ')' 
          |  ':' self '(' <opt argument list> ')'
@@ -1039,8 +1055,8 @@ Comment Line  = '//'
         ::= <opt attributes> <opt modifiers> '~' self '(' ')' <block or semicolon> 
 
 <event declaration>
-        ::= <opt attributes> <opt modifiers> event <type> <member declaration name> <opt event initializer> <opt event declarators> ';' 
-         |  <opt attributes> <opt modifiers> event <type> <member declaration name> '{' <event accessor declarations> '}' 
+        ::= <opt attributes> <opt modifiers> event <type> <method declaration name>  <opt event initializer> <opt event declarators> ';' 
+         |  <opt attributes> <opt modifiers> event <type> <method declaration name>  '{' <event accessor declarations> '}' 
 
 
 <opt event initializer>
@@ -1067,7 +1083,7 @@ Comment Line  = '//'
          |  <remove accessor declaration> <add accessor declaration> <raise accessor declaration opt>
          |  <add accessor declaration>  <raise accessor declaration opt>
          |  <remove accessor declaration> <raise accessor declaration opt>
-         |  <raise accessor declaration>
+
   
 
 <add accessor declaration>
@@ -1084,7 +1100,7 @@ Comment Line  = '//'
         ::= <opt attributes> <opt modifiers> raise  <block or semicolon>
          
 <enum declaration>
-        ::= <opt attributes> <opt modifiers> enum <type declaration name> <opt enum base> '{' <opt enum member declarations> '}' <opt semicolon> 
+        ::= <opt attributes> <opt modifiers> enum <Identifier> <opt enum base> '{' <opt enum member declarations> '}' <opt semicolon> 
 
 <opt enum base>
         ::= 
@@ -1103,7 +1119,7 @@ Comment Line  = '//'
 <enum member declaration>
         ::= <opt attributes> <Identifier>  
          |  <opt attributes> <Identifier>  '='  <expression>  
-         |  <attribute sections>
+    
 
 <delegate declaration>
         ::= <opt attributes> <opt modifiers> delegate <member type> <type declaration name> '(' <opt formal parameter list> ')' <opt type parameter constraints clauses> ';' 
@@ -1112,9 +1128,6 @@ Comment Line  = '//'
 
 <type declaration name>
         ::= <Identifier>  <opt type parameter list> 
-
-<member declaration name>
-        ::= <method declaration name> 
 
 <method declaration name>
         ::= <type declaration name> 

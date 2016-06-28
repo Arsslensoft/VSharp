@@ -1,10 +1,12 @@
 ﻿
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VSC.AST;
+using VSC.Base;
 using VSC.TypeSystem;
 using VSC.TypeSystem.Implementation;
 using VSC.TypeSystem.Resolver;
@@ -30,10 +32,12 @@ namespace VSC.Context
         }
         public CompilerContext Compiler { get; set; } 
         internal UsingScope usingScope;
-        VSharpUnresolvedTypeDefinition currentTypeDefinition;
-        UnresolvedMethodSpec currentMethod;
+      internal  VSharpUnresolvedTypeDefinition currentTypeDefinition;
 
-        InterningProvider interningProvider = new SimpleInterningProvider();
+      public VSharpUnresolvedTypeDefinition DefaultTypeDefinition = null;
+       internal UnresolvedMethodSpec currentMethod;
+
+     internal   InterningProvider interningProvider = new SimpleInterningProvider();
         internal VSharpUnresolvedFile unresolvedFile;
         public VSharpUnresolvedFile UnresolvedFile
         {
@@ -61,6 +65,9 @@ namespace VSC.Context
             this.unresolvedFile = new VSharpUnresolvedFile();
             this.unresolvedFile.FileName = filename;
             this.usingScope = unresolvedFile.RootUsingScope;
+            DefaultTypeDefinition = CreateTypeDefinition("default",true);
+            DefaultTypeDefinition.GlobalTypeDefinition = false; 
+            currentTypeDefinition = DefaultTypeDefinition;
             IsInMemberAccess = false;
         }
 
@@ -71,6 +78,27 @@ namespace VSC.Context
         }
 
         public bool IsInMemberAccess { get; set; }
+
+
+        public VSharpUnresolvedTypeDefinition CreateTypeDefinition(string name, bool isglobal = false)
+        {
+
+            VSharpUnresolvedTypeDefinition newType;
+            if (isglobal)
+            {
+                newType = new VSharpUnresolvedTypeDefinition(usingScope, name);
+                unresolvedFile.TopLevelTypeDefinitions.Add(newType);
+            }
+            else
+            {
+                newType = new VSharpUnresolvedTypeDefinition(DefaultTypeDefinition, name);
+                DefaultTypeDefinition.NestedTypes.Add(newType);
+            }
+            newType.UnresolvedFile = unresolvedFile;
+            newType.HasExtensionMethods = false; // gets set to true when an extension method is added
+            return newType;
+        }
+
 
         #region Types
         public static KnownTypeCode GetTypeCodeForPrimitiveType(string keyword)
@@ -141,7 +169,8 @@ namespace VSC.Context
         {
             if (interningProvider == null)
                 interningProvider = InterningProvider.Dummy;
-            ITypeReference target = ConvertTypeReference(sne, lookupMode, interningProvider);
+            ITypeReference target = ConvertTypeReference(sne._type_expression, lookupMode, interningProvider);
+         if(sne._rank_specifiers != null)
             foreach (var a in sne._rank_specifiers)
                 target = interningProvider.Intern(new ArrayTypeReference(target, a._dimension));
 
@@ -217,7 +246,7 @@ namespace VSC.Context
         {
             if (interningProvider == null)
                 interningProvider = InterningProvider.Dummy;
-             ITypeReference t =ConvertTypeReference( type,lookupMode, interningProvider);
+             ITypeReference t =ConvertTypeReference( type._builtin_type,lookupMode);
 
              if (type._isnullable)
                  t = interningProvider.Intern(NullableType.Create(t));
@@ -249,17 +278,36 @@ namespace VSC.Context
             var t = new SimpleTypeOrNamespaceReference(identifier, interningProvider.InternList(typeArguments), lookupMode);
             return interningProvider.Intern(t);
         }
+        public ITypeReference ConvertTypeReference(ExplicitInterface sne, NameLookupMode lookupMode, InterningProvider interningProvider = null)
+        {
+            if (interningProvider == null)
+                interningProvider = InterningProvider.Dummy;
+            var typeArguments = new List<ITypeReference>();
+            if (sne._opt_type_argument_list._type_arguments != null)
+            {
+                foreach (var ta in sne._opt_type_argument_list._type_arguments)
+                    typeArguments.Add(ConvertTypeReference(ta, lookupMode, interningProvider));
+
+            }
+            string identifier = sne._identifier._Identifier;
+            if (typeArguments.Count == 0 && string.IsNullOrEmpty(identifier))
+                // empty SimpleType is used for typeof(List<>).
+                return SpecialTypeSpec.UnboundTypeArgument;
+
+            var t = new SimpleTypeOrNamespaceReference(identifier, interningProvider.InternList(typeArguments), lookupMode);
+            return interningProvider.Intern(t);
+        }
         #endregion
 
         #region Modifiers
-        static void ApplyModifiers(UnresolvedTypeDefinitionSpec td, VSC.TypeSystem.Modifiers modifiers)
+     public    void ApplyModifiers(UnresolvedTypeDefinitionSpec td, VSC.TypeSystem.Modifiers modifiers)
         {
             td.Accessibility = GetAccessibility(modifiers) ?? (td.DeclaringTypeDefinition != null ? Accessibility.Private : Accessibility.Internal);
             td.IsAbstract = (modifiers & (VSC.TypeSystem.Modifiers.ABSTRACT | VSC.TypeSystem.Modifiers.STATIC)) != 0;
             td.IsSealed = (modifiers & (VSC.TypeSystem.Modifiers.SEALED | VSC.TypeSystem.Modifiers.STATIC)) != 0;
             td.IsShadowing = (modifiers & VSC.TypeSystem.Modifiers.NEW) != 0;
         }
-        static void ApplyModifiers(UnresolvedMemberSpec m, VSC.TypeSystem.Modifiers modifiers)
+     public  void ApplyModifiers(UnresolvedMemberSpec m, VSC.TypeSystem.Modifiers modifiers)
         {
             // members from interfaces are always Public+Abstract. (NOTE: 'new' modifier is valid in interfaces as well.)
             if (m.DeclaringTypeDefinition.Kind == TypeKind.Interface)
@@ -277,15 +325,15 @@ namespace VSC.Context
             m.IsStatic = (modifiers & VSC.TypeSystem.Modifiers.STATIC) != 0;
             m.IsVirtual = (modifiers & VSC.TypeSystem.Modifiers.VIRTUAL) != 0;
         }
-        static Accessibility? GetAccessibility(VSC.TypeSystem.Modifiers modifiers)
+        public  Accessibility? GetAccessibility(VSC.TypeSystem.Modifiers modifiers)
         {
             switch (modifiers & VSC.TypeSystem.Modifiers.AccessibilityMask)
             {
                 case VSC.TypeSystem.Modifiers.PRIVATE:
                     return Accessibility.Private;
-                case VSC.TypeSystem.Modifiers.FRIEND:
+                case VSC.TypeSystem.Modifiers.INTERNAL:
                     return Accessibility.Internal;
-                case VSC.TypeSystem.Modifiers.PROTECTED | VSC.TypeSystem.Modifiers.FRIEND:
+                case VSC.TypeSystem.Modifiers.PROTECTED | VSC.TypeSystem.Modifiers.INTERNAL:
                     return Accessibility.ProtectedOrInternal;
                 case VSC.TypeSystem.Modifiers.PROTECTED:
                     return Accessibility.Protected;
@@ -300,7 +348,7 @@ namespace VSC.Context
 
         //TODO:Add Constant folding support
         #region Constant Values
-        IConstantValue ConvertConstantValue(ITypeReference targetType, Expression expression)
+       public IConstantValue ConvertConstantValue(ITypeReference targetType, Expression expression)
         {
             return ConvertConstantValue(targetType, expression, currentTypeDefinition, currentMethod, usingScope, interningProvider);
         }
@@ -310,8 +358,11 @@ namespace VSC.Context
             IUnresolvedTypeDefinition parentTypeDefinition, IUnresolvedMethod parentMethodDefinition, UsingScope parentUsingScope,
             InterningProvider interningProvider)
         {
+            LiteralExpression l = expression as LiteralExpression;
+            if(l == null)
+                return new ErrorConstantValue(targetType);
 
-            ConstantExpression c = expression as ConstantExpression;
+            ConstantExpression c = l.ConstantExpr;
             if (c == null)
                 return new ErrorConstantValue(targetType);
             PrimitiveConstantExpression pc = c as PrimitiveConstantExpression;
@@ -332,20 +383,13 @@ namespace VSC.Context
         #endregion
 
         #region Attributes
-       public void ConvertAttributes(IList<IUnresolvedAttribute> outputList, IEnumerable<AttributeSection> attributes)
-        {
-            foreach (AttributeSection section in attributes)
-            {
-                ConvertAttributes(outputList, section);
-            }
-        }
 
-       public void ConvertAttributes(IList<IUnresolvedAttribute> outputList, AttributeSection attributeSection)
-        {
-            foreach (VSC.AST.Attribute attr in attributeSection._attribute_list)
-                outputList.Add(ConvertAttribute(attr));
-            
-        }
+       public void ConvertAttributes(IList<IUnresolvedAttribute> outputList, List<VSC.AST.Attribute> attributeSection)
+       {
+           foreach (VSC.AST.Attribute attr in attributeSection)
+               outputList.Add(ConvertAttribute(attr));
+
+       }
 
     
 
@@ -390,10 +434,9 @@ namespace VSC.Context
         #region Parameters
         UnresolvedParameterSpec ConvertParameter(FixedParameter pd)
         {
-            UnresolvedParameterSpec p = new UnresolvedParameterSpec(ConvertTypeReference(pd._member_type, NameLookupMode.Type), interningProvider.Intern(pd._identifier._Identifier));
+            UnresolvedParameterSpec p = new UnresolvedParameterSpec(ConvertTypeReference(pd._type, NameLookupMode.Type), interningProvider.Intern(pd._identifier._Identifier));
             p.Region = MakeRegion(pd);
-            if (pd._opt_attributes._attribute_sections != null)
-                ConvertAttributes(p.Attributes, pd._opt_attributes._attribute_sections);
+            ConvertAttributes(p.Attributes, pd._opt_attributes._Attributes);
 
             if (pd._opt_parameter_modifier._parameter_modifier != null)
             {
@@ -419,8 +462,8 @@ namespace VSC.Context
         {
             UnresolvedParameterSpec p = new UnresolvedParameterSpec(ConvertTypeReference(pd._type, NameLookupMode.Type), interningProvider.Intern(pd._identifier._Identifier));
             p.Region = MakeRegion(pd);
-            if (pd._opt_attributes._attribute_sections != null)
-                ConvertAttributes(p.Attributes, pd._opt_attributes._attribute_sections);
+
+           ConvertAttributes(p.Attributes, pd._opt_attributes._Attributes);
 
             p.IsParams = true;
             if (pd._expression != null)
@@ -429,20 +472,22 @@ namespace VSC.Context
             return p;
 
         }
-        void ConvertParameters(IList<IUnresolvedParameter> outputList, IEnumerable<FixedParameter> parameters, ParameterArray par = null)
+       public void ConvertParameters(IList<IUnresolvedParameter> outputList, IEnumerable<FixedParameter> parameters, ParameterArray par = null)
         {
+         if(parameters != null)
             foreach ( FixedParameter pd in parameters)
                 outputList.Add(interningProvider.Intern(ConvertParameter(pd)));
+
             if(par != null)
                   outputList.Add(interningProvider.Intern(ConvertParameter(par)));
         }
 
-        internal IList<ITypeReference> GetParameterTypes(IEnumerable<FixedParameter> parameters, InterningProvider interningProvider)
+       public IList<ITypeReference> GetParameterTypes(IEnumerable<FixedParameter> parameters, InterningProvider interningProvider)
         {
             List<ITypeReference> result = new List<ITypeReference>();
             foreach (FixedParameter pd in parameters)
             {
-                ITypeReference type = ConvertTypeReference(pd._member_type,NameLookupMode.Type, interningProvider);
+                ITypeReference type = ConvertTypeReference(pd._type,NameLookupMode.Type, interningProvider);
 
 
                 if(pd._opt_parameter_modifier._parameter_modifier != null)
@@ -455,7 +500,409 @@ namespace VSC.Context
             return result;
         }
         #endregion
-       public DomRegion MakeRegion(Semantic node)
+
+
+        #region Type Parameters
+
+    
+       public void ConvertTypeParameters(IList<IUnresolvedTypeParameter> output, TypeParameters typeParameters,
+                                  TypeParameterConstraintsClauses constraints, SymbolKind ownerType)
+        {
+            // output might be non-empty when type parameters were copied from an outer class
+            int index = output.Count;
+            List<UnresolvedTypeParameterSpec> list = new List<UnresolvedTypeParameterSpec>();
+            if (typeParameters != null)
+            {
+                foreach (Identifier tpDecl in typeParameters)
+                {
+                    UnresolvedTypeParameterSpec tp = new UnresolvedTypeParameterSpec(ownerType, index++, tpDecl._Identifier);
+                    tp.Region = MakeRegion(tpDecl);
+                    list.Add(tp);
+                    output.Add(tp); // tp must be added to list here so that it can be referenced by constraints
+                }
+                if (constraints != null)
+                    foreach (var c in constraints)
+                    {
+                        bool parfound = false;
+                        foreach (var tp in list)
+                        {
+                            if (tp.Name == c._identifier._Identifier)
+                            {
+                                foreach (TypeParameterConstraint type in c._type_parameter_constraints)
+                                {
+                                    if (type._type == null)
+                                    {
+                                        tp.HasReferenceTypeConstraint = true;
+                                        continue;
+                                    }
+
+                                    var lookupMode = (ownerType == SymbolKind.TypeDefinition) ? NameLookupMode.BaseTypeReference : NameLookupMode.Type;
+                                    tp.Constraints.Add(ConvertTypeReference(type._type, lookupMode));
+                                }
+                                parfound = true;
+                                break;
+                            }
+                        }
+                        if(!parfound)
+                            Compiler.Report.Error(2, constraints.Location, "Type parameters constraints cannot be defined unless there is a type parameter declared, no type parameter with this `{0}` has been found", c._identifier._Identifier);
+
+                    }
+                foreach (UnresolvedTypeParameterSpec tp in list)
+                    tp.ApplyInterningProvider(interningProvider);
+            }
+            else if(constraints != null)
+                Compiler.Report.Error(2, constraints.Location, "Type parameters constraints cannot be defined unless there is a type parameter declared");
+           
+        }
+        #endregion
+
+
+       #region Accessor
+      public UnresolvedMethodSpec ConvertAccessor(RaiseAccessorDeclaration accessor, IUnresolvedMember p,  bool memberIsExtern)
+       {
+           if (accessor == null)
+               return null;
+           var a = new UnresolvedMethodSpec(currentTypeDefinition, "raise_" + p.Name);
+           a.SymbolKind = SymbolKind.Accessor;
+           a.AccessorOwner = p;
+           a.Accessibility = GetAccessibility(accessor._opt_modifiers._Modifiers) ?? p.Accessibility;
+           a.IsAbstract = p.IsAbstract;
+           a.IsOverride = p.IsOverride;
+           a.IsSealed = p.IsSealed;
+           a.IsStatic = p.IsStatic;
+           a.IsSynthetic = p.IsSynthetic;
+           a.IsVirtual = p.IsVirtual;
+
+           a.Region = MakeRegion(accessor);
+           a.BodyRegion = MakeRegion(accessor._block_or_semicolon);
+           // An accessor has no body if both are true:
+           //  a) there's no body in the code
+           //  b) the member is either abstract or extern
+           a.HasBody = !(accessor._block_or_semicolon._block_statement == null && (p.IsAbstract || memberIsExtern));
+           if (p.SymbolKind == SymbolKind.Indexer)
+           {
+               foreach (var indexerParam in ((IUnresolvedProperty)p).Parameters)
+                   a.Parameters.Add(indexerParam);
+           }
+           UnresolvedParameterSpec param = null;
+         
+               param = new UnresolvedParameterSpec(p.ReturnType, "value");
+               a.Parameters.Add(param);
+               a.ReturnType = KnownTypeReference.Void;
+          
+
+               ConvertAttributes(a.ReturnTypeAttributes, accessor._opt_attributes._ReturnAttributes);
+               ConvertAttributes(a.Attributes, accessor._opt_attributes._Attributes);
+     
+           if (p.IsExplicitInterfaceImplementation)
+           {
+               a.IsExplicitInterfaceImplementation = true;
+               Debug.Assert(p.ExplicitInterfaceImplementations.Count == 1);
+               a.ExplicitInterfaceImplementations.Add(interningProvider.Intern(new MemberReferenceSpec(
+                   SymbolKind.Accessor,
+                   p.ExplicitInterfaceImplementations[0].DeclaringTypeReference,
+                   a.Name, 0, GetParameterTypes(a.Parameters)
+               )));
+           }
+           a.ApplyInterningProvider(interningProvider);
+           return a;
+       }
+      public UnresolvedMethodSpec ConvertAccessor(AddAccessorDeclaration accessor, IUnresolvedMember p, bool memberIsExtern)
+       {
+           if (accessor == null)
+               return null;
+           var a = new UnresolvedMethodSpec(currentTypeDefinition, "add_" + p.Name);
+           a.SymbolKind = SymbolKind.Accessor;
+           a.AccessorOwner = p;
+           a.Accessibility = GetAccessibility(accessor._opt_modifiers._Modifiers) ?? p.Accessibility;
+           a.IsAbstract = p.IsAbstract;
+           a.IsOverride = p.IsOverride;
+           a.IsSealed = p.IsSealed;
+           a.IsStatic = p.IsStatic;
+           a.IsSynthetic = p.IsSynthetic;
+           a.IsVirtual = p.IsVirtual;
+
+           a.Region = MakeRegion(accessor);
+           a.BodyRegion = MakeRegion(accessor._block_or_semicolon);
+           // An accessor has no body if both are true:
+           //  a) there's no body in the code
+           //  b) the member is either abstract or extern
+           a.HasBody = !(accessor._block_or_semicolon._block_statement == null && (p.IsAbstract || memberIsExtern));
+           if (p.SymbolKind == SymbolKind.Indexer)
+           {
+               foreach (var indexerParam in ((IUnresolvedProperty)p).Parameters)
+                   a.Parameters.Add(indexerParam);
+           }
+           UnresolvedParameterSpec param = null;
+
+           param = new UnresolvedParameterSpec(p.ReturnType, "value");
+           a.Parameters.Add(param);
+           a.ReturnType = KnownTypeReference.Void;
+   
+           ConvertAttributes(a.ReturnTypeAttributes, accessor._opt_attributes._ReturnAttributes);
+           ConvertAttributes(a.Attributes, accessor._opt_attributes._Attributes);
+
+           if (p.IsExplicitInterfaceImplementation)
+           {
+               a.IsExplicitInterfaceImplementation = true;
+               Debug.Assert(p.ExplicitInterfaceImplementations.Count == 1);
+               a.ExplicitInterfaceImplementations.Add(interningProvider.Intern(new MemberReferenceSpec(
+                   SymbolKind.Accessor,
+                   p.ExplicitInterfaceImplementations[0].DeclaringTypeReference,
+                   a.Name, 0, GetParameterTypes(a.Parameters)
+               )));
+           }
+           a.ApplyInterningProvider(interningProvider);
+           return a;
+       }
+      public UnresolvedMethodSpec ConvertAccessor(RemoveAccessorDeclaration accessor, IUnresolvedMember p, bool memberIsExtern)
+       {
+           if (accessor == null)
+               return null;
+           var a = new UnresolvedMethodSpec(currentTypeDefinition, "remove_" + p.Name);
+           a.SymbolKind = SymbolKind.Accessor;
+           a.AccessorOwner = p;
+           a.Accessibility = GetAccessibility(accessor._opt_modifiers._Modifiers) ?? p.Accessibility;
+           a.IsAbstract = p.IsAbstract;
+           a.IsOverride = p.IsOverride;
+           a.IsSealed = p.IsSealed;
+           a.IsStatic = p.IsStatic;
+           a.IsSynthetic = p.IsSynthetic;
+           a.IsVirtual = p.IsVirtual;
+
+           a.Region = MakeRegion(accessor);
+           a.BodyRegion = MakeRegion(accessor._block_or_semicolon);
+           // An accessor has no body if both are true:
+           //  a) there's no body in the code
+           //  b) the member is either abstract or extern
+           a.HasBody = !(accessor._block_or_semicolon._block_statement == null && (p.IsAbstract || memberIsExtern));
+           if (p.SymbolKind == SymbolKind.Indexer)
+           {
+               foreach (var indexerParam in ((IUnresolvedProperty)p).Parameters)
+                   a.Parameters.Add(indexerParam);
+           }
+           UnresolvedParameterSpec param = null;
+         
+           param = new UnresolvedParameterSpec(p.ReturnType, "value");
+           a.Parameters.Add(param);
+           a.ReturnType = KnownTypeReference.Void;
+      
+
+           ConvertAttributes(a.ReturnTypeAttributes, accessor._opt_attributes._ReturnAttributes);
+           ConvertAttributes(a.Attributes, accessor._opt_attributes._Attributes);
+
+           if (p.IsExplicitInterfaceImplementation)
+           {
+               a.IsExplicitInterfaceImplementation = true;
+               Debug.Assert(p.ExplicitInterfaceImplementations.Count == 1);
+               a.ExplicitInterfaceImplementations.Add(interningProvider.Intern(new MemberReferenceSpec(
+                   SymbolKind.Accessor,
+                   p.ExplicitInterfaceImplementations[0].DeclaringTypeReference,
+                   a.Name, 0, GetParameterTypes(a.Parameters)
+               )));
+           }
+           a.ApplyInterningProvider(interningProvider);
+           return a;
+       }
+      public UnresolvedMethodSpec ConvertAccessor(GetAccessorDeclaration accessor, IUnresolvedMember p, bool memberIsExtern)
+       {
+           if (accessor == null)
+               return null;
+           var a = new UnresolvedMethodSpec(currentTypeDefinition, "get_" + p.Name);
+           a.SymbolKind = SymbolKind.Accessor;
+           a.AccessorOwner = p;
+           a.Accessibility = GetAccessibility(accessor._opt_modifiers._Modifiers) ?? p.Accessibility;
+           a.IsAbstract = p.IsAbstract;
+           a.IsOverride = p.IsOverride;
+           a.IsSealed = p.IsSealed;
+           a.IsStatic = p.IsStatic;
+           a.IsSynthetic = p.IsSynthetic;
+           a.IsVirtual = p.IsVirtual;
+
+           a.Region = MakeRegion(accessor);
+           a.BodyRegion = MakeRegion(accessor._block_or_semicolon);
+           // An accessor has no body if both are true:
+           //  a) there's no body in the code
+           //  b) the member is either abstract or extern
+           a.HasBody = !(accessor._block_or_semicolon._block_statement == null && (p.IsAbstract || memberIsExtern));
+           if (p.SymbolKind == SymbolKind.Indexer)
+           {
+               foreach (var indexerParam in ((IUnresolvedProperty)p).Parameters)
+                   a.Parameters.Add(indexerParam);
+           }
+        
+           a.ReturnType = p.ReturnType;
+        
+     
+
+           ConvertAttributes(a.ReturnTypeAttributes, accessor._opt_attributes._ReturnAttributes);
+           ConvertAttributes(a.Attributes, accessor._opt_attributes._Attributes);
+
+           if (p.IsExplicitInterfaceImplementation)
+           {
+               a.IsExplicitInterfaceImplementation = true;
+               Debug.Assert(p.ExplicitInterfaceImplementations.Count == 1);
+               a.ExplicitInterfaceImplementations.Add(interningProvider.Intern(new MemberReferenceSpec(
+                   SymbolKind.Accessor,
+                   p.ExplicitInterfaceImplementations[0].DeclaringTypeReference,
+                   a.Name, 0, GetParameterTypes(a.Parameters)
+               )));
+           }
+           a.ApplyInterningProvider(interningProvider);
+           return a;
+       }
+      public UnresolvedMethodSpec ConvertAccessor(SetAccessorDeclaration accessor, IUnresolvedMember p, bool memberIsExtern)
+       {
+           if (accessor == null)
+               return null;
+           var a = new UnresolvedMethodSpec(currentTypeDefinition, "set_" + p.Name);
+           a.SymbolKind = SymbolKind.Accessor;
+           a.AccessorOwner = p;
+           a.Accessibility = GetAccessibility(accessor._opt_modifiers._Modifiers) ?? p.Accessibility;
+           a.IsAbstract = p.IsAbstract;
+           a.IsOverride = p.IsOverride;
+           a.IsSealed = p.IsSealed;
+           a.IsStatic = p.IsStatic;
+           a.IsSynthetic = p.IsSynthetic;
+           a.IsVirtual = p.IsVirtual;
+
+           a.Region = MakeRegion(accessor);
+           a.BodyRegion = MakeRegion(accessor._block_or_semicolon);
+           // An accessor has no body if both are true:
+           //  a) there's no body in the code
+           //  b) the member is either abstract or extern
+           a.HasBody = !(accessor._block_or_semicolon._block_statement == null && (p.IsAbstract || memberIsExtern));
+           if (p.SymbolKind == SymbolKind.Indexer)
+           {
+               foreach (var indexerParam in ((IUnresolvedProperty)p).Parameters)
+                   a.Parameters.Add(indexerParam);
+           }
+           UnresolvedParameterSpec param = null;
+       
+           param = new UnresolvedParameterSpec(p.ReturnType, "value");
+           a.Parameters.Add(param);
+           a.ReturnType = KnownTypeReference.Void;
+     
+           ConvertAttributes(a.ReturnTypeAttributes, accessor._opt_attributes._ReturnAttributes);
+           ConvertAttributes(a.Attributes, accessor._opt_attributes._Attributes);
+
+           if (p.IsExplicitInterfaceImplementation)
+           {
+               a.IsExplicitInterfaceImplementation = true;
+               Debug.Assert(p.ExplicitInterfaceImplementations.Count == 1);
+               a.ExplicitInterfaceImplementations.Add(interningProvider.Intern(new MemberReferenceSpec(
+                   SymbolKind.Accessor,
+                   p.ExplicitInterfaceImplementations[0].DeclaringTypeReference,
+                   a.Name, 0, GetParameterTypes(a.Parameters)
+               )));
+           }
+           a.ApplyInterningProvider(interningProvider);
+           return a;
+       }
+
+      public UnresolvedMethodSpec CreateDefaultEventAccessor(IUnresolvedEvent ev, string name, IUnresolvedParameter valueParameter)
+      {
+          var a = new UnresolvedMethodSpec(currentTypeDefinition, name);
+          a.SymbolKind = SymbolKind.Accessor;
+          a.AccessorOwner = ev;
+          a.Region = ev.BodyRegion;
+          a.BodyRegion = DomRegion.Empty;
+          a.Accessibility = ev.Accessibility;
+          a.IsAbstract = ev.IsAbstract;
+          a.IsOverride = ev.IsOverride;
+          a.IsSealed = ev.IsSealed;
+          a.IsStatic = ev.IsStatic;
+          a.IsSynthetic = ev.IsSynthetic;
+          a.IsVirtual = ev.IsVirtual;
+          a.HasBody = true; // even if it's compiler-generated; the body still exists
+          a.ReturnType = KnownTypeReference.Void;
+          a.Parameters.Add(valueParameter);
+          return a;
+      }
+       #endregion
+
+      static IUnresolvedParameter MakeParameter(ITypeReference type, string name)
+      {
+          UnresolvedParameterSpec p = new UnresolvedParameterSpec(type, name);
+          p.Freeze();
+          return p;
+      }
+      static readonly IUnresolvedParameter delegateObjectParameter = MakeParameter(KnownTypeReference.Object, "object");
+      static readonly IUnresolvedParameter delegateIntPtrMethodParameter = MakeParameter(KnownTypeReference.IntPtr, "method");
+
+      /// <summary>
+      /// Adds the 'Invoke' method, and a constructor, to the <paramref name="delegateType"/>.
+      /// </summary>
+      public void AddDefaultMethodsToDelegate(UnresolvedTypeDefinitionSpec delegateType, ITypeReference returnType, IEnumerable<IUnresolvedParameter> parameters)
+      {
+          if (delegateType == null)
+              throw new ArgumentNullException("delegateType");
+          if (returnType == null)
+              throw new ArgumentNullException("returnType");
+          if (parameters == null)
+              throw new ArgumentNullException("parameters");
+
+          DomRegion region = delegateType.Region;
+          region = new DomRegion(region.FileName, region.BeginLine, region.BeginColumn); // remove end position
+
+          UnresolvedMethodSpec invoke = new UnresolvedMethodSpec(delegateType, "Invoke");
+          invoke.Accessibility = Accessibility.Public;
+          invoke.IsSynthetic = true;
+          foreach (var p in parameters)
+              invoke.Parameters.Add(p);
+          invoke.ReturnType = returnType;
+          invoke.Region = region;
+          delegateType.Members.Add(invoke);
+
+          UnresolvedMethodSpec ctor = new UnresolvedMethodSpec(delegateType, ".ctor");
+          ctor.SymbolKind = SymbolKind.Constructor;
+          ctor.Accessibility = Accessibility.Public;
+          ctor.IsSynthetic = true;
+          ctor.Parameters.Add(delegateObjectParameter);
+          ctor.Parameters.Add(delegateIntPtrMethodParameter);
+          ctor.ReturnType = delegateType;
+          ctor.Region = region;
+          delegateType.Members.Add(ctor);
+      }
+
+       public  IList<ITypeReference> GetParameterTypes(IList<IUnresolvedParameter> parameters)
+       {
+           if (parameters.Count == 0)
+               return EmptyList<ITypeReference>.Instance;
+           ITypeReference[] types = new ITypeReference[parameters.Count];
+           for (int i = 0; i < types.Length; i++)
+               types[i] = parameters[i].Type;
+           
+           return interningProvider.InternList(types);
+       }
+       public bool InheritsConstraints(MethodDeclaration methodDeclaration)
+       {
+           // overrides and explicit interface implementations inherit constraints
+           if ((methodDeclaration._Modifiers & VSC.TypeSystem.Modifiers.OVERRIDE) == VSC.TypeSystem.Modifiers.OVERRIDE)
+               return true;
+
+
+           return methodDeclaration._method_header._method_declaration_name._explicit_interface != null;
+       }
+
+       public DomRegion MakeRegion(Declaration node)
+       {
+           return MakeRegion(node as Semantic);
+       }
+       public DomRegion MakeRegion(MethodBodyExpressionBlock node)
+       {
+           return MakeRegion(node as Semantic);
+       }
+       public DomRegion MakeRegion(BlockOrSemicolon node)
+       {
+           return MakeRegion(node as Semantic);
+       }
+       public DomRegion MakeRegion(BlockStatement node)
+       {
+           return MakeRegion(node as Semantic);
+       }
+   
+        public DomRegion MakeRegion(Semantic node)
         {
             if (node == null )
                 return DomRegion.Empty;

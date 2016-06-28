@@ -684,6 +684,87 @@ namespace VSC.TypeSystem.Resolver
 				}
 			}
 		}
+
+        public static uint RotateLeft(uint value, int count)
+            {
+                    return (value << count) | (value >> (32 - count));
+            }
+        public static uint RotateRight(uint value, int count)
+            {
+                return (value >> count) | (value << (32 - count));
+            }
+        public static ulong RotateLeft(ulong value, int count)
+        {
+            return (value << count) | (value >> (64 - count));
+        }
+        public static ulong RotateRight(ulong value, int count)
+        {
+            return (value >> count) | (value << (64 - count));
+        }
+        public static long RotateLeft(long value, int count)
+        {
+            return (value << count) | (value >> (64 - count));
+        }
+        public static long RotateRight(long value, int count)
+        {
+            return (value >> count) | (value << (64 - count));
+        }
+        public static int RotateLeft(int value, int count)
+        {
+            return (value << count) | (value >> (64 - count));
+        }
+        public static int RotateRight(int value, int count)
+        {
+            return (value >> count) | (value << (64 - count));
+        }
+
+
+        OperatorMethod[] rotateLeftOperators;
+        public OperatorMethod[] RotateLeftOperators
+        {
+            get
+            {
+                OperatorMethod[] ops = LazyInit.VolatileRead(ref rotateLeftOperators);
+                if (ops != null)
+                {
+                    return ops;
+                }
+                else
+                {
+                    return LazyInit.GetOrSet(ref rotateLeftOperators, Lift(
+                        new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => RotateLeft(a, b)),
+                        new LambdaBinaryOperatorMethod<uint, int>(this, (a, b) => RotateLeft(a,b)),
+                        new LambdaBinaryOperatorMethod<long, int>(this, (a, b) => RotateLeft(a, b)),
+                        new LambdaBinaryOperatorMethod<ulong, int>(this, (a, b) => RotateLeft(a, b))
+                    ));
+                }
+            }
+        }
+
+        OperatorMethod[] rotateRightOperators;
+        public OperatorMethod[] RotateRightOperators
+        {
+            get
+            {
+                OperatorMethod[] ops = LazyInit.VolatileRead(ref rotateRightOperators);
+                if (ops != null)
+                {
+                    return ops;
+                }
+                else
+                {
+                    return LazyInit.GetOrSet(ref rotateRightOperators, Lift(
+                        new LambdaBinaryOperatorMethod<int, int>(this, (a, b) => RotateRight(a,b)),
+                        new LambdaBinaryOperatorMethod<uint, int>(this, (a, b) => RotateRight(a, b)),
+                        new LambdaBinaryOperatorMethod<long, int>(this, (a, b) => RotateRight(a, b)),
+                        new LambdaBinaryOperatorMethod<ulong, int>(this, (a, b) => RotateRight(a, b))
+                    ));
+                }
+            }
+        }
+
+
+
 		#endregion
 		
 		#region Equality operators
@@ -770,7 +851,7 @@ namespace VSC.TypeSystem.Resolver
 			TypeCode.Decimal,
 			TypeCode.Boolean
 		};
-		
+  
 		OperatorMethod[] valueEqualityOperators;
 		
 		public OperatorMethod[] ValueEqualityOperators {

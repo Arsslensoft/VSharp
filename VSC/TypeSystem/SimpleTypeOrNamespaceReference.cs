@@ -26,7 +26,7 @@ using VSC.TypeSystem.Resolver;
 namespace VSC.TypeSystem
 {
 	/// <summary>
-	/// Represents a simple C# name. (a single non-qualified identifier with an optional list of type arguments)
+	/// Represents a simple V# name. (a single non-qualified identifier with an optional list of type arguments)
 	/// </summary>
 	[Serializable]
 	public sealed class SimpleTypeOrNamespaceReference : TypeOrNamespaceReference, ISupportsInterning

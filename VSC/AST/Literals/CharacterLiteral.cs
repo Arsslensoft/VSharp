@@ -5,8 +5,10 @@ namespace VSC.AST {
     {
  
 			[Rule("<Character Constant> ::= CharLiteral")]
-			public CharacterLiteral( Semantic _symbol80)
+			public CharacterLiteral( CharTerminal _symbol80)
 				{
+                  
+                    ConstantExpr = new CharConstant(StringHelper.CharFromVSharpLiteral(_symbol80.Name.Substring(1,_symbol80.Name.Length - 2)), _symbol80.position);
 				}
 }
 }

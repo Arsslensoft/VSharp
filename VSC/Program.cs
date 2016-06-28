@@ -10,6 +10,7 @@ using VSC.Base.GoldParser;
 using VSC.Base.GoldParser.Grammar;
 using VSC.Base.GoldParser.Parser;
 using VSC.Base.GoldParser.Semantic;
+using VSC.Context;
 
 namespace VSC
 {
@@ -34,21 +35,26 @@ namespace VSC
 
             }
 
-           // if (parseMessage == ParseMessage.Accept)
-            //CompilationUnit cu = processor.CurrentToken as CompilationUnit;
+            if (parseMessage == ParseMessage.Accept)
+            {
+                CompilationUnit cu = processor.CurrentToken as CompilationUnit;
+                CompilerContext cctx = new CompilerContext();
+                SymbolResolveContext srctx = new SymbolResolveContext(file, cctx);
+                cu.Resolve(srctx);
+            }
             st.Stop();
             Console.WriteLine(st.Elapsed);
         }
         static void Main(string[] args)
         {
-            Parse(@"C:\Users\Arsslen\Desktop\a.vs");
-            Parse(@"C:\Users\Arsslen\Desktop\a.vs");
-            Parse(@"C:\Users\Arsslen\Desktop\c.vs");
-            Parse(@"C:\Users\Arsslen\Desktop\c.vs");
-            Parse(@"C:\Users\Arsslen\Desktop\a.vs");
-            Parse(@"C:\Users\Arsslen\Desktop\a.vs");
-            Parse(@"C:\Users\Arsslen\Desktop\c.vs");
-            Parse(@"C:\Users\Arsslen\Desktop\c.vs");
+            Parse(@"..\..\Tests\test.vs");
+            //Parse(@"C:\Users\Arsslen\Desktop\a.vs");
+            //Parse(@"C:\Users\Arsslen\Desktop\c.vs");
+            //Parse(@"C:\Users\Arsslen\Desktop\c.vs");
+            //Parse(@"C:\Users\Arsslen\Desktop\a.vs");
+            //Parse(@"C:\Users\Arsslen\Desktop\a.vs");
+            //Parse(@"C:\Users\Arsslen\Desktop\c.vs");
+            //Parse(@"C:\Users\Arsslen\Desktop\c.vs");
             Console.Read();
         }
     }

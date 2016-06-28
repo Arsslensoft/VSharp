@@ -3,6 +3,47 @@ using System.IO;
 using VSC.Base.GoldParser.Semantic;
 using VSC.Context;
 namespace VSC.AST {
+
+     [Terminal("OctalLiteral")]
+    public class OctalTerminal : Semantic
+    {
+     public OctalTerminal(string text) : base(text) { }
+    }
+        [Terminal("BinaryLiteral")]
+    public class BinaryTerminal : Semantic
+    {
+            public BinaryTerminal(string text) : base(text) { }
+    }
+  [Terminal("DecLiteral")]
+ public class DecimalTerminal : Semantic
+    {
+      public DecimalTerminal(string text) : base(text) { }
+    }
+    [Terminal("HexLiteral")]
+    public class HexTerminal : Semantic
+    {
+        public HexTerminal(string text) : base(text) { }
+    }
+        [Terminal("RealLiteral")]
+    public class FloatTerminal : Semantic
+    {
+        public FloatTerminal(string text) : base(text) { }
+    }
+        [Terminal("CharLiteral")]
+    public class CharTerminal : Semantic
+    {
+        public CharTerminal(string text) : base(text) { }
+    }
+        [Terminal("VerbatimStringLiteral")]
+    public class VerbatimStringTerminal : Semantic
+    {
+        public VerbatimStringTerminal(string text) : base(text) { }
+    }
+        [Terminal("RegularStringLiteral")]
+    public class RegularStringTerminal : Semantic
+    {
+        public RegularStringTerminal(string text) : base(text) { }
+    }
     [Terminal("(EOF)")]
     [Terminal("(Error)")]
     [Terminal("(Whitespace)")]
@@ -76,19 +117,16 @@ namespace VSC.AST {
     [Terminal("add")]
     [Terminal("as")]
     [Terminal("ASMCodeLiteral")]
-    [Terminal("BinaryLiteral")]
     [Terminal("bool")]
     [Terminal("break")]
     [Terminal("byte")]
     [Terminal("case")]
     [Terminal("catch")]
     [Terminal("char")]
-    [Terminal("CharLiteral")]
     [Terminal("checked")]
     [Terminal("class")]
     [Terminal("const")]
     [Terminal("continue")]
-    [Terminal("DecLiteral")]
     [Terminal("default")]
     [Terminal("delegate")]
     [Terminal("delete")]
@@ -106,7 +144,6 @@ namespace VSC.AST {
     [Terminal("foreach")]
     [Terminal("get")]
     [Terminal("goto")]
-    [Terminal("HexLiteral")]
     [Terminal("Identifier")]
     [Terminal("if")]
     [Terminal("implicit")]
@@ -121,7 +158,6 @@ namespace VSC.AST {
     [Terminal("new")]
     [Terminal("null")]
     [Terminal("object")]
-    [Terminal("OctalLiteral")]
     [Terminal("operator")]
     [Terminal("OperatorLiteralBinary")]
     [Terminal("OperatorLiteralUnary")]
@@ -134,9 +170,7 @@ namespace VSC.AST {
     [Terminal("public")]
     [Terminal("raise")]
     [Terminal("readonly")]
-    [Terminal("RealLiteral")]
     [Terminal("ref")]
-    [Terminal("RegularStringLiteral")]
     [Terminal("remove")]
     [Terminal("return")]
     [Terminal("sbyte")]
@@ -163,22 +197,25 @@ namespace VSC.AST {
     [Terminal("unsafe")]
     [Terminal("ushort")]
     [Terminal("using")]
-    [Terminal("VerbatimStringLiteral")]
     [Terminal("virtual")]
     [Terminal("void")]
     [Terminal("where")]
     [Terminal("while")]
 	public class Semantic : SemanticToken
     {
-            
+        string _name = null;
         public static Location TranslateLocation(VSC.Base.GoldParser.Parser.LineInfo li)
         {
             return new Location(new SourceFile(Path.GetFileName(li.SourceFile), li.SourceFile, 0), li.Line, li.Column);
         }
         private Location _loc;
         public Location Location { get { _loc = TranslateLocation(position); return _loc; } }
-        public virtual string Name { get { return symbol.Name; } }
-
+        public virtual string Name { get { if (_name == null)return symbol.Name; else return _name; } }
+        public Semantic() { }
+        public Semantic(string text)
+        {
+            _name = text;
+        }
         public virtual void EmitComment(string comment, EmitContext ec)
         {
         }

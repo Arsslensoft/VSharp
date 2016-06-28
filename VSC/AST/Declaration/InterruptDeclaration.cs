@@ -1,7 +1,8 @@
 using System;
 using VSC.Base.GoldParser.Semantic;
-namespace VSC.AST { 
-	public class InterruptDeclaration : Semantic {
+namespace VSC.AST {
+    public class InterruptDeclaration : Declaration
+    {
  			public IntegralLiteral _integral_constant;
 			public BlockStatement _block_statement;
 

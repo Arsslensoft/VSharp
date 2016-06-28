@@ -5,7 +5,7 @@ namespace VSC.AST {
  			public AddAccessorDeclaration _add_accessor_declaration;
 			public RemoveAccessorDeclaration _remove_accessor_declaration;
 			public RaiseAccessorDeclarationOpt _raise_accessor_declaration_opt;
-			public RaiseAccessorDeclaration _raise_accessor_declaration;
+
 
 			[Rule("<event accessor declarations> ::= <add accessor declaration> <remove accessor declaration> <raise accessor declaration opt>")]
 			public EventAccessorDeclarations(AddAccessorDeclaration _AddAccessorDeclaration,RemoveAccessorDeclaration _RemoveAccessorDeclaration,RaiseAccessorDeclarationOpt _RaiseAccessorDeclarationOpt)
@@ -33,10 +33,6 @@ namespace VSC.AST {
 				_remove_accessor_declaration = _RemoveAccessorDeclaration;
 				_raise_accessor_declaration_opt = _RaiseAccessorDeclarationOpt;
 				}
-			[Rule("<event accessor declarations> ::= <raise accessor declaration>")]
-			public EventAccessorDeclarations(RaiseAccessorDeclaration _RaiseAccessorDeclaration)
-				{
-				_raise_accessor_declaration = _RaiseAccessorDeclaration;
-				}
+	
 }
 }

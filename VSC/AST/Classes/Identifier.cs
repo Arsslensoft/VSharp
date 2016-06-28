@@ -1,6 +1,7 @@
 using System;
 using VSC.Base.GoldParser.Semantic;
-namespace VSC.AST { 
+namespace VSC.AST {
+
 	public class Identifier : Semantic {
 
         internal string _Identifier;

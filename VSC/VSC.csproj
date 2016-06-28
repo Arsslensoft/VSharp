@@ -41,6 +41,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AST\BinaryOperationExpression.cs" />
+    <Compile Include="AST\Constants\CharConstant.cs" />
     <Compile Include="AST\Declaration\AccessorDeclarations.cs" />
     <Compile Include="AST\Declaration\AddAccessorDeclaration.cs" />
     <Compile Include="AST\Classes\List.cs" />
@@ -94,9 +96,7 @@
     <Compile Include="AST\Expression\CheckedExpression.cs" />
     <Compile Include="AST\Statement\CheckedStatement.cs" />
     <Compile Include="AST\Classes\ClassBase.cs" />
-    <Compile Include="AST\Classes\ClassDeclaration.cs" />
-    <Compile Include="AST\Declaration\ClassMemberDeclaration.cs" />
-    <Compile Include="AST\Sequences\ClassMemberDeclarations.cs" />
+    <Compile Include="AST\Declaration\ClassDeclaration.cs" />
     <Compile Include="AST\Classes\CompilationUnit.cs" />
     <Compile Include="AST\Expression\ConditionalAndExpression.cs" />
     <Compile Include="AST\Expression\ConditionalExpression.cs" />
@@ -105,28 +105,23 @@
     <Compile Include="AST\Classes\ConstantDeclarator.cs" />
     <Compile Include="AST\Sequences\ConstantDeclarators.cs" />
     <Compile Include="AST\Expression\ConstantExpression.cs" />
-    <Compile Include="AST\Classes\ConstantInitializer.cs" />
-    <Compile Include="AST\Classes\ConstantInitializerExpr.cs" />
     <Compile Include="AST\Classes\ConstDeclarator.cs" />
     <Compile Include="AST\Sequences\ConstDeclarators.cs" />
-    <Compile Include="AST\Classes\ConstructorBody.cs" />
     <Compile Include="AST\Declaration\ConstructorDeclaration.cs" />
     <Compile Include="AST\Classes\ConstructorDeclarator.cs" />
     <Compile Include="AST\Classes\ConstructorInitializer.cs" />
     <Compile Include="AST\Classes\ConstVariableInitializer.cs" />
     <Compile Include="AST\Statement\ContinueStatement.cs" />
-    <Compile Include="AST\Declaration\ConversionOperatorDeclarator.cs" />
     <Compile Include="AST\Expression\DefaultValueExpression.cs" />
-    <Compile Include="AST\Classes\DelegateDeclaration.cs" />
+    <Compile Include="AST\Declaration\DelegateDeclaration.cs" />
     <Compile Include="AST\Statement\DeleteStatement.cs" />
-    <Compile Include="AST\Classes\DestructorDeclaration.cs" />
+    <Compile Include="AST\Declaration\DestructorDeclaration.cs" />
     <Compile Include="AST\Sequences\DimSeparators.cs" />
     <Compile Include="AST\Statement\DoWhileStatement.cs" />
     <Compile Include="AST\Expression\ElementAccess.cs" />
     <Compile Include="AST\Statement\EmptyStatement.cs" />
-    <Compile Include="AST\Classes\EnumDeclaration.cs" />
+    <Compile Include="AST\Declaration\EnumDeclaration.cs" />
     <Compile Include="AST\Declaration\EnumMemberDeclaration.cs" />
-    <Compile Include="AST\Sequences\EnumMemberDeclarations.cs" />
     <Compile Include="AST\Expression\EqualityExpression.cs" />
     <Compile Include="AST\Declaration\EventAccessorDeclarations.cs" />
     <Compile Include="AST\Declaration\EventDeclaration.cs" />
@@ -155,7 +150,6 @@
     <Compile Include="AST\Statement\ForStatement.cs" />
     <Compile Include="AST\Statement\ForThenStatement.cs" />
     <Compile Include="AST\Classes\GetAccessorDeclaration.cs" />
-    <Compile Include="AST\Declaration\GlobalMemberDeclaration.cs" />
     <Compile Include="AST\Statement\GotoCaseStatement.cs" />
     <Compile Include="AST\Statement\GotoDefaultStatement.cs" />
     <Compile Include="AST\Statement\GotoLabelStatement.cs" />
@@ -173,8 +167,6 @@
     <Compile Include="AST\Literals\IntegralLiteral.cs" />
     <Compile Include="AST\Classes\IntegralType.cs" />
     <Compile Include="AST\Declaration\InterfaceDeclaration.cs" />
-    <Compile Include="AST\Declaration\InterfaceMemberDeclaration.cs" />
-    <Compile Include="AST\Sequences\InterfaceMemberDeclarations.cs" />
     <Compile Include="AST\Declaration\InterruptDeclaration.cs" />
     <Compile Include="AST\Statement\InterruptStatement.cs" />
     <Compile Include="AST\Expression\InvocationExpression.cs" />
@@ -185,7 +177,6 @@
     <Compile Include="AST\Sequences\LambdaParameterList.cs" />
     <Compile Include="AST\Expression\LogicalNegationExpression.cs" />
     <Compile Include="AST\Expression\MemberAccess.cs" />
-    <Compile Include="AST\Classes\MemberDeclarationName.cs" />
     <Compile Include="AST\Classes\MemberType.cs" />
     <Compile Include="AST\Classes\MethodBodyExpressionBlock.cs" />
     <Compile Include="AST\Declaration\MethodDeclaration.cs" />
@@ -196,7 +187,6 @@
     <Compile Include="AST\Literals\MultilineStringLiteral.cs" />
     <Compile Include="AST\Expression\MultiplicativeExpression.cs" />
     <Compile Include="AST\Expression\NegationExpression.cs" />
-    <Compile Include="AST\Expression\NonAssignmentExpression.cs" />
     <Compile Include="AST\Classes\NonSimpleArgument.cs" />
     <Compile Include="AST\Expression\NullCoalescingExpression.cs" />
     <Compile Include="AST\Literals\NullLiteral.cs" />
@@ -204,7 +194,6 @@
     <Compile Include="AST\Expression\OnesComplementExpression.cs" />
     <Compile Include="AST\Declaration\OperatorDeclaration.cs" />
     <Compile Include="AST\Classes\OperatorDeclarator.cs" />
-    <Compile Include="AST\Classes\OperatorType.cs" />
     <Compile Include="AST\Optional\OptArgumentList.cs" />
     <Compile Include="AST\Optional\OptArrayInitializer.cs" />
     <Compile Include="AST\Optional\OptAttributes.cs" />
@@ -238,8 +227,7 @@
     <Compile Include="AST\Classes\OverloadableOperator.cs" />
     <Compile Include="AST\Declaration\PackageDeclaration.cs" />
     <Compile Include="AST\Sequences\PackageDeclarations.cs" />
-    <Compile Include="AST\Declaration\PackageOrTypeDeclaration.cs" />
-    <Compile Include="AST\Sequences\PackageOrTypeDeclarations.cs" />
+    <Compile Include="AST\Sequences\DeclarationSequence.cs" />
     <Compile Include="AST\Classes\PackageOrTypeExpr.cs" />
     <Compile Include="AST\Classes\ParameterArray.cs" />
     <Compile Include="AST\Classes\ParameterModifier.cs" />
@@ -288,7 +276,6 @@
     <Compile Include="AST\Statement\TryStatement.cs" />
     <Compile Include="AST\Classes\Type.cs" />
     <Compile Include="AST\Sequences\TypeArguments.cs" />
-    <Compile Include="AST\Declaration\TypeDeclaration.cs" />
     <Compile Include="AST\Classes\TypeDeclarationName.cs" />
     <Compile Include="AST\Classes\TypeExpression.cs" />
     <Compile Include="AST\Classes\TypeExpressionOrArray.cs" />
@@ -455,6 +442,7 @@
     <Compile Include="Context\FlowAnalysisContext.cs" />
     <Compile Include="Context\ResolveContext.cs" />
     <Compile Include="TypeSystem\AliasNamespaceReference.cs" />
+    <Compile Include="TypeSystem\MethodTypeParameterWithInheritedConstraints.cs" />
     <Compile Include="TypeSystem\VSharpAttribute.cs" />
     <Compile Include="TypeSystem\MemberTypeOrNamespaceReference.cs" />
     <Compile Include="TypeSystem\Resolver\AliasNamespaceResolveResult.cs" />
@@ -629,7 +617,8 @@
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>$(ProjectDir)\..\jay -ctv &lt; $(ProjectDir)\..\skeleton.cs $(ProjectDir)\VSharpParser.jay &gt; $(ProjectDir)\VSharpParser.cs</PreBuildEvent>
+    <PreBuildEvent>
+    </PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

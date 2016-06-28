@@ -17,10 +17,11 @@ namespace VSC.TypeSystem
     [Flags]
     public enum Modifiers
     {
+        NONE = 0,
         PROTECTED = 0x0001,
         PUBLIC = 0x0002,
         PRIVATE = 0x0004,
-        FRIEND = 0x0008,
+        INTERNAL = 0x0008,
         NEW = 0x0010,
         ABSTRACT = 0x0020,
         SEALED = 0x0040,
@@ -43,7 +44,7 @@ namespace VSC.TypeSystem
         COMPILER_GENERATED = 0x100000,
         BACKING_FIELD = 0x200000,
 
-        AccessibilityMask = PUBLIC | PROTECTED | FRIEND | PRIVATE,
+        AccessibilityMask = PUBLIC | PROTECTED | INTERNAL | PRIVATE,
         AllowedExplicitImplFlags = UNSAFE | EXTERN,
     }
 
@@ -57,9 +58,9 @@ namespace VSC.TypeSystem
                     return "public";
                 case Modifiers.PROTECTED:
                     return "protected";
-                case Modifiers.PROTECTED | Modifiers.FRIEND:
+                case Modifiers.PROTECTED | Modifiers.INTERNAL:
                     return "protected friend";
-                case Modifiers.FRIEND:
+                case Modifiers.INTERNAL:
                     return "friend";
                 case Modifiers.PRIVATE:
                     return "private";
@@ -79,7 +80,7 @@ namespace VSC.TypeSystem
                     s = "public"; break;
                 case Modifiers.PROTECTED:
                     s = "protected"; break;
-                case Modifiers.FRIEND:
+                case Modifiers.INTERNAL:
                     s = "friend"; break;
                 case Modifiers.PRIVATE:
                     s = "private"; break;
@@ -116,16 +117,16 @@ namespace VSC.TypeSystem
 
             if ((modB & Modifiers.PUBLIC) != 0)
             {
-                flags = Modifiers.PROTECTED | Modifiers.FRIEND | Modifiers.PRIVATE;
+                flags = Modifiers.PROTECTED | Modifiers.INTERNAL | Modifiers.PRIVATE;
             }
             else if ((modB & Modifiers.PROTECTED) != 0)
             {
-                if ((modB & Modifiers.FRIEND) != 0)
-                    flags = Modifiers.PROTECTED | Modifiers.FRIEND;
+                if ((modB & Modifiers.INTERNAL) != 0)
+                    flags = Modifiers.PROTECTED | Modifiers.INTERNAL;
 
                 flags |= Modifiers.PRIVATE;
             }
-            else if ((modB & Modifiers.FRIEND) != 0)
+            else if ((modB & Modifiers.INTERNAL) != 0)
                 flags = Modifiers.PRIVATE;
 
             return modB != modA && (modA & (~flags)) == 0;
