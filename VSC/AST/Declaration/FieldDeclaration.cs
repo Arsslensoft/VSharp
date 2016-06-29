@@ -1,19 +1,22 @@
 using System;
+using System.Collections.Generic;
 using VSC.Base.GoldParser.Semantic;
 using VSC.TypeSystem.Implementation;
 namespace VSC.AST {
     public class FieldDeclaration : Declaration
     {
+        public List<UnresolvedFieldSpec> UnresolvedFields = new List<UnresolvedFieldSpec>();
  			public OptAttributes _opt_attributes;
 			public OptModifiers _opt_modifiers;
 			public MemberType _member_type;
 			public Identifier _identifier;
 			public OptFieldInitializer _opt_field_initializer;
 			public OptFieldDeclarators _opt_field_declarators;
-
-			[Rule("<field declaration> ::= <opt attributes> <opt modifiers> <member type> <Identifier> <opt field initializer> <opt field declarators> ';'")]
-			public FieldDeclaration(OptAttributes _OptAttributes,OptModifiers _OptModifiers,MemberType _MemberType,Identifier _Identifier,OptFieldInitializer _OptFieldInitializer,OptFieldDeclarators _OptFieldDeclarators, Semantic _symbol31)
-				{
+            public OptDocumentation _opt_documentation;
+            [Rule("<field declaration> ::= <Opt Documentation> <opt attributes> <opt modifiers> <member type> <Identifier> <opt field initializer> <opt field declarators> ';'")]
+            public FieldDeclaration(OptDocumentation _OptDocumentation, OptAttributes _OptAttributes, OptModifiers _OptModifiers, MemberType _MemberType, Identifier _Identifier, OptFieldInitializer _OptFieldInitializer, OptFieldDeclarators _OptFieldDeclarators, Semantic _symbol31)
+            {
+                _opt_documentation = _OptDocumentation;
 				_opt_attributes = _OptAttributes;
 				_opt_modifiers = _OptModifiers;
 				_member_type = _MemberType;
@@ -29,7 +32,8 @@ namespace VSC.AST {
                 UnresolvedFieldSpec field = null;
                 // first one
                 field = new UnresolvedFieldSpec(rc.currentTypeDefinition, _identifier._Identifier);
-
+                // documentation
+                rc.AddDocumentation(field, _opt_documentation);
                 field.Region = rc.MakeRegion(_identifier);
                 field.BodyRegion = rc.MakeRegion(_opt_field_initializer);
                 // attributes
@@ -45,13 +49,14 @@ namespace VSC.AST {
      
                 rc.currentTypeDefinition.Members.Add(field);
                 field.ApplyInterningProvider(rc.interningProvider);
-
+                UnresolvedFields.Add(field);
                 // other fields
              if(!isSingleField)
                 foreach (FieldDeclarator vi in _opt_field_declarators._field_declarators)
                 {
                     field = new UnresolvedFieldSpec(rc.currentTypeDefinition, vi.Name);
-
+                    // documentation
+                    rc.AddDocumentation(field, _opt_documentation);
                     field.Region =  rc.MakeRegion(vi);
                     field.BodyRegion = rc.MakeRegion(vi._variable_initializer);
                     // attributes
@@ -69,7 +74,11 @@ namespace VSC.AST {
 
                     rc.currentTypeDefinition.Members.Add(field);
                     field.ApplyInterningProvider(rc.interningProvider);
+                    UnresolvedFields.Add(field);
                 }
+
+
+
                 return true;
             }
 }

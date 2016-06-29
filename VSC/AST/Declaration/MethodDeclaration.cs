@@ -7,12 +7,16 @@ using VSC.TypeSystem;
 namespace VSC.AST {
     public class MethodDeclaration : Declaration
     {
+        public UnresolvedMethodSpec UnresolvedMethod;
  			public MethodHeader _method_header;
 			public MethodBodyExpressionBlock _method_body_expression_block;
             public VSC.TypeSystem.Modifiers _Modifiers = TypeSystem.Modifiers.NONE;
-			[Rule("<method declaration> ::= <method header> <method body expression block>")]
-			public MethodDeclaration(MethodHeader _MethodHeader,MethodBodyExpressionBlock _MethodBodyExpressionBlock)
-				{
+
+            public OptDocumentation _opt_documentation;
+            [Rule("<method declaration> ::= <Opt Documentation> <method header> <method body expression block>")]
+            public MethodDeclaration(OptDocumentation _OptDocumentation, MethodHeader _MethodHeader, MethodBodyExpressionBlock _MethodBodyExpressionBlock)
+            {
+                _opt_documentation = _OptDocumentation;
 				_method_header = _MethodHeader;
 				_method_body_expression_block = _MethodBodyExpressionBlock;
                 _Modifiers = _MethodHeader._opt_modifiers._Modifiers;
@@ -33,7 +37,8 @@ namespace VSC.AST {
                 rc.currentMethod = m; // required for resolving type parameters
                 m.Region = rc.MakeRegion(this);
                 m.BodyRegion = rc.MakeRegion(_method_body_expression_block);
-
+                // documentation
+                rc.AddDocumentation(m, _opt_documentation);
                 if (rc.InheritsConstraints(this) && _method_header._opt_type_parameter_constraints_clauses._type_parameter_constraints_clauses != null)
                 {
                     int index = 0;
@@ -54,6 +59,7 @@ namespace VSC.AST {
                 else if(_method_header._method_declaration_name._explicit_interface == null)
                     rc.ConvertTypeParameters(m.TypeParameters, _method_header._method_declaration_name._type_declaration_name._opt_type_parameter_list._type_parameters, _method_header._opt_type_parameter_constraints_clauses._type_parameter_constraints_clauses, SymbolKind.Method);
 
+
                 // return type
                 m.ReturnType = rc.ConvertTypeReference(_method_header._member_type, NameLookupMode.Type);
 
@@ -63,6 +69,7 @@ namespace VSC.AST {
 
                 // modifiers
                 rc.ApplyModifiers(m,_Modifiers);
+                m.IsSupersede = (_Modifiers & TypeSystem.Modifiers.SUPERSEDE) == TypeSystem.Modifiers.SUPERSEDE;
 
                 // extension method
                 if (_method_header._opt_formal_parameter_list._formal_parameter_list != null)
@@ -102,7 +109,7 @@ namespace VSC.AST {
                 rc.currentTypeDefinition.Members.Add(m);
                 rc.currentMethod = null;
                 m.ApplyInterningProvider(rc.interningProvider);
-
+                UnresolvedMethod = m;
                 return true;
             }
 }

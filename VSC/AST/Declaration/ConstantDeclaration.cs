@@ -9,10 +9,11 @@ namespace VSC.AST {
         public Identifier _identifier;
         public VariableInitializer _variable_initializer;
         public OptConstantDeclarators _opt_constant_declarators;
-
-        [Rule("<constant declaration> ::= <opt attributes> <opt modifiers> const <type> <Identifier> '=' <variable initializer> <opt constant declarators> ';'")]
-        public ConstantDeclaration(OptAttributes _OptAttributes, OptModifiers _OptModifiers, Semantic _symbol83, Type _Type, Identifier _Identifier, Semantic _symbol60, VariableInitializer _VariableInitializer, OptConstantDeclarators _OptConstantDeclarators, Semantic _symbol31)
+        public OptDocumentation _opt_documentation;
+        [Rule("<constant declaration> ::= <Opt Documentation> <opt attributes> <opt modifiers> const <type> <Identifier> '=' <variable initializer> <opt constant declarators> ';'")]
+        public ConstantDeclaration(OptDocumentation _OptDocumentation, OptAttributes _OptAttributes, OptModifiers _OptModifiers, Semantic _symbol83, Type _Type, Identifier _Identifier, Semantic _symbol60, VariableInitializer _VariableInitializer, OptConstantDeclarators _OptConstantDeclarators, Semantic _symbol31)
         {
+            _opt_documentation = _OptDocumentation;
             _opt_attributes = _OptAttributes;
             _opt_modifiers = _OptModifiers;
             _type = _Type;
@@ -28,7 +29,8 @@ namespace VSC.AST {
                 UnresolvedFieldSpec field = null;
                 // first one
                 field = new UnresolvedFieldSpec(rc.currentTypeDefinition, _identifier._Identifier);
-
+                // documentation
+                rc.AddDocumentation(field, _opt_documentation);
                 field.Region = rc.MakeRegion(_identifier);
                 field.BodyRegion = rc.MakeRegion(_variable_initializer);
                 // attributes
@@ -54,6 +56,8 @@ namespace VSC.AST {
                     foreach (var vi in  _opt_constant_declarators._constant_declarators )
                     {
                         field = new UnresolvedFieldSpec(rc.currentTypeDefinition, vi.Name);
+                        // documentation
+                        rc.AddDocumentation(field, _opt_documentation);
 
                         field.Region = rc.MakeRegion(vi);
                         field.BodyRegion = rc.MakeRegion(vi._variable_initializer);

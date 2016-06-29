@@ -70,6 +70,8 @@
     <Compile Include="AST\Optional\AnonymousTypeParametersOpt.cs" />
     <Compile Include="AST\Optional\AnonymousTypeParametersOptComma.cs" />
     <Compile Include="AST\Classes\Argument.cs" />
+    <Compile Include="AST\Optional\OptDocumentation.cs" />
+    <Compile Include="AST\Optional\OptPartial.cs" />
     <Compile Include="AST\Sequences\ArgumentList.cs" />
     <Compile Include="AST\Expression\ArrayCreationExpression.cs" />
     <Compile Include="AST\Classes\ArrayInitializer.cs" />

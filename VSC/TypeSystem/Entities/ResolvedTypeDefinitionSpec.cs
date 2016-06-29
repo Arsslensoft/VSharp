@@ -12,6 +12,7 @@ namespace VSC.TypeSystem.Implementation
 	{
 		readonly ITypeResolveContext parentContext;
 		readonly IUnresolvedTypeDefinition[] parts;
+   
 		Accessibility accessibility = Accessibility.Internal;
 		bool isAbstract, isSealed, isShadowing;
 		bool isSynthetic = true; // true if all parts are synthetic
@@ -65,6 +66,7 @@ namespace VSC.TypeSystem.Implementation
 				return LazyInit.GetOrSet(ref this.typeParameters, result);
 			}
 		}
+      
 		
 		IList<IAttribute> attributes;
 		
@@ -101,27 +103,33 @@ namespace VSC.TypeSystem.Implementation
 		public virtual TypeKind Kind {
 			get { return parts[0].Kind; }
 		}
-		
-		#region NestedTypes
-		IList<ITypeDefinition> nestedTypes;
-		
-		public IList<ITypeDefinition> NestedTypes {
-			get {
-				IList<ITypeDefinition> result = LazyInit.VolatileRead(ref this.nestedTypes);
-				if (result != null) {
-					return result;
-				} else {
-					result = (
-						from part in parts
-						from nestedTypeRef in part.NestedTypes
-						group nestedTypeRef by new { nestedTypeRef.Name, nestedTypeRef.TypeParameters.Count } into g
-						select new ResolvedTypeDefinitionSpec(new SimpleTypeResolveContext(this), g.ToArray())
-					).ToList<ITypeDefinition>().AsReadOnly();
-					return LazyInit.GetOrSet(ref this.nestedTypes, result);
-				}
-			}
-		}
-		#endregion
+
+        #region NestedTypes
+        IList<ITypeDefinition> nestedTypes;
+
+        public IList<ITypeDefinition> NestedTypes
+        {
+            get
+            {
+                IList<ITypeDefinition> result = LazyInit.VolatileRead(ref this.nestedTypes);
+                if (result != null)
+                {
+                    return result;
+                }
+                else
+                {
+                    result = (
+                        from part in parts
+                        from nestedTypeRef in part.NestedTypes
+                        group nestedTypeRef by new { nestedTypeRef.Name, nestedTypeRef.TypeParameters.Count } into g
+                        select new ResolvedTypeDefinitionSpec(new SimpleTypeResolveContext(this), g.ToArray())
+                    ).ToList<ITypeDefinition>().AsReadOnly();
+                    return LazyInit.GetOrSet(ref this.nestedTypes, result);
+                }
+            }
+        }
+        #endregion
+
 		
 		#region Members
 		sealed class MemberList : IList<IMember>
@@ -426,6 +434,10 @@ namespace VSC.TypeSystem.Implementation
 			get { return false; }
 		}
 
+        public bool IsPartial
+        {
+            get { return parts.Length > 1 || parts[0].IsPartial; }
+        }
 		#region DirectBaseTypes
 		IList<IType> directBaseTypes;
 		
@@ -609,9 +621,38 @@ namespace VSC.TypeSystem.Implementation
 		{
 			return (ISymbolReference)ToTypeReference();
 		}
-		
-		
-		
+
+
+
+        public IEnumerable<IType> GetNestedTypes(Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
+        {
+            const GetMemberOptions opt = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
+            if ((options & opt) == opt)
+            {
+                if (filter == null)
+                    return this.NestedTypes;
+                else
+                    return GetNestedTypesImpl(filter);
+            }
+            else
+            {
+                return GetMembersHelper.GetNestedTypes(this, filter, options);
+            }
+        }
+
+        IEnumerable<IType> GetNestedTypesImpl(Predicate<ITypeDefinition> filter)
+        {
+            foreach (var nestedType in this.NestedTypes)
+            {
+                if (filter(nestedType))
+                    yield return nestedType;
+            }
+        }
+
+        public IEnumerable<IType> GetNestedTypes(IList<IType> typeArguments, Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
+        {
+            return GetMembersHelper.GetNestedTypes(this, typeArguments, filter, options);
+        }
 		#region GetMembers()
 		IEnumerable<IMember> GetFilteredMembers(Predicate<IUnresolvedMember> filter)
 		{

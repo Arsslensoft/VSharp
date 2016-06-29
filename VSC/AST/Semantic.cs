@@ -44,16 +44,44 @@ namespace VSC.AST {
     {
         public RegularStringTerminal(string text) : base(text) { }
     }
+        [Terminal("(Comment)")]
+    public class CommentTerminal : Semantic
+        {
+            public string Comment;
+            public CommentTerminal(string com)
+            {
+                if (com.StartsWith("//"))
+                    Comment = com.Remove(0, 2);
+                else
+                {
+                    Comment = com.Remove(0, 2);
+                    Comment = Comment.Substring(0, Comment.Length - 2);
+                }
+            }
+         
+        }
+        [Terminal("Documentation")]
+        public class DocumentationTerminal : Semantic
+        {
+            public string Documentation;
+            public DocumentationTerminal(string com)
+            {
+         
+                    Documentation = com.Remove(0, 3);
+              
+            }
+
+        }
     [Terminal("(EOF)")]
     [Terminal("(Error)")]
     [Terminal("(Whitespace)")]
-    [Terminal("(Comment)")]
     [Terminal("(NewLine)")]
     [Terminal("(*/)")]
     [Terminal("(//)")]
     [Terminal("(/*)")]
     [Terminal("-")]
     [Terminal("--")]
+    [Terminal("(///)")]
     [Terminal("!")]
     [Terminal("!<")]
     [Terminal("!=")]
@@ -165,6 +193,7 @@ namespace VSC.AST {
     [Terminal("override")]
     [Terminal("package")]
     [Terminal("params")]
+    [Terminal("partial")]
     [Terminal("private")]
     [Terminal("protected")]
     [Terminal("public")]
@@ -184,6 +213,7 @@ namespace VSC.AST {
     [Terminal("string")]
     [Terminal("struct")]
     [Terminal("super")]
+    [Terminal("supersede")]
     [Terminal("switch")]
     [Terminal("sync")]
     [Terminal("throw")]
@@ -194,7 +224,6 @@ namespace VSC.AST {
     [Terminal("ulong")]
     [Terminal("unchecked")]
     [Terminal("union")]
-    [Terminal("unsafe")]
     [Terminal("ushort")]
     [Terminal("using")]
     [Terminal("virtual")]

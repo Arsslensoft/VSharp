@@ -5,6 +5,7 @@ using VSC.TypeSystem.Implementation;
 namespace VSC.AST {
     public class EventDeclaration : Declaration
     {
+        public UnresolvedEventSpec UnresolvedEvent;
  			public OptAttributes _opt_attributes;
 			public OptModifiers _opt_modifiers;
 			public Type _type;
@@ -12,10 +13,11 @@ namespace VSC.AST {
 			public OptEventInitializer _opt_event_initializer;
 			public OptEventDeclarators _opt_event_declarators;
 			public EventAccessorDeclarations _event_accessor_declarations;
-
-			[Rule("<event declaration> ::= <opt attributes> <opt modifiers> event <type> <method declaration name> <opt event initializer> <opt event declarators> ';'")]
-            public EventDeclaration(OptAttributes _OptAttributes, OptModifiers _OptModifiers, Semantic _symbol93, Type _Type, MethodDeclarationName _MemberDeclarationName, OptEventInitializer _OptEventInitializer, OptEventDeclarators _OptEventDeclarators, Semantic _symbol31)
-				{
+            public OptDocumentation _opt_documentation;
+            [Rule("<event declaration> ::= <Opt Documentation> <opt attributes> <opt modifiers> event <type> <method declaration name> <opt event initializer> <opt event declarators> ';'")]
+            public EventDeclaration(OptDocumentation _OptDocumentation, OptAttributes _OptAttributes, OptModifiers _OptModifiers, Semantic _symbol93, Type _Type, MethodDeclarationName _MemberDeclarationName, OptEventInitializer _OptEventInitializer, OptEventDeclarators _OptEventDeclarators, Semantic _symbol31)
+            {
+                _opt_documentation = _OptDocumentation;
 				_opt_attributes = _OptAttributes;
 				_opt_modifiers = _OptModifiers;
 				_type = _Type;
@@ -23,9 +25,10 @@ namespace VSC.AST {
 				_opt_event_initializer = _OptEventInitializer;
 				_opt_event_declarators = _OptEventDeclarators;
 				}
-            [Rule("<event declaration> ::= <opt attributes> <opt modifiers> event <type> <method declaration name> '{' <event accessor declarations> '}'")]
-            public EventDeclaration(OptAttributes _OptAttributes, OptModifiers _OptModifiers, Semantic _symbol93, Type _Type, MethodDeclarationName _MemberDeclarationName, Semantic _symbol43, EventAccessorDeclarations _EventAccessorDeclarations, Semantic _symbol47)
-				{
+            [Rule("<event declaration> ::= <Opt Documentation> <opt attributes> <opt modifiers> event <type> <method declaration name> '{' <event accessor declarations> '}'")]
+            public EventDeclaration(OptDocumentation _OptDocumentation, OptAttributes _OptAttributes, OptModifiers _OptModifiers, Semantic _symbol93, Type _Type, MethodDeclarationName _MemberDeclarationName, Semantic _symbol43, EventAccessorDeclarations _EventAccessorDeclarations, Semantic _symbol47)
+            {
+                _opt_documentation = _OptDocumentation;
 				_opt_attributes = _OptAttributes;
 				_opt_modifiers = _OptModifiers;
 				_type = _Type;
@@ -48,7 +51,8 @@ namespace VSC.AST {
                 rc.ApplyModifiers(e, _opt_modifiers._Modifiers);
                 e.ReturnType = rc.ConvertTypeReference(_type, TypeSystem.Resolver.NameLookupMode.Type);
                 rc.ConvertAttributes(e.Attributes,_opt_attributes._Attributes);
-               
+                // documentation
+                rc.AddDocumentation(e, _opt_documentation);
 
                 if (_member_declaration_name._explicit_interface != null)
                 {
@@ -71,6 +75,7 @@ namespace VSC.AST {
 
                 rc.currentTypeDefinition.Members.Add(e);
                 e.ApplyInterningProvider(rc.interningProvider);
+                UnresolvedEvent = e;
                 return true;
             }
 }

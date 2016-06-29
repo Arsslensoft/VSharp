@@ -81,32 +81,37 @@ namespace VSC.TypeSystem.Implementation
 				return effectiveBaseClass;
 			}
 		}
-		
-		IType CalculateEffectiveBaseClass()
-		{
-			if (HasValueTypeConstraint)
-				return this.Compilation.FindType(KnownTypeCode.ValueType);
-			
-			List<IType> classTypeConstraints = new List<IType>();
-			foreach (IType constraint in this.DirectBaseTypes) {
-				if (constraint.Kind == TypeKind.Class) {
-					classTypeConstraints.Add(constraint);
-				} else if (constraint.Kind == TypeKind.TypeParameter) {
-					IType baseClass = ((ITypeParameter)constraint).EffectiveBaseClass;
-					if (baseClass.Kind == TypeKind.Class)
-						classTypeConstraints.Add(baseClass);
-				}
-			}
-			if (classTypeConstraints.Count == 0)
-				return this.Compilation.FindType(KnownTypeCode.Object);
-			// Find the derived-most type in the resulting set:
-			IType result = classTypeConstraints[0];
-			for (int i = 1; i < classTypeConstraints.Count; i++) {
-				if (classTypeConstraints[i].GetDefinition().IsDerivedFrom(result.GetDefinition()))
-					result = classTypeConstraints[i];
-			}
-			return result;
-		}
+
+        IType CalculateEffectiveBaseClass()
+        {
+            if (HasValueTypeConstraint)
+                return this.Compilation.FindType(KnownTypeCode.ValueType);
+
+            List<IType> classTypeConstraints = new List<IType>();
+            foreach (IType constraint in this.DirectBaseTypes)
+            {
+                if (constraint.Kind == TypeKind.Class)
+                {
+                    classTypeConstraints.Add(constraint);
+                }
+                else if (constraint.Kind == TypeKind.TypeParameter)
+                {
+                    IType baseClass = ((ITypeParameter)constraint).EffectiveBaseClass;
+                    if (baseClass.Kind == TypeKind.Class)
+                        classTypeConstraints.Add(baseClass);
+                }
+            }
+            if (classTypeConstraints.Count == 0)
+                return this.Compilation.FindType(KnownTypeCode.Object);
+            // Find the derived-most type in the resulting set:
+            IType result = classTypeConstraints[0];
+            for (int i = 1; i < classTypeConstraints.Count; i++)
+            {
+                if (classTypeConstraints[i].GetDefinition().IsDerivedFrom(result.GetDefinition()))
+                    result = classTypeConstraints[i];
+            }
+            return result;
+        }
 		
 		ICollection<IType> effectiveInterfaceSet;
 		
@@ -138,41 +143,50 @@ namespace VSC.TypeSystem.Implementation
 			}
 			return result;
 		}
-		
-		public abstract bool HasReferenceTypeConstraint { get; }
-		public abstract bool HasValueTypeConstraint { get; }
-		
+
+        public abstract bool HasDefaultConstructorConstraint { get; }
+        public abstract bool HasReferenceTypeConstraint { get; }
+        public abstract bool HasValueTypeConstraint { get; }
+
+
 		public TypeKind Kind {
 			get { return TypeKind.TypeParameter; }
 		}
-		
-		public bool? IsReferenceType {
-			get {
-				if (this.HasValueTypeConstraint)
-					return false;
-				if (this.HasReferenceTypeConstraint)
-					return true;
-				
-				// A type parameter is known to be a reference type if it has the reference type constraint
-				// or its effective base class is not object or System.ValueType.
-				IType effectiveBaseClass = this.EffectiveBaseClass;
-				if (effectiveBaseClass.Kind == TypeKind.Class || effectiveBaseClass.Kind == TypeKind.Delegate) {
-					ITypeDefinition effectiveBaseClassDef = effectiveBaseClass.GetDefinition();
-					if (effectiveBaseClassDef != null) {
-						switch (effectiveBaseClassDef.KnownTypeCode) {
-							case KnownTypeCode.Object:
-							case KnownTypeCode.ValueType:
-							case KnownTypeCode.Enum:
-								return null;
-						}
-					}
-					return true;
-				} else if (effectiveBaseClass.Kind == TypeKind.Struct || effectiveBaseClass.Kind == TypeKind.Enum) {
-					return false;
-				}
-				return null;
-			}
-		}
+
+        public bool? IsReferenceType
+        {
+            get
+            {
+                if (this.HasValueTypeConstraint)
+                    return false;
+                if (this.HasReferenceTypeConstraint)
+                    return true;
+
+                // A type parameter is known to be a reference type if it has the reference type constraint
+                // or its effective base class is not object or System.ValueType.
+                IType effectiveBaseClass = this.EffectiveBaseClass;
+                if (effectiveBaseClass.Kind == TypeKind.Class || effectiveBaseClass.Kind == TypeKind.Delegate)
+                {
+                    ITypeDefinition effectiveBaseClassDef = effectiveBaseClass.GetDefinition();
+                    if (effectiveBaseClassDef != null)
+                    {
+                        switch (effectiveBaseClassDef.KnownTypeCode)
+                        {
+                            case KnownTypeCode.Object:
+                            case KnownTypeCode.ValueType:
+                            case KnownTypeCode.Enum:
+                                return null;
+                        }
+                    }
+                    return true;
+                }
+                else if (effectiveBaseClass.Kind == TypeKind.Struct || effectiveBaseClass.Kind == TypeKind.Enum)
+                {
+                    return false;
+                }
+                return null;
+            }
+        }
 		
 		IType IType.DeclaringType {
 			get { return null; }
@@ -230,22 +244,36 @@ namespace VSC.TypeSystem.Implementation
 		{
 			return TypeParameterReference.Create(this.OwnerType, this.Index);
 		}
-		
-	
-		
-		public IEnumerable<IMethod> GetConstructors(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
-		{
-			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
-				if ( this.HasValueTypeConstraint) {
-					if (filter == null || filter(UnresolvedMethodSpec.DummyConstructor)) {
-						return new [] { ResolvedMethodSpec.GetDummyConstructor(compilation, this) };
-					}
-				}
-				return EmptyList<IMethod>.Instance;
-			} else {
-				return GetMembersHelper.GetConstructors(this, filter, options);
-			}
-		}
+
+
+        IEnumerable<IType> IType.GetNestedTypes(Predicate<ITypeDefinition> filter, GetMemberOptions options)
+        {
+            return EmptyList<IType>.Instance;
+        }
+
+        IEnumerable<IType> IType.GetNestedTypes(IList<IType> typeArguments, Predicate<ITypeDefinition> filter, GetMemberOptions options)
+        {
+            return EmptyList<IType>.Instance;
+        }
+
+        public IEnumerable<IMethod> GetConstructors(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
+        {
+            if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
+            {
+                if (this.HasDefaultConstructorConstraint || this.HasValueTypeConstraint)
+                {
+                    if (filter == null || filter(UnresolvedMethodSpec.DummyConstructor))
+                    {
+                        return new[] { ResolvedMethodSpec.GetDummyConstructor(compilation, this) };
+                    }
+                }
+                return EmptyList<IMethod>.Instance;
+            }
+            else
+            {
+                return GetMembersHelper.GetConstructors(this, filter, options);
+            }
+        }
 		
 		public IEnumerable<IMethod> GetMethods(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{

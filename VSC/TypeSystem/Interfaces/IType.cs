@@ -140,7 +140,64 @@ namespace VSC.TypeSystem
 		/// </summary>
 		TypeParameterSubstitution GetSubstitution(IList<IType> methodTypeArguments);
 
-	
+        /// <summary>
+        /// Gets inner classes (including inherited inner classes).
+        /// </summary>
+        /// <param name="filter">The filter used to select which types to return.
+        /// The filter is tested on the original type definitions (before parameterization).</param>
+        /// <param name="options">Specified additional options for the GetMembers() operation.</param>
+        /// <remarks>
+        /// <para>
+        /// If the nested type is generic, this method will return a parameterized type,
+        /// where the additional type parameters are set to <see cref="SpecialType.UnboundTypeArgument"/>.
+        /// </para>
+        /// <para>
+        /// Type parameters belonging to the outer class will have the value copied from the outer type
+        /// if it is a parameterized type. Otherwise, those existing type parameters will be self-parameterized,
+        /// and thus 'leaked' to the caller in the same way the GetMembers() method does not specialize members
+        /// from an <see cref="ITypeDefinition"/> and 'leaks' type parameters in member signatures.
+        /// </para>
+        /// </remarks>
+        /// <example>
+        /// <code>
+        /// class Base&lt;T> {
+        /// 	class Nested&lt;X> {}
+        /// }
+        /// class Derived&lt;A, B> : Base&lt;B> {}
+        /// 
+        /// Derived[string,int].GetNestedTypes() = { Base`1+Nested`1[int, unbound] }
+        /// Derived.GetNestedTypes() = { Base`1+Nested`1[`1, unbound] }
+        /// Base[`1].GetNestedTypes() = { Base`1+Nested`1[`1, unbound] }
+        /// Base.GetNestedTypes() = { Base`1+Nested`1[`0, unbound] }
+        /// </code>
+        /// </example>
+        IEnumerable<IType> GetNestedTypes(Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None);
+
+        // Note that we cannot 'leak' the additional type parameter as we leak the normal type parameters, because
+        // the index might collide. For example,
+        //   class Base<T> { class Nested<X> {} }
+        //   class Derived<A, B> : Base<B> { }
+        // 
+        // Derived<string, int>.GetNestedTypes() = Base+Nested<int, UnboundTypeArgument>
+        // Derived.GetNestedTypes() = Base+Nested<`1, >
+        //  Here `1 refers to B, and there's no way to return X as it would collide with B.
+
+        /// <summary>
+        /// Gets inner classes (including inherited inner classes)
+        /// that have <c>typeArguments.Count</c> additional type parameters.
+        /// </summary>
+        /// <param name="typeArguments">The type arguments passed to the inner class</param>
+        /// <param name="filter">The filter used to select which types to return.
+        /// The filter is tested on the original type definitions (before parameterization).</param>
+        /// <param name="options">Specified additional options for the GetMembers() operation.</param>
+        /// <remarks>
+        /// Type parameters belonging to the outer class will have the value copied from the outer type
+        /// if it is a parameterized type. Otherwise, those existing type parameters will be self-parameterized,
+        /// and thus 'leaked' to the caller in the same way the GetMembers() method does not specialize members
+        /// from an <see cref="ITypeDefinition"/> and 'leaks' type parameters in member signatures.
+        /// </remarks>
+        IEnumerable<IType> GetNestedTypes(IList<IType> typeArguments, Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None);
+		
 		/// <summary>
 		/// Gets all instance constructors for this type.
 		/// </summary>

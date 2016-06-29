@@ -178,8 +178,24 @@ namespace VSC.TypeSystem
 				return genericType.DirectBaseTypes.Select(t => t.AcceptVisitor(substitution));
 			}
 		}
+
+
+        public IEnumerable<IType> GetNestedTypes(Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
+        {
+            if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)
+                return genericType.GetNestedTypes(filter, options);
+            else
+                return GetMembersHelper.GetNestedTypes(this, filter, options);
+        }
+
+        public IEnumerable<IType> GetNestedTypes(IList<IType> typeArguments, Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
+        {
+            if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)
+                return genericType.GetNestedTypes(typeArguments, filter, options);
+            else
+                return GetMembersHelper.GetNestedTypes(this, typeArguments, filter, options);
+        }
 		
-	
 		public IEnumerable<IMethod> GetConstructors(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
 		{
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)

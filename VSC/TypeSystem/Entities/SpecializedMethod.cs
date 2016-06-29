@@ -113,8 +113,10 @@ namespace VSC.TypeSystem.Implementation
 		public bool IsOperator {
 			get { return methodDefinition.IsOperator; }
 		}
-		
-	
+        public bool IsSupersede
+        {
+            get { return methodDefinition.IsSupersede; }
+        }
 		public bool IsAsync {
 			get { return methodDefinition.IsAsync; }
 		}
@@ -242,7 +244,7 @@ namespace VSC.TypeSystem.Implementation
 			internal TypeVisitor substitution;
 			
 			public SpecializedTypeParameter(ITypeParameter baseTp, IMethod specializedOwner)
-				: base(specializedOwner, baseTp.Index, baseTp.Name, baseTp.Region)
+				: base(specializedOwner, baseTp.Index, baseTp.Name,  baseTp.Region)
 			{
 				// We don't have to consider already-specialized baseTps because
 				// we read the baseTp directly from the unpacked memberDefinition.
@@ -269,7 +271,10 @@ namespace VSC.TypeSystem.Implementation
 				get { return baseTp.HasReferenceTypeConstraint; }
 			}
 			
-	
+			public override bool HasDefaultConstructorConstraint {
+				get { return baseTp.HasDefaultConstructorConstraint; }
+			}
+			
 			public override IEnumerable<IType> DirectBaseTypes {
 				get {
 					return baseTp.DirectBaseTypes.Select(t => t.AcceptVisitor(substitution));

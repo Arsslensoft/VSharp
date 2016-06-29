@@ -5,16 +5,18 @@ using VSC.TypeSystem.Implementation;
 namespace VSC.AST {
     public class IndexerDeclaration : Declaration
     {
+        public UnresolvedPropertySpec UnresolvedProperty;
  			public OptAttributes _opt_attributes;
 			public OptModifiers _opt_modifiers;
 			public MemberType _member_type;
 			public IndexerDeclarationName _indexer_declaration_name;
 			public OptFormalParameterList _opt_formal_parameter_list;
 			public IndexerBody _indexer_body;
-
-			[Rule("<indexer declaration> ::= <opt attributes> <opt modifiers> <member type> <indexer declaration name> '[' <opt formal parameter list> ']' <indexer body>")]
-			public IndexerDeclaration(OptAttributes _OptAttributes,OptModifiers _OptModifiers,MemberType _MemberType,IndexerDeclarationName _IndexerDeclarationName, Semantic _symbol37,OptFormalParameterList _OptFormalParameterList, Semantic _symbol40,IndexerBody _IndexerBody)
-				{
+            public OptDocumentation _opt_documentation;
+            [Rule("<indexer declaration> ::= <Opt Documentation> <opt attributes> <opt modifiers> <member type> <indexer declaration name> '[' <opt formal parameter list> ']' <indexer body>")]
+            public IndexerDeclaration(OptDocumentation _OptDocumentation, OptAttributes _OptAttributes, OptModifiers _OptModifiers, MemberType _MemberType, IndexerDeclarationName _IndexerDeclarationName, Semantic _symbol37, OptFormalParameterList _OptFormalParameterList, Semantic _symbol40, IndexerBody _IndexerBody)
+            {
+                _opt_documentation = _OptDocumentation;
 				_opt_attributes = _OptAttributes;
 				_opt_modifiers = _OptModifiers;
 				_member_type = _MemberType;
@@ -27,13 +29,14 @@ namespace VSC.AST {
             {
                 UnresolvedPropertySpec p = new UnresolvedPropertySpec(rc.currentTypeDefinition, "Item");
                 p.SymbolKind = SymbolKind.Indexer;
-                p.Region = rc.MakeRegion(this);
-                //p.BodyRegion = MakeBraceRegion();
+                p.Region = rc.MakeRegion(this,_indexer_body.end);
+                p.BodyRegion = rc.MakeRegion(_indexer_body);
                 // modifiers
                 rc.ApplyModifiers(p, _opt_modifiers._Modifiers);
                 // return
                 p.ReturnType = rc.ConvertTypeReference(_member_type, TypeSystem.Resolver.NameLookupMode.Type);
-
+                // documentation
+                rc.AddDocumentation(p, _opt_documentation);
                 //attributes
                 rc.ConvertAttributes(p.Attributes, _opt_attributes._Attributes);
                
@@ -64,7 +67,7 @@ namespace VSC.AST {
 
                 // add to resolver
                 rc.currentTypeDefinition.Members.Add(p);
-                p.ApplyInterningProvider(rc.interningProvider);
+                p.ApplyInterningProvider(rc.interningProvider); UnresolvedProperty = p;
                 return true;
             }
 }

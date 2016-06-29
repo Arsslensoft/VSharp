@@ -112,15 +112,20 @@ namespace VSC.Base.GoldParser.Parser {
 				} else {
 					inputToken = currentToken;
 				}
+           
 				switch (inputToken.Symbol.Kind) {
+                  
+
 				case SymbolKind.WhiteSpace:
-				case SymbolKind.CommentStart:
-				case SymbolKind.CommentLine:
+                case SymbolKind.CommentStart:
+                case SymbolKind.CommentLine:   
+                  
 					ClearCurrentToken();
 					break;
 				case SymbolKind.Error:
 					return ParseMessage.LexicalError;
 				default:
+
 					LalrAction action = currentState.GetActionBySymbol(inputToken.Symbol);
 					if (action == null) {
 						if (RetrySyntaxError(ref inputToken)) {

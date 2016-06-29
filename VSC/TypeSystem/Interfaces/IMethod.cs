@@ -35,8 +35,12 @@ namespace VSC.TypeSystem
 		bool IsConstructor { get; }
 		bool IsDestructor { get; }
 		bool IsOperator { get; }
-		
-	
+
+        /// <summary>
+        /// Gets whether the method is a V#-style superseded method.
+        /// To test if it is a superseded method declaration.
+        /// </summary>
+        bool IsSupersede { get; }
 
 		/// <summary>
 		/// Gets whether the method is a V#-style async method.
@@ -114,7 +118,11 @@ namespace VSC.TypeSystem
 		bool IsDestructor { get; }
 		bool IsOperator { get; }
 
-
+        /// <summary>
+        /// Gets whether the method is a V#-style superseded method.
+        /// To test if it is a superseded method declaration.
+        /// </summary>
+        bool IsSupersede { get; }
 		/// <summary>
 		/// Gets whether the method is a V#-style async method.
 		/// </summary>

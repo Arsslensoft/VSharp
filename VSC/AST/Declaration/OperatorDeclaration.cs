@@ -6,14 +6,16 @@ using VSC.TypeSystem.Resolver;
 namespace VSC.AST {
     public class OperatorDeclaration : Declaration
     {
+        public UnresolvedMethodSpec UnresolvedMethod;
  			public OptAttributes _opt_attributes;
 			public OptModifiers _opt_modifiers;
 			public OperatorDeclarator _operator_declarator;
 			public MethodBodyExpressionBlock _method_body_expression_block;
-
-			[Rule("<operator declaration> ::= <opt attributes> <opt modifiers> <operator declarator> <method body expression block>")]
-			public OperatorDeclaration(OptAttributes _OptAttributes,OptModifiers _OptModifiers,OperatorDeclarator _OperatorDeclarator,MethodBodyExpressionBlock _MethodBodyExpressionBlock)
-				{
+            public OptDocumentation _opt_documentation;
+            [Rule("<operator declaration> ::= <Opt Documentation> <opt attributes> <opt modifiers> <operator declarator> <method body expression block>")]
+            public OperatorDeclaration(OptDocumentation _OptDocumentation, OptAttributes _OptAttributes, OptModifiers _OptModifiers, OperatorDeclarator _OperatorDeclarator, MethodBodyExpressionBlock _MethodBodyExpressionBlock)
+            {
+                _opt_documentation = _OptDocumentation;
 				_opt_attributes = _OptAttributes;
 				_opt_modifiers = _OptModifiers;
 				_operator_declarator = _OperatorDeclarator;
@@ -26,7 +28,7 @@ namespace VSC.AST {
 
                 UnresolvedMethodSpec m = new UnresolvedMethodSpec(rc.currentTypeDefinition, opname);
                 m.SymbolKind = SymbolKind.Operator;
-                m.Region = rc.MakeRegion(this);
+                m.Region = rc.MakeRegion(this, this._method_body_expression_block);
                 m.BodyRegion = rc.MakeRegion(this._method_body_expression_block);
 
                 // return type
@@ -34,7 +36,8 @@ namespace VSC.AST {
             // attributes
                 rc.ConvertAttributes(m.Attributes, _opt_attributes._Attributes);
                 rc.ConvertAttributes(m.ReturnTypeAttributes, _opt_attributes._ReturnAttributes);
-
+                // documentation
+                rc.AddDocumentation(m, _opt_documentation);
                 // modifiers
                 rc.ApplyModifiers(m, _opt_modifiers._Modifiers);
                 // body
@@ -50,7 +53,7 @@ namespace VSC.AST {
                 // add to resolver
                 rc.currentTypeDefinition.Members.Add(m);
                 m.ApplyInterningProvider(rc.interningProvider);
-      
+                UnresolvedMethod = m;
                 return true;
             }
 }

@@ -12,7 +12,7 @@ namespace VSC.AST {
 			[Rule("<modifier> ::= readonly")]
 			[Rule("<modifier> ::= sealed")]
 			[Rule("<modifier> ::= static")]
-			[Rule("<modifier> ::= unsafe")]
+			[Rule("<modifier> ::= supersede")]
 			[Rule("<modifier> ::= virtual")]
 			[Rule("<modifier> ::= private")]
 			[Rule("<modifier> ::= protected")]

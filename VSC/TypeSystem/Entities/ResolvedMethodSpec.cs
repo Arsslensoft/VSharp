@@ -173,7 +173,10 @@ namespace VSC.TypeSystem.Implementation
 				return parts ?? new IUnresolvedMethod[] { (IUnresolvedMethod)unresolved };
 			}
 		}
-		
+        public bool IsSupersede
+        {
+            get { return ((IUnresolvedMethod)unresolved).IsSupersede; }
+        }
 		public bool IsConstructor {
 			get { return ((IUnresolvedMethod)unresolved).IsConstructor; }
 		}

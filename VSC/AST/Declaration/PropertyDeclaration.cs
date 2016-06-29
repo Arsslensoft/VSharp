@@ -5,6 +5,7 @@ using VSC.TypeSystem.Implementation;
 namespace VSC.AST {
     public class PropertyDeclaration : Declaration
     {
+        public UnresolvedPropertySpec UnresolvedProperty;
  			public OptAttributes _opt_attributes;
 			public OptModifiers _opt_modifiers;
 			public MemberType _member_type;
@@ -12,10 +13,11 @@ namespace VSC.AST {
 			public AccessorDeclarations _accessor_declarations;
 			public OptPropertyInitializer _opt_property_initializer;
 			public ExpressionBlock _expression_block;
-
-            [Rule("<property declaration> ::= <opt attributes> <opt modifiers> <member type> <method declaration name> '{' <accessor declarations> '}' <opt property initializer>")]
-            public PropertyDeclaration(OptAttributes _OptAttributes, OptModifiers _OptModifiers, MemberType _MemberType, MethodDeclarationName _MemberDeclarationName, Semantic _symbol43, AccessorDeclarations _AccessorDeclarations, Semantic _symbol47, OptPropertyInitializer _OptPropertyInitializer)
-				{
+            public OptDocumentation _opt_documentation;
+            [Rule("<property declaration> ::= <Opt Documentation> <opt attributes> <opt modifiers> <member type> <method declaration name> '{' <accessor declarations> '}' <opt property initializer>")]
+            public PropertyDeclaration(OptDocumentation _OptDocumentation, OptAttributes _OptAttributes, OptModifiers _OptModifiers, MemberType _MemberType, MethodDeclarationName _MemberDeclarationName, Semantic _symbol43, AccessorDeclarations _AccessorDeclarations, Semantic _symbol47, OptPropertyInitializer _OptPropertyInitializer)
+            {
+                _opt_documentation = _OptDocumentation;
 				_opt_attributes = _OptAttributes;
 				_opt_modifiers = _OptModifiers;
 				_member_type = _MemberType;
@@ -23,9 +25,10 @@ namespace VSC.AST {
 				_accessor_declarations = _AccessorDeclarations;
 				_opt_property_initializer = _OptPropertyInitializer;
 				}
-            [Rule("<property declaration> ::= <opt attributes> <opt modifiers> <member type> <method declaration name> <expression block>")]
-			public PropertyDeclaration(OptAttributes _OptAttributes,OptModifiers _OptModifiers,MemberType _MemberType,MethodDeclarationName _MemberDeclarationName,ExpressionBlock _ExpressionBlock)
-				{
+            [Rule("<property declaration> ::= <Opt Documentation> <opt attributes> <opt modifiers> <member type> <method declaration name> <expression block>")]
+            public PropertyDeclaration(OptDocumentation _OptDocumentation, OptAttributes _OptAttributes, OptModifiers _OptModifiers, MemberType _MemberType, MethodDeclarationName _MemberDeclarationName, ExpressionBlock _ExpressionBlock)
+            {
+                _opt_documentation = _OptDocumentation;
 				_opt_attributes = _OptAttributes;
 				_opt_modifiers = _OptModifiers;
 				_member_type = _MemberType;
@@ -49,7 +52,8 @@ namespace VSC.AST {
                 rc.ApplyModifiers(p, _opt_modifiers._Modifiers);
                 // return
                 p.ReturnType = rc.ConvertTypeReference(_member_type, TypeSystem.Resolver.NameLookupMode.Type);
-
+                // documentation
+                rc.AddDocumentation(p, _opt_documentation);
                 // attributes
                 rc.ConvertAttributes(p.Attributes, _opt_attributes._Attributes);
 
@@ -74,7 +78,8 @@ namespace VSC.AST {
 
                 // add to resolver
                 rc.currentTypeDefinition.Members.Add(p);
-                p.ApplyInterningProvider(rc.interningProvider);
+                p.ApplyInterningProvider(rc.interningProvider); 
+                UnresolvedProperty = p;
                 return true;
             }
 }

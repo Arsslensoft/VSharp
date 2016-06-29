@@ -112,7 +112,16 @@ namespace VSC.TypeSystem.Implementation
 				flags[FlagHasNoExtensionMethods] = (value == false);
 			}
 		}
-		
+
+        public bool IsPartial
+        {
+            get { return flags[FlagPartialTypeDefinition]; }
+            set
+            {
+                ThrowIfFrozen();
+                flags[FlagPartialTypeDefinition] = value;
+            }
+        }
 		
 		public override string Namespace {
 			get { return namespaceName; }

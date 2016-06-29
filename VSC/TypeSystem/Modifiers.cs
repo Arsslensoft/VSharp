@@ -31,7 +31,7 @@ namespace VSC.TypeSystem
         OVERRIDE = 0x0400,
         EXTERN = 0x0800,
         SUPERSEDE = 0x1000,
-        UNSAFE = 0x2000,
+        PARTIAL = 0x2000,
         TOP = 0x4000,
 
         //
@@ -45,7 +45,7 @@ namespace VSC.TypeSystem
         BACKING_FIELD = 0x200000,
 
         AccessibilityMask = PUBLIC | PROTECTED | INTERNAL | PRIVATE,
-        AllowedExplicitImplFlags = UNSAFE | EXTERN,
+        AllowedExplicitImplFlags = EXTERN,
     }
 
     static class ModifiersExtensions
@@ -100,8 +100,8 @@ namespace VSC.TypeSystem
                     s = "extern"; break;
                 case Modifiers.SUPERSEDE:
                     s = "supersede"; break;
-                case Modifiers.UNSAFE:
-                    s = "unsafe"; break;
+                case Modifiers.PARTIAL:
+                    s = "partial"; break;
    
             }
 

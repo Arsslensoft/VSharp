@@ -12,4 +12,19 @@ namespace VSC.AST {
 				
 				}
 }
+
+    public class Documentation : Sequence<DocumentationTerminal>
+    {
+        [Rule("<Documentation> ::= Documentation")]
+        public Documentation(DocumentationTerminal _symbol22)
+            : base(_symbol22)
+        {
+        }
+        [Rule("<Documentation> ::= Documentation <Documentation>")]
+        public Documentation(DocumentationTerminal _symbol22, Documentation _PointerStars)
+            : base(_symbol22, _PointerStars)
+        {
+
+        }
+    }
 }

@@ -4,6 +4,7 @@ using VSC.TypeSystem;
 using VSC.TypeSystem.Resolver;
 namespace VSC.AST { 
 	public class ClassDeclaration : Declaration {
+        public VSharpUnresolvedTypeDefinition UnresolvedType;
  			public OptAttributes _opt_attributes;
 			public OptModifiers _opt_modifiers;
 			public TypeDeclarationName _type_declaration_name;
@@ -12,11 +13,13 @@ namespace VSC.AST {
 			public OptClassMemberDeclarations _opt_class_member_declarations;
 			public OptSemicolon _opt_semicolon;
             public Semantic open_brace;
-
-
-			[Rule("<class declaration> ::= <opt attributes> <opt modifiers> class <type declaration name> <opt class base> <opt type parameter constraints clauses> '{' <opt class member declarations> '}' <opt semicolon>")]
-			public ClassDeclaration(OptAttributes _OptAttributes,OptModifiers _OptModifiers, Semantic _symbol82,TypeDeclarationName _TypeDeclarationName,OptClassBase _OptClassBase,OptTypeParameterConstraintsClauses _OptTypeParameterConstraintsClauses, Semantic _symbol43,OptClassMemberDeclarations _OptClassMemberDeclarations, Semantic _symbol47,OptSemicolon _OptSemicolon)
+            public OptPartial _opt_partial;
+            public OptDocumentation _opt_documentation;
+            [Rule("<class declaration> ::= <Opt Documentation> <opt attributes> <opt modifiers> <opt partial> class <type declaration name> <opt class base> <opt type parameter constraints clauses> '{' <opt class member declarations> '}' <opt semicolon>")]
+            public ClassDeclaration(OptDocumentation _OptDocumentation, OptAttributes _OptAttributes, OptModifiers _OptModifiers, OptPartial _OptPartial, Semantic _symbol82, TypeDeclarationName _TypeDeclarationName, OptClassBase _OptClassBase, OptTypeParameterConstraintsClauses _OptTypeParameterConstraintsClauses, Semantic _symbol43, OptClassMemberDeclarations _OptClassMemberDeclarations, Semantic _symbol47, OptSemicolon _OptSemicolon)
             {
+                _opt_documentation = _OptDocumentation;
+                _opt_partial = _OptPartial;
                 open_brace = _symbol43;
 				_opt_attributes = _OptAttributes;
 				_opt_modifiers = _OptModifiers;
@@ -28,10 +31,15 @@ namespace VSC.AST {
 				}
             public override bool Resolve(Context.SymbolResolveContext rc)
             {
-                var td = rc.currentTypeDefinition = rc.CreateTypeDefinition(this._type_declaration_name._identifier._Identifier);
+               
+                if (_opt_partial.ispartial)
+                    _opt_modifiers._Modifiers |= TypeSystem.Modifiers.PARTIAL;
+                var td = rc.currentTypeDefinition = UnresolvedType = rc.CreateTypeDefinition(this._type_declaration_name._identifier._Identifier);
                 td.Region = rc.MakeRegion(this, _opt_semicolon);
                 td.BodyRegion = rc.MakeRegion(open_brace, _opt_semicolon);
                  rc.ApplyModifiers(td, _opt_modifiers._Modifiers);
+                // documentation
+                 rc.AddDocumentation(td, _opt_documentation);
                 // attributes
                 rc.ConvertAttributes(td.Attributes, _opt_attributes._Attributes);
 

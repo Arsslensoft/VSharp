@@ -96,17 +96,23 @@ namespace VSC.TypeSystem
 		/// Gets the effective interface set of this type parameter.
 		/// </summary>
 		ICollection<IType> EffectiveInterfaceSet { get; }
-		
-		
-		/// <summary>
-		/// Gets if the type parameter has the 'class' constraint.
-		/// </summary>
-		bool HasReferenceTypeConstraint { get; }
-		
-		/// <summary>
-		/// Gets if the type parameter has the 'struct' constraint.
-		/// </summary>
-		bool HasValueTypeConstraint { get; }
+
+
+
+        /// <summary>
+        /// Gets if the type parameter has the 'self()' constraint.
+        /// </summary>
+        bool HasDefaultConstructorConstraint { get; }
+
+        /// <summary>
+        /// Gets if the type parameter has the 'class' constraint.
+        /// </summary>
+        bool HasReferenceTypeConstraint { get; }
+
+        /// <summary>
+        /// Gets if the type parameter has the 'struct' constraint.
+        /// </summary>
+        bool HasValueTypeConstraint { get; }
 	}
 	
 

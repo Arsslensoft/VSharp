@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -84,15 +85,17 @@ namespace VSC.Context
         {
 
             VSharpUnresolvedTypeDefinition newType;
-            if (isglobal)
+          if (currentTypeDefinition != null)
             {
-                newType = new VSharpUnresolvedTypeDefinition(usingScope, name);
-                unresolvedFile.TopLevelTypeDefinitions.Add(newType);
+                newType = new VSharpUnresolvedTypeDefinition(currentTypeDefinition, name);
+                foreach (var typeParameter in currentTypeDefinition.TypeParameters)
+                    newType.TypeParameters.Add(typeParameter);
+                currentTypeDefinition.NestedTypes.Add(newType);
             }
             else
             {
-                newType = new VSharpUnresolvedTypeDefinition(DefaultTypeDefinition, name);
-                DefaultTypeDefinition.NestedTypes.Add(newType);
+                newType = new VSharpUnresolvedTypeDefinition(usingScope, name);
+                unresolvedFile.TopLevelTypeDefinitions.Add(newType);
             }
             newType.UnresolvedFile = unresolvedFile;
             newType.HasExtensionMethods = false; // gets set to true when an extension method is added
@@ -306,6 +309,7 @@ namespace VSC.Context
             td.IsAbstract = (modifiers & (VSC.TypeSystem.Modifiers.ABSTRACT | VSC.TypeSystem.Modifiers.STATIC)) != 0;
             td.IsSealed = (modifiers & (VSC.TypeSystem.Modifiers.SEALED | VSC.TypeSystem.Modifiers.STATIC)) != 0;
             td.IsShadowing = (modifiers & VSC.TypeSystem.Modifiers.NEW) != 0;
+            td.IsPartial = (modifiers & VSC.TypeSystem.Modifiers.PARTIAL) != 0;
         }
      public  void ApplyModifiers(UnresolvedMemberSpec m, VSC.TypeSystem.Modifiers modifiers)
         {
@@ -501,6 +505,82 @@ namespace VSC.Context
         }
         #endregion
 
+       #region Documentation
+      public void AddDocumentation(IUnresolvedEntity entity, OptDocumentation doc)
+       {
+
+           if (doc._documentation != null)
+           {
+               StringBuilder documentation = new StringBuilder();
+               foreach (var d in doc._documentation)
+                   documentation.AppendLine(d.Documentation);
+              
+               unresolvedFile.AddDocumentation(entity, documentation.ToString());
+           }
+       }
+
+       void PrepareMultilineDocumentation(string content, StringBuilder b)
+       {
+           using (var reader = new StringReader(content))
+           {
+               string firstLine = reader.ReadLine();
+               // Add first line only if it's not empty:
+               if (!string.IsNullOrWhiteSpace(firstLine))
+               {
+                   if (firstLine[0] == ' ')
+                       b.Append(firstLine, 1, firstLine.Length - 1);
+                   else
+                       b.Append(firstLine);
+               }
+               // Read lines into list:
+               List<string> lines = new List<string>();
+               string line;
+               while ((line = reader.ReadLine()) != null)
+                   lines.Add(line);
+               // If the last line (the line with '*/' delimiter) is white space only, ignore it.
+               if (lines.Count > 0 && string.IsNullOrWhiteSpace(lines[lines.Count - 1]))
+                   lines.RemoveAt(lines.Count - 1);
+               if (lines.Count > 0)
+               {
+                   // Extract pattern from lines[0]: whitespace, asterisk, whitespace
+                   int patternLength = 0;
+                   string secondLine = lines[0];
+                   while (patternLength < secondLine.Length && char.IsWhiteSpace(secondLine[patternLength]))
+                       patternLength++;
+                   if (patternLength < secondLine.Length && secondLine[patternLength] == '*')
+                   {
+                       patternLength++;
+                       while (patternLength < secondLine.Length && char.IsWhiteSpace(secondLine[patternLength]))
+                           patternLength++;
+                   }
+                   else
+                   {
+                       // no asterisk
+                       patternLength = 0;
+                   }
+                   // Now reduce pattern length to the common pattern:
+                   for (int i = 1; i < lines.Count; i++)
+                   {
+                       line = lines[i];
+                       if (line.Length < patternLength)
+                           patternLength = line.Length;
+                       for (int j = 0; j < patternLength; j++)
+                       {
+                           if (secondLine[j] != line[j])
+                               patternLength = j;
+                       }
+                   }
+                   // Append the lines to the string builder:
+                   for (int i = 0; i < lines.Count; i++)
+                   {
+                       if (b.Length > 0 || i > 0)
+                           b.Append(Environment.NewLine);
+                       b.Append(lines[i], patternLength, lines[i].Length - patternLength);
+                   }
+               }
+           }
+       }
+       #endregion
 
         #region Type Parameters
 
@@ -530,12 +610,24 @@ namespace VSC.Context
                             {
                                 foreach (TypeParameterConstraint type in c._type_parameter_constraints)
                                 {
-                                    if (type._type == null)
-                                    {
-                                        tp.HasReferenceTypeConstraint = true;
-                                        continue;
-                                    }
-
+                                    
+                                
+                                        if (type._kind == TypeParameterConstraintKind.Ctor)
+                                        {
+                                            tp.HasDefaultConstructorConstraint = true;
+                                            continue;
+                                        }
+                                        else if (type._kind == TypeParameterConstraintKind.Class)
+                                        {
+                                            tp.HasReferenceTypeConstraint = true;
+                                            continue;
+                                        }
+                                        else if (type._kind == TypeParameterConstraintKind.Struct)
+                                        {
+                                            tp.HasValueTypeConstraint = true;
+                                            continue;
+                                        }
+                                    
                                     var lookupMode = (ownerType == SymbolKind.TypeDefinition) ? NameLookupMode.BaseTypeReference : NameLookupMode.Type;
                                     tp.Constraints.Add(ConvertTypeReference(type._type, lookupMode));
                                 }
@@ -891,17 +983,24 @@ namespace VSC.Context
        }
        public DomRegion MakeRegion(MethodBodyExpressionBlock node)
        {
-           return MakeRegion(node as Semantic);
+           if (node._block_or_semicolon != null)
+               return MakeRegion(node._block_or_semicolon);
+           else return MakeRegion(node._expression_block.start, node._expression_block.end);
        }
        public DomRegion MakeRegion(BlockOrSemicolon node)
        {
-           return MakeRegion(node as Semantic);
+           if (node._block_statement != null)
+               return MakeRegion(node._block_statement);
+           else return MakeRegion(node as Semantic);
        }
        public DomRegion MakeRegion(BlockStatement node)
        {
-           return MakeRegion(node as Semantic);
+           return MakeRegion(node.start,node.end);
        }
-   
+       public DomRegion MakeRegion(IndexerBody node)
+       {
+           return MakeRegion(node.start, node.end);
+       }
         public DomRegion MakeRegion(Semantic node)
         {
             if (node == null )
@@ -915,6 +1014,22 @@ namespace VSC.Context
                return DomRegion.Empty;
            else
                return MakeRegion(node.Location, end.Location);
+       }
+       public DomRegion MakeRegion(Semantic node, MethodBodyExpressionBlock end)
+       {
+           DomRegion reg = MakeRegion(end);
+           if (node == null)
+               return DomRegion.Empty;
+           else
+               return MakeRegion(node.Location, reg.End);
+       }
+       public DomRegion MakeRegion(Semantic node, BlockOrSemicolon end)
+       {
+           DomRegion reg = MakeRegion(end);
+           if (node == null)
+               return DomRegion.Empty;
+           else
+               return MakeRegion(node.Location, reg.End);
        }
         //internal static Location GetStartLocationAfterAttributes(Semantic node)
         //{

@@ -34,7 +34,67 @@ namespace VSC.TypeSystem.Implementation
 	/// </summary>
 	static class GetMembersHelper
 	{
-	
+        #region GetNestedTypes
+        public static IEnumerable<IType> GetNestedTypes(IType type, Predicate<ITypeDefinition> filter, GetMemberOptions options)
+        {
+            return GetNestedTypes(type, null, filter, options);
+        }
+
+        public static IEnumerable<IType> GetNestedTypes(IType type, IList<IType> nestedTypeArguments, Predicate<ITypeDefinition> filter, GetMemberOptions options)
+        {
+            if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
+            {
+                return GetNestedTypesImpl(type, nestedTypeArguments, filter, options);
+            }
+            else
+            {
+                return type.GetNonInterfaceBaseTypes().SelectMany(t => GetNestedTypesImpl(t, nestedTypeArguments, filter, options));
+            }
+        }
+
+        static IEnumerable<IType> GetNestedTypesImpl(IType outerType, IList<IType> nestedTypeArguments, Predicate<ITypeDefinition> filter, GetMemberOptions options)
+        {
+            ITypeDefinition outerTypeDef = outerType.GetDefinition();
+            if (outerTypeDef == null)
+                yield break;
+
+            int outerTypeParameterCount = outerTypeDef.TypeParameterCount;
+            ParameterizedTypeSpec pt = outerType as ParameterizedTypeSpec;
+            foreach (ITypeDefinition nestedType in outerTypeDef.NestedTypes)
+            {
+                int totalTypeParameterCount = nestedType.TypeParameterCount;
+                if (nestedTypeArguments != null)
+                {
+                    if (totalTypeParameterCount - outerTypeParameterCount != nestedTypeArguments.Count)
+                        continue;
+                }
+                if (!(filter == null || filter(nestedType)))
+                    continue;
+
+                if (totalTypeParameterCount == 0 || (options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions)
+                {
+                    yield return nestedType;
+                }
+                else
+                {
+                    // We need to parameterize the nested type
+                    IType[] newTypeArguments = new IType[totalTypeParameterCount];
+                    for (int i = 0; i < outerTypeParameterCount; i++)
+                    {
+                        newTypeArguments[i] = pt != null ? pt.GetTypeArgument(i) : outerTypeDef.TypeParameters[i];
+                    }
+                    for (int i = outerTypeParameterCount; i < totalTypeParameterCount; i++)
+                    {
+                        if (nestedTypeArguments != null)
+                            newTypeArguments[i] = nestedTypeArguments[i - outerTypeParameterCount];
+                        else
+                            newTypeArguments[i] = SpecialTypeSpec.UnboundTypeArgument;
+                    }
+                    yield return new ParameterizedTypeSpec(nestedType, newTypeArguments);
+                }
+            }
+        }
+        #endregion
 		
 		#region GetMethods
 		public static IEnumerable<IMethod> GetMethods(IType type, Predicate<IUnresolvedMethod> filter, GetMemberOptions options)

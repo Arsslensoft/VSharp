@@ -48,8 +48,11 @@ namespace VSC.TypeSystem
 		/// methods are extension methods.
 		/// </summary>
 		bool? HasExtensionMethods { get; }
-		
 
+        /// <summary>
+        /// Gets whether the partial modifier is set on this part of the type definition.
+        /// </summary>
+        bool IsPartial { get; }
 		
 		/// <summary>
 		/// Gets whether this unresolved type definition causes the addition of a default constructor
@@ -110,7 +113,10 @@ namespace VSC.TypeSystem
 		IEnumerable<IMethod> Methods { get; }
 		IEnumerable<IProperty> Properties { get; }
 		IEnumerable<IEvent> Events { get; }
-		
+        /// <summary>
+        /// Gets whether the partial modifier is set on this part of the type definition.
+        /// </summary>
+        bool IsPartial { get; }
 		/// <summary>
 		/// Gets the known type code for this type definition.
 		/// </summary>

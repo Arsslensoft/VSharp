@@ -545,7 +545,18 @@ namespace VSC.TypeSystem.Resolver
                 if (!NullableType.IsNonNullableValueType(typeArgument))
                     return false;
             }
-     
+            if (typeParameter.HasDefaultConstructorConstraint)
+            {
+                ITypeDefinition def = typeArgument.GetDefinition();
+                if (def != null && def.IsAbstract)
+                    return false;
+                var ctors = typeArgument.GetConstructors(
+                    m => m.Parameters.Count == 0 && m.Accessibility == Accessibility.Public,
+                    GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions
+                );
+                if (!ctors.Any())
+                    return false;
+            }
             foreach (IType constraintType in typeParameter.DirectBaseTypes)
             {
                 IType c = constraintType;

@@ -95,8 +95,16 @@ namespace VSC.TypeSystem.Implementation
 		public bool IsOperator {
 			get { return this.SymbolKind == SymbolKind.Operator; }
 		}
-		
-	
+
+        public bool IsSupersede
+        {
+            get { return flags[FlagSupersededMethod]; }
+            set
+            {
+                ThrowIfFrozen();
+                flags[FlagSupersededMethod] = value;
+            }
+        }
 		public bool IsAsync {
 			get { return flags[FlagAsyncMethod]; }
 			set {

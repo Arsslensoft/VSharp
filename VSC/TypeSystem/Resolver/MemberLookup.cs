@@ -179,7 +179,11 @@ namespace VSC.TypeSystem.Resolver
 				
 				List<IEntity> entities = new List<IEntity>();
 				entities.AddRange(type.GetMembers(options: GetMemberOptions.IgnoreInheritedMembers));
-		
+				if (!targetIsTypeParameter) {
+					var nestedTypes = type.GetNestedTypes(options: GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions);
+					// GetDefinition() might return null if some IType has a strange implementation of GetNestedTypes.
+					entities.AddRange(nestedTypes.Select(t => t.GetDefinition()).Where(td => td != null));
+				}
 				
 				foreach (var entityGroup in entities.GroupBy(e => e.Name)) {
 					
@@ -270,43 +274,60 @@ namespace VSC.TypeSystem.Resolver
 		#endregion
 		
 		#region LookupType
-		public ResolveResult LookupType(IType declaringType, string name, IList<IType> typeArguments, bool parameterizeResultType = true)
-		{
-			if (declaringType == null)
-				throw new ArgumentNullException("declaringType");
-			if (name == null)
-				throw new ArgumentNullException("name");
-			if (typeArguments == null)
-				throw new ArgumentNullException("typeArguments");
-			
-			int typeArgumentCount = typeArguments.Count;
-			Predicate<ITypeDefinition> filter = delegate (ITypeDefinition d) {
-				return InnerTypeParameterCount(d) == typeArgumentCount && d.Name == name && IsAccessible(d, true);
-			};
-			
-			List<LookupGroup> lookupGroups = new List<LookupGroup>();
-            //if (declaringType.Kind != TypeKind.TypeParameter) {
-            //    foreach (IType type in declaringType.GetNonInterfaceBaseTypes()) {
-            //        List<IType> newNestedTypes = null;
-            //        IEnumerable<IType> typeBaseTypes = null;
-			
-            //    }
-            //}
-			
-			lookupGroups.RemoveAll(g => g.AllHidden);
-			Debug.Assert(lookupGroups.All(g => g.NestedTypes != null && g.NestedTypes.Count > 0));
-			
-			if (lookupGroups.Count == 0) {
-				return new UnknownMemberResolveResult(declaringType, name, typeArguments);
-			}
-			
-			LookupGroup resultGroup = lookupGroups[lookupGroups.Count - 1];
-			
-			if (resultGroup.NestedTypes.Count > 1 || lookupGroups.Count > 1)
-				return new AmbiguousTypeResolveResult(resultGroup.NestedTypes[0]);
-			else
-				return new TypeResolveResult(resultGroup.NestedTypes[0]);
-		}
+        public ResolveResult LookupType(IType declaringType, string name, IList<IType> typeArguments, bool parameterizeResultType = true)
+        {
+            if (declaringType == null)
+                throw new ArgumentNullException("declaringType");
+            if (name == null)
+                throw new ArgumentNullException("name");
+            if (typeArguments == null)
+                throw new ArgumentNullException("typeArguments");
+
+            int typeArgumentCount = typeArguments.Count;
+            Predicate<ITypeDefinition> filter = delegate(ITypeDefinition d)
+            {
+                return InnerTypeParameterCount(d) == typeArgumentCount && d.Name == name && IsAccessible(d, true);
+            };
+
+            List<LookupGroup> lookupGroups = new List<LookupGroup>();
+            if (declaringType.Kind != TypeKind.TypeParameter)
+            {
+                foreach (IType type in declaringType.GetNonInterfaceBaseTypes())
+                {
+                    List<IType> newNestedTypes = null;
+                    IEnumerable<IType> typeBaseTypes = null;
+
+                    IEnumerable<IType> nestedTypes;
+                    if (parameterizeResultType)
+                    {
+                        nestedTypes = type.GetNestedTypes(typeArguments, filter, GetMemberOptions.IgnoreInheritedMembers);
+                    }
+                    else
+                    {
+                        nestedTypes = type.GetNestedTypes(filter, GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions);
+                    }
+                    AddNestedTypes(type, nestedTypes, typeArgumentCount, lookupGroups, ref typeBaseTypes, ref newNestedTypes);
+
+                    if (newNestedTypes != null)
+                        lookupGroups.Add(new LookupGroup(type, newNestedTypes, null, null));
+                }
+            }
+
+            lookupGroups.RemoveAll(g => g.AllHidden);
+            Debug.Assert(lookupGroups.All(g => g.NestedTypes != null && g.NestedTypes.Count > 0));
+
+            if (lookupGroups.Count == 0)
+            {
+                return new UnknownMemberResolveResult(declaringType, name, typeArguments);
+            }
+
+            LookupGroup resultGroup = lookupGroups[lookupGroups.Count - 1];
+
+            if (resultGroup.NestedTypes.Count > 1 || lookupGroups.Count > 1)
+                return new AmbiguousTypeResolveResult(resultGroup.NestedTypes[0]);
+            else
+                return new TypeResolveResult(resultGroup.NestedTypes[0]);
+        }
 		
 		static int InnerTypeParameterCount(IType type)
 		{
@@ -319,71 +340,86 @@ namespace VSC.TypeSystem.Resolver
 		/// <summary>
 		/// Performs a member lookup.
 		/// </summary>
-		public ResolveResult Lookup(ResolveResult targetResolveResult, string name, IList<IType> typeArguments, bool isInvocation)
-		{
-			if (targetResolveResult == null)
-				throw new ArgumentNullException("targetResolveResult");
-			if (name == null)
-				throw new ArgumentNullException("name");
-			if (typeArguments == null)
-				throw new ArgumentNullException("typeArguments");
-			
-			bool targetIsTypeParameter = targetResolveResult.Type.Kind == TypeKind.TypeParameter;
-			
-			bool allowProtectedAccess = IsProtectedAccessAllowed(targetResolveResult);
-			Predicate<ITypeDefinition> nestedTypeFilter = delegate(ITypeDefinition entity) {
-				return entity.Name == name && IsAccessible(entity, allowProtectedAccess);
-			};
-			Predicate<IUnresolvedMember> memberFilter = delegate(IUnresolvedMember entity) {
-				// NOTE: Atm destructors can be looked up with 'Finalize'
-				return entity.SymbolKind != SymbolKind.Indexer &&
-				       entity.SymbolKind != SymbolKind.Operator && 
-				       entity.Name == name;
-			};
-			
-			List<LookupGroup> lookupGroups = new List<LookupGroup>();
-			// This loop will handle base types before derived types.
-			// The loop performs three jobs:
-			// 1) It marks entries in lookup groups from base classes as removed when those members
-			//    are hidden by a derived class.
-			// 2) It adds a new lookup group with the members from a declaring type.
-			// 3) It replaces virtual members with the overridden version, placing the override in the
-			//    lookup group belonging to the base class.
-			foreach (IType type in targetResolveResult.Type.GetNonInterfaceBaseTypes()) {
-				
-				List<IType> newNestedTypes = null;
-				List<IParameterizedMember> newMethods = null;
-				IMember newNonMethod = null;
-				
-				IEnumerable<IType> typeBaseTypes = null;
-				
-		
-				IEnumerable<IMember> members;
-				if (typeArguments.Count == 0) {
-					// Note: IsInvocable-checking cannot be done as part of the filter;
-					// because it must be done after type substitution.
-					members = type.GetMembers(memberFilter, GetMemberOptions.IgnoreInheritedMembers);
-					if (isInvocation)
-						members = members.Where(m => IsInvocable(m));
-				} else {
-					// No need to check for isInvocation/isInvocable here:
-					// we only fetch methods
-					members = type.GetMethods(typeArguments, memberFilter, GetMemberOptions.IgnoreInheritedMembers);
-				}
-				AddMembers(type, members, allowProtectedAccess, lookupGroups, false, ref typeBaseTypes, ref newMethods, ref newNonMethod);
-				
-				if (newNestedTypes != null || newMethods != null || newNonMethod != null)
-					lookupGroups.Add(new LookupGroup(type, newNestedTypes, newMethods, newNonMethod));
-			}
-			
-			// Remove interface members hidden by class members.
-			if (targetIsTypeParameter) {
-				// This can happen only with type parameters.
-				RemoveInterfaceMembersHiddenByClassMembers(lookupGroups);
-			}
-			
-			return CreateResult(targetResolveResult, lookupGroups, name, typeArguments);
-		}
+        public ResolveResult Lookup(ResolveResult targetResolveResult, string name, IList<IType> typeArguments, bool isInvocation)
+        {
+            if (targetResolveResult == null)
+                throw new ArgumentNullException("targetResolveResult");
+            if (name == null)
+                throw new ArgumentNullException("name");
+            if (typeArguments == null)
+                throw new ArgumentNullException("typeArguments");
+
+            bool targetIsTypeParameter = targetResolveResult.Type.Kind == TypeKind.TypeParameter;
+
+            bool allowProtectedAccess = IsProtectedAccessAllowed(targetResolveResult);
+            Predicate<ITypeDefinition> nestedTypeFilter = delegate(ITypeDefinition entity)
+            {
+                return entity.Name == name && IsAccessible(entity, allowProtectedAccess);
+            };
+            Predicate<IUnresolvedMember> memberFilter = delegate(IUnresolvedMember entity)
+            {
+                // NOTE: Atm destructors can be looked up with 'Finalize'
+                return entity.SymbolKind != SymbolKind.Indexer &&
+                       entity.SymbolKind != SymbolKind.Operator &&
+                       entity.Name == name;
+            };
+
+            List<LookupGroup> lookupGroups = new List<LookupGroup>();
+            // This loop will handle base types before derived types.
+            // The loop performs three jobs:
+            // 1) It marks entries in lookup groups from base classes as removed when those members
+            //    are hidden by a derived class.
+            // 2) It adds a new lookup group with the members from a declaring type.
+            // 3) It replaces virtual members with the overridden version, placing the override in the
+            //    lookup group belonging to the base class.
+            foreach (IType type in targetResolveResult.Type.GetNonInterfaceBaseTypes())
+            {
+
+                List<IType> newNestedTypes = null;
+                List<IParameterizedMember> newMethods = null;
+                IMember newNonMethod = null;
+
+                IEnumerable<IType> typeBaseTypes = null;
+
+                if (!isInvocation && !targetIsTypeParameter)
+                {
+                    // Consider nested types only if it's not an invocation.
+                    // type.GetNestedTypes() is checking the type parameter count for an exact match,
+                    // so we don't need to do that in our filter.
+                    var nestedTypes = type.GetNestedTypes(typeArguments, nestedTypeFilter, GetMemberOptions.IgnoreInheritedMembers);
+                    AddNestedTypes(type, nestedTypes, typeArguments.Count, lookupGroups, ref typeBaseTypes, ref newNestedTypes);
+                }
+
+                IEnumerable<IMember> members;
+                if (typeArguments.Count == 0)
+                {
+                    // Note: IsInvocable-checking cannot be done as part of the filter;
+                    // because it must be done after type substitution.
+                    members = type.GetMembers(memberFilter, GetMemberOptions.IgnoreInheritedMembers);
+                    if (isInvocation)
+                        members = members.Where(m => IsInvocable(m));
+                }
+                else
+                {
+                    // No need to check for isInvocation/isInvocable here:
+                    // we only fetch methods
+                    members = type.GetMethods(typeArguments, memberFilter, GetMemberOptions.IgnoreInheritedMembers);
+                }
+                AddMembers(type, members, allowProtectedAccess, lookupGroups, false, ref typeBaseTypes, ref newMethods, ref newNonMethod);
+
+                if (newNestedTypes != null || newMethods != null || newNonMethod != null)
+                    lookupGroups.Add(new LookupGroup(type, newNestedTypes, newMethods, newNonMethod));
+            }
+
+            // Remove interface members hidden by class members.
+            if (targetIsTypeParameter)
+            {
+                // This can happen only with type parameters.
+                RemoveInterfaceMembersHiddenByClassMembers(lookupGroups);
+            }
+
+            return CreateResult(targetResolveResult, lookupGroups, name, typeArguments);
+        }
 		#endregion
 		
 		#region Lookup Indexer
@@ -469,208 +505,247 @@ namespace VSC.TypeSystem.Resolver
 			}
 		}
 		#endregion
-		
-		#region AddMembers
-		/// <summary>
-		/// Adds members to 'newMethods'/'newNonMethod'.
-		/// Removes any members in the existing lookup groups that were hidden by added members.
-		/// Substitutes 'virtual' members in the existing lookup groups for added 'override' members.
-		/// </summary>
-		/// <param name="type">Declaring type of the members</param>
-		/// <param name="members">List of members to add.</param>
-		/// <param name="allowProtectedAccess">Whether protected members are accessible</param>
-		/// <param name="lookupGroups">List of existing lookup groups</param>
-		/// <param name="treatAllParameterizedMembersAsMethods">Whether to treat properties as methods</param>
-		/// <param name="typeBaseTypes">The base types of 'type' (initialized on demand)</param>
-		/// <param name="newMethods">The target list for methods (created on demand).</param>
-		/// <param name="newNonMethod">The target variable for non-method members.</param>
-		void AddMembers(IType type, IEnumerable<IMember> members,
-		                bool allowProtectedAccess,
-		                List<LookupGroup> lookupGroups,
-		                bool treatAllParameterizedMembersAsMethods,
-		                ref IEnumerable<IType> typeBaseTypes, ref List<IParameterizedMember> newMethods, ref IMember newNonMethod)
-		{
-			foreach (IMember member in members) {
-				if (!IsAccessible(member, allowProtectedAccess))
-					continue;
-				
-				IParameterizedMember method;
-				if (treatAllParameterizedMembersAsMethods)
-					method = member as IParameterizedMember;
-				else
-					method = member as IMethod;
-				
-				bool replacedVirtualMemberWithOverride = false;
-				if (member.IsOverride) {
-					// Replacing virtual member with override:
-					
-					// Go backwards so that we find the corresponding virtual member
-					// in the most-derived type
-					for (int i = lookupGroups.Count - 1; i >= 0 && !replacedVirtualMemberWithOverride; i--) {
-						if (typeBaseTypes == null)
-							typeBaseTypes = type.GetNonInterfaceBaseTypes();
-						
-						var lookupGroup = lookupGroups[i];
-						if (typeBaseTypes.Contains(lookupGroup.DeclaringType)) {
-							if (method != null) {
-								// Find the matching method, and replace it with the override
-								for (int j = 0; j < lookupGroup.Methods.Count; j++) {
-									if (SignatureComparer.Ordinal.Equals(method, lookupGroup.Methods[j])) {
-										lookupGroup.Methods[j] = method;
-										replacedVirtualMemberWithOverride = true;
-										break;
-									}
-								}
-							} else {
-								// If the member type matches, replace it with the override
-								if (lookupGroup.NonMethod != null && lookupGroup.NonMethod.SymbolKind == member.SymbolKind) {
-									lookupGroup.NonMethod = member;
-									replacedVirtualMemberWithOverride = true;
-									break;
-								}
-							}
-						}
-					}
-				}
-				// If the member wasn't an override, or if we didn't find any matching virtual method,
-				// proceed to add the member.
-				if (!replacedVirtualMemberWithOverride) {
-					// Make the member hide other members:
-					foreach (var lookupGroup in lookupGroups) {
-						if (lookupGroup.AllHidden)
-							continue; // everything is already hidden
-						if (typeBaseTypes == null)
-							typeBaseTypes = type.GetNonInterfaceBaseTypes();
-						
-						if (typeBaseTypes.Contains(lookupGroup.DeclaringType)) {
-							// Methods hide all non-methods; Non-methods hide everything
-							lookupGroup.NestedTypes = null;
-							lookupGroup.NonMethodIsHidden = true;
-							if (method == null) { // !(member is IMethod)
-								lookupGroup.MethodsAreHidden = true;
-							}
-						}
-					}
-					
-					// Add the new member
-					if (method != null) {
-						if (newMethods == null)
-							newMethods = new List<IParameterizedMember>();
-						newMethods.Add(method);
-					} else {
-						newNonMethod = member;
-					}
-				}
-			}
-		}
-		#endregion
-		
-		#region RemoveInterfaceMembersHiddenByClassMembers
-		void RemoveInterfaceMembersHiddenByClassMembers(List<LookupGroup> lookupGroups)
-		{
-			foreach (var classLookupGroup in lookupGroups) {
-				if (IsInterfaceOrSystemObject(classLookupGroup.DeclaringType))
-					continue;
-				// The current lookup groups contains class members that might hide interface members
-				bool hasNestedTypes = classLookupGroup.NestedTypes != null && classLookupGroup.NestedTypes.Count > 0;
-				if (hasNestedTypes || !classLookupGroup.NonMethodIsHidden) {
-					// Hide all members from interface types
-					foreach (var interfaceLookupGroup in lookupGroups) {
-						if (IsInterfaceOrSystemObject(interfaceLookupGroup.DeclaringType)) {
-							interfaceLookupGroup.NestedTypes = null;
-							interfaceLookupGroup.NonMethodIsHidden = true;
-							interfaceLookupGroup.MethodsAreHidden = true;
-						}
-					}
-				} else if (!classLookupGroup.MethodsAreHidden) {
-					foreach (var classMethod in classLookupGroup.Methods) {
-						// Hide all non-methods from interface types, and all methods with the same signature
-						// as a method in this class type.
-						foreach (var interfaceLookupGroup in lookupGroups) {
-							if (IsInterfaceOrSystemObject(interfaceLookupGroup.DeclaringType)) {
-								interfaceLookupGroup.NestedTypes = null;
-								interfaceLookupGroup.NonMethodIsHidden = true;
-								if (interfaceLookupGroup.Methods != null && !interfaceLookupGroup.MethodsAreHidden) {
-									// The mapping of virtual to overridden methods is already done,
-									// so we can simply remove the methods from the collection
-									interfaceLookupGroup.Methods.RemoveAll(
-										m => SignatureComparer.Ordinal.Equals(classMethod, m));
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-		
-		static bool IsInterfaceOrSystemObject(IType type)
-		{
-			// return true if type is an interface or System.Object
-			if (type.Kind == TypeKind.Interface)
-				return true;
-			ITypeDefinition d = type.GetDefinition();
-			return d != null && d.KnownTypeCode == KnownTypeCode.Object;
-		}
-		#endregion
-		
-		#region CreateResult
-		ResolveResult CreateResult(ResolveResult targetResolveResult, List<LookupGroup> lookupGroups, string name, IList<IType> typeArguments)
-		{
-			// Remove all hidden groups
-			lookupGroups.RemoveAll(g => g.AllHidden);
-			
-			if (lookupGroups.Count == 0) {
-				// No members found
-				return new UnknownMemberResolveResult(targetResolveResult.Type, name, typeArguments);
-			}
-			
-			if (lookupGroups.Any(g => !g.MethodsAreHidden && g.Methods.Count > 0)) {
-				// If there are methods, make a MethodGroupResolveResult.
-				// Note that a conflict between a member and a method (possible with multiple interface inheritance)
-				// is only a warning, not an error, and the V# compiler will prefer the method group.
-				List<MethodListWithDeclaringType> methodLists = new List<MethodListWithDeclaringType>();
-				foreach (var lookupGroup in lookupGroups) {
-					if (!lookupGroup.MethodsAreHidden && lookupGroup.Methods.Count > 0) {
-						var methodListWithDeclType = new MethodListWithDeclaringType(lookupGroup.DeclaringType);
-						foreach (var method in lookupGroup.Methods) {
-							methodListWithDeclType.Add((IMethod)method);
-						}
-						methodLists.Add(methodListWithDeclType);
-					}
-				}
-                return null;//TODO:Fix
-				//return new MethodGroupResolveResult(targetResolveResult, name, methodLists, typeArguments);
-			}
-			
-			// If there are ambiguities, report the most-derived result (last group)
-			LookupGroup resultGroup = lookupGroups[lookupGroups.Count - 1];
-			if (resultGroup.NestedTypes != null && resultGroup.NestedTypes.Count > 0) {
-				if (resultGroup.NestedTypes.Count > 1 || !resultGroup.NonMethodIsHidden || lookupGroups.Count > 1)
-					return new AmbiguousTypeResolveResult(resultGroup.NestedTypes[0]);
-				else
-					return new TypeResolveResult(resultGroup.NestedTypes[0]);
-			}
-			
-			if (resultGroup.NonMethod.IsStatic && targetResolveResult is ThisResolveResult) {
-				targetResolveResult = new TypeResolveResult(targetResolveResult.Type);
-			}
-			
-			if (lookupGroups.Count > 1) {
-				return new AmbiguousMemberResolveResult(targetResolveResult, resultGroup.NonMethod);
-			} else {
-				if (isInEnumMemberInitializer) {
-					IField field = resultGroup.NonMethod as IField;
-					if (field != null && field.DeclaringTypeDefinition != null && field.DeclaringTypeDefinition.Kind == TypeKind.Enum) {
-						return new MemberResolveResult(
-							targetResolveResult, field,
-							field.DeclaringTypeDefinition.EnumUnderlyingType,
-							field.IsConst, field.ConstantValue);
-					}
-				}
-				return new MemberResolveResult(targetResolveResult, resultGroup.NonMethod);
-			}
-		}
-		#endregion
+
+        #region AddMembers
+        /// <summary>
+        /// Adds members to 'newMethods'/'newNonMethod'.
+        /// Removes any members in the existing lookup groups that were hidden by added members.
+        /// Substitutes 'virtual' members in the existing lookup groups for added 'override' members.
+        /// </summary>
+        /// <param name="type">Declaring type of the members</param>
+        /// <param name="members">List of members to add.</param>
+        /// <param name="allowProtectedAccess">Whether protected members are accessible</param>
+        /// <param name="lookupGroups">List of existing lookup groups</param>
+        /// <param name="treatAllParameterizedMembersAsMethods">Whether to treat properties as methods</param>
+        /// <param name="typeBaseTypes">The base types of 'type' (initialized on demand)</param>
+        /// <param name="newMethods">The target list for methods (created on demand).</param>
+        /// <param name="newNonMethod">The target variable for non-method members.</param>
+        void AddMembers(IType type, IEnumerable<IMember> members,
+                        bool allowProtectedAccess,
+                        List<LookupGroup> lookupGroups,
+                        bool treatAllParameterizedMembersAsMethods,
+                        ref IEnumerable<IType> typeBaseTypes, ref List<IParameterizedMember> newMethods, ref IMember newNonMethod)
+        {
+            foreach (IMember member in members)
+            {
+                if (!IsAccessible(member, allowProtectedAccess))
+                    continue;
+
+                IParameterizedMember method;
+                if (treatAllParameterizedMembersAsMethods)
+                    method = member as IParameterizedMember;
+                else
+                    method = member as IMethod;
+
+                bool replacedVirtualMemberWithOverride = false;
+                if (member.IsOverride)
+                {
+                    // Replacing virtual member with override:
+
+                    // Go backwards so that we find the corresponding virtual member
+                    // in the most-derived type
+                    for (int i = lookupGroups.Count - 1; i >= 0 && !replacedVirtualMemberWithOverride; i--)
+                    {
+                        if (typeBaseTypes == null)
+                            typeBaseTypes = type.GetNonInterfaceBaseTypes();
+
+                        var lookupGroup = lookupGroups[i];
+                        if (typeBaseTypes.Contains(lookupGroup.DeclaringType))
+                        {
+                            if (method != null)
+                            {
+                                // Find the matching method, and replace it with the override
+                                for (int j = 0; j < lookupGroup.Methods.Count; j++)
+                                {
+                                    if (SignatureComparer.Ordinal.Equals(method, lookupGroup.Methods[j]))
+                                    {
+                                        lookupGroup.Methods[j] = method;
+                                        replacedVirtualMemberWithOverride = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                // If the member type matches, replace it with the override
+                                if (lookupGroup.NonMethod != null && lookupGroup.NonMethod.SymbolKind == member.SymbolKind)
+                                {
+                                    lookupGroup.NonMethod = member;
+                                    replacedVirtualMemberWithOverride = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                // If the member wasn't an override, or if we didn't find any matching virtual method,
+                // proceed to add the member.
+                if (!replacedVirtualMemberWithOverride)
+                {
+                    // Make the member hide other members:
+                    foreach (var lookupGroup in lookupGroups)
+                    {
+                        if (lookupGroup.AllHidden)
+                            continue; // everything is already hidden
+                        if (typeBaseTypes == null)
+                            typeBaseTypes = type.GetNonInterfaceBaseTypes();
+
+                        if (typeBaseTypes.Contains(lookupGroup.DeclaringType))
+                        {
+                            // Methods hide all non-methods; Non-methods hide everything
+                            lookupGroup.NestedTypes = null;
+                            lookupGroup.NonMethodIsHidden = true;
+                            if (method == null)
+                            { // !(member is IMethod)
+                                lookupGroup.MethodsAreHidden = true;
+                            }
+                        }
+                    }
+
+                    // Add the new member
+                    if (method != null)
+                    {
+                        if (newMethods == null)
+                            newMethods = new List<IParameterizedMember>();
+                        newMethods.Add(method);
+                    }
+                    else
+                    {
+                        newNonMethod = member;
+                    }
+                }
+            }
+        }
+        #endregion
+
+        #region RemoveInterfaceMembersHiddenByClassMembers
+        void RemoveInterfaceMembersHiddenByClassMembers(List<LookupGroup> lookupGroups)
+        {
+            foreach (var classLookupGroup in lookupGroups)
+            {
+                if (IsInterfaceOrSystemObject(classLookupGroup.DeclaringType))
+                    continue;
+                // The current lookup groups contains class members that might hide interface members
+                bool hasNestedTypes = classLookupGroup.NestedTypes != null && classLookupGroup.NestedTypes.Count > 0;
+                if (hasNestedTypes || !classLookupGroup.NonMethodIsHidden)
+                {
+                    // Hide all members from interface types
+                    foreach (var interfaceLookupGroup in lookupGroups)
+                    {
+                        if (IsInterfaceOrSystemObject(interfaceLookupGroup.DeclaringType))
+                        {
+                            interfaceLookupGroup.NestedTypes = null;
+                            interfaceLookupGroup.NonMethodIsHidden = true;
+                            interfaceLookupGroup.MethodsAreHidden = true;
+                        }
+                    }
+                }
+                else if (!classLookupGroup.MethodsAreHidden)
+                {
+                    foreach (var classMethod in classLookupGroup.Methods)
+                    {
+                        // Hide all non-methods from interface types, and all methods with the same signature
+                        // as a method in this class type.
+                        foreach (var interfaceLookupGroup in lookupGroups)
+                        {
+                            if (IsInterfaceOrSystemObject(interfaceLookupGroup.DeclaringType))
+                            {
+                                interfaceLookupGroup.NestedTypes = null;
+                                interfaceLookupGroup.NonMethodIsHidden = true;
+                                if (interfaceLookupGroup.Methods != null && !interfaceLookupGroup.MethodsAreHidden)
+                                {
+                                    // The mapping of virtual to overridden methods is already done,
+                                    // so we can simply remove the methods from the collection
+                                    interfaceLookupGroup.Methods.RemoveAll(
+                                        m => SignatureComparer.Ordinal.Equals(classMethod, m));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        static bool IsInterfaceOrSystemObject(IType type)
+        {
+            // return true if type is an interface or System.Object
+            if (type.Kind == TypeKind.Interface)
+                return true;
+            ITypeDefinition d = type.GetDefinition();
+            return d != null && d.KnownTypeCode == KnownTypeCode.Object;
+        }
+        #endregion
+
+        #region CreateResult
+        ResolveResult CreateResult(ResolveResult targetResolveResult, List<LookupGroup> lookupGroups, string name, IList<IType> typeArguments)
+        {
+            // Remove all hidden groups
+            lookupGroups.RemoveAll(g => g.AllHidden);
+
+            if (lookupGroups.Count == 0)
+            {
+                // No members found
+                return new UnknownMemberResolveResult(targetResolveResult.Type, name, typeArguments);
+            }
+
+            if (lookupGroups.Any(g => !g.MethodsAreHidden && g.Methods.Count > 0))
+            {
+                // If there are methods, make a MethodGroupResolveResult.
+                // Note that a conflict between a member and a method (possible with multiple interface inheritance)
+                // is only a warning, not an error, and the C# compiler will prefer the method group.
+                List<MethodListWithDeclaringType> methodLists = new List<MethodListWithDeclaringType>();
+                foreach (var lookupGroup in lookupGroups)
+                {
+                    if (!lookupGroup.MethodsAreHidden && lookupGroup.Methods.Count > 0)
+                    {
+                        var methodListWithDeclType = new MethodListWithDeclaringType(lookupGroup.DeclaringType);
+                        foreach (var method in lookupGroup.Methods)
+                        {
+                            methodListWithDeclType.Add((IMethod)method);
+                        }
+                        methodLists.Add(methodListWithDeclType);
+                    }
+                }
+
+                return new MethodGroupResolveResult(targetResolveResult, name, methodLists, typeArguments);
+            }
+
+            // If there are ambiguities, report the most-derived result (last group)
+            LookupGroup resultGroup = lookupGroups[lookupGroups.Count - 1];
+            if (resultGroup.NestedTypes != null && resultGroup.NestedTypes.Count > 0)
+            {
+                if (resultGroup.NestedTypes.Count > 1 || !resultGroup.NonMethodIsHidden || lookupGroups.Count > 1)
+                    return new AmbiguousTypeResolveResult(resultGroup.NestedTypes[0]);
+                else
+                    return new TypeResolveResult(resultGroup.NestedTypes[0]);
+            }
+
+            if (resultGroup.NonMethod.IsStatic && targetResolveResult is ThisResolveResult)
+            {
+                targetResolveResult = new TypeResolveResult(targetResolveResult.Type);
+            }
+
+            if (lookupGroups.Count > 1)
+            {
+                return new AmbiguousMemberResolveResult(targetResolveResult, resultGroup.NonMethod);
+            }
+            else
+            {
+                if (isInEnumMemberInitializer)
+                {
+                    IField field = resultGroup.NonMethod as IField;
+                    if (field != null && field.DeclaringTypeDefinition != null && field.DeclaringTypeDefinition.Kind == TypeKind.Enum)
+                    {
+                        return new MemberResolveResult(
+                            targetResolveResult, field,
+                            field.DeclaringTypeDefinition.EnumUnderlyingType,
+                            field.IsConst, field.ConstantValue);
+                    }
+                }
+                return new MemberResolveResult(targetResolveResult, resultGroup.NonMethod);
+            }
+        }
+        #endregion
 	}
 
     /// <summary>

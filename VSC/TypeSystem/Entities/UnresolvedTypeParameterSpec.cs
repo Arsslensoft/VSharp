@@ -10,7 +10,7 @@ namespace VSC.TypeSystem.Implementation
 	/// Default implementation of <see cref="IUnresolvedTypeParameter"/>.
 	/// </summary>
 	[Serializable]
-	public class UnresolvedTypeParameterSpec : IUnresolvedTypeParameter, IFreezable
+	public class UnresolvedTypeParameterSpec  : IUnresolvedTypeParameter, IFreezable
 	{
 		readonly int index;
 		IList<ITypeReference> constraints;
@@ -22,6 +22,7 @@ namespace VSC.TypeSystem.Implementation
 		const ushort FlagFrozen                       = 0x0001;
 		const ushort FlagReferenceTypeConstraint      = 0x0002;
 		const ushort FlagValueTypeConstraint          = 0x0004;
+		const ushort FlagDefaultConstructorConstraint = 0x0008;
 		
 		public void Freeze()
 		{
@@ -35,8 +36,8 @@ namespace VSC.TypeSystem.Implementation
 		{
 			constraints = FreezableHelper.FreezeList(constraints);
 		}
-		
-		public UnresolvedTypeParameterSpec(SymbolKind ownerType, int index, string name = null)
+
+        public UnresolvedTypeParameterSpec(SymbolKind ownerType, int index, string name = null)
 		{
 			this.ownerType = ownerType;
 			this.index = index;
@@ -88,8 +89,8 @@ namespace VSC.TypeSystem.Implementation
 				return constraints;
 			}
 		}
-	
 		
+	
 		public DomRegion Region {
 			get { return region; }
 			set {
@@ -98,6 +99,13 @@ namespace VSC.TypeSystem.Implementation
 			}
 		}
 		
+		public bool HasDefaultConstructorConstraint {
+			get { return flags[FlagDefaultConstructorConstraint]; }
+			set {
+				FreezableHelper.ThrowIfFrozen(this);
+				flags[FlagDefaultConstructorConstraint] = value;
+			}
+		}
 		
 		public bool HasReferenceTypeConstraint {
 			get { return flags[FlagReferenceTypeConstraint]; }
@@ -141,9 +149,8 @@ namespace VSC.TypeSystem.Implementation
 			if (owner == null)
 				throw new InvalidOperationException("Could not determine the type parameter's owner.");
 			return new ResolvedTypeParameterSpec(
-				owner, index, name, 
-             this.Region,
-				this.HasValueTypeConstraint, this.HasReferenceTypeConstraint, this.Constraints.Resolve(context)
+				owner, index, name, this.Region,
+				this.HasValueTypeConstraint, this.HasReferenceTypeConstraint, this.HasDefaultConstructorConstraint, this.Constraints.Resolve(context)
 			);
 		}
 	}

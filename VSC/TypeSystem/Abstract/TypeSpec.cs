@@ -65,7 +65,16 @@ namespace VSC.TypeSystem.Implementation
 		}
 		
 		public abstract ITypeReference ToTypeReference();
-	
+
+        public virtual IEnumerable<IType> GetNestedTypes(Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
+        {
+            return EmptyList<IType>.Instance;
+        }
+
+        public virtual IEnumerable<IType> GetNestedTypes(IList<IType> typeArguments, Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
+        {
+            return EmptyList<IType>.Instance;
+        }
 		
 		public virtual IEnumerable<IMethod> GetMethods(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
