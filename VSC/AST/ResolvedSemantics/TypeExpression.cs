@@ -27,5 +27,22 @@ namespace VSC.AST {
 				{
 				_builtin_type_expression = _BuiltinTypeExpression;
 				}
+
+            public override string ToString()
+            {
+                if (_builtin_type_expression != null)
+                    return _builtin_type_expression.ToString();
+                else
+                {
+                    string type = _package_or_type_expr.ToString();
+                    if (_isnullable)
+                        type += "?";
+                    else if (_pointer_stars != null)
+                        foreach (var ps in _pointer_stars)
+                            type += "*";
+
+                    return type;
+                }
+            }
 }
 }

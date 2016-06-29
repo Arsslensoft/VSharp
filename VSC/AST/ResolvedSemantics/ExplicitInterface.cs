@@ -19,5 +19,25 @@ namespace VSC.AST {
 				_identifier = _Identifier;
 				_opt_type_argument_list = _OptTypeArgumentList;
 				}
+            public override string ToString()
+            {
+                string res = "";
+                if(_explicit_interface != null)
+                    res += _explicit_interface.ToString();
+
+
+                res += _identifier._Identifier;
+                if (_opt_type_argument_list._type_arguments != null)
+                {
+                    res += "!<";
+                    foreach (var a in _opt_type_argument_list._type_arguments)
+                        res += a._type_expression_or_array.ToString() + ", ";
+
+                    res = res.Substring(0, res.Length - 1);
+                    res += ">";
+                }
+
+                return res+".";
+            }
 }
 }

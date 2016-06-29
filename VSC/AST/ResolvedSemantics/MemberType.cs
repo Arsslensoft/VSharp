@@ -13,5 +13,11 @@ namespace VSC.AST {
 			public MemberType( Semantic _symbol162)
 				{
 				}
+            public override string ToString()
+            {
+                if (_type_expression_or_array != null)
+                    return _type_expression_or_array.ToString();
+                else return "void";
+            }
 }
 }

@@ -89,8 +89,8 @@
     <Compile Include="AST\Classes\BlockVariableInitializer.cs" />
     <Compile Include="AST\Literals\BooleanLiteral.cs" />
     <Compile Include="AST\Statement\BreakStatement.cs" />
-    <Compile Include="AST\Classes\BuiltinType.cs" />
-    <Compile Include="AST\Classes\BuiltinTypeExpression.cs" />
+    <Compile Include="AST\ResolvedSemantics\BuiltinType.cs" />
+    <Compile Include="AST\ResolvedSemantics\BuiltinTypeExpression.cs" />
     <Compile Include="AST\Expression\CastExpression.cs" />
     <Compile Include="AST\Classes\CatchClause.cs" />
     <Compile Include="AST\Classes\CatchClauses.cs" />
@@ -131,7 +131,7 @@
     <Compile Include="AST\Sequences\EventDeclarators.cs" />
     <Compile Include="AST\Classes\EventVariableInitializer.cs" />
     <Compile Include="AST\Expression\ExclusiveOrExpression.cs" />
-    <Compile Include="AST\Classes\ExplicitInterface.cs" />
+    <Compile Include="AST\ResolvedSemantics\ExplicitInterface.cs" />
     <Compile Include="AST\Classes\ExpressionBlock.cs" />
     <Compile Include="AST\Sequences\ExpressionList.cs" />
     <Compile Include="AST\Classes\ExpressionOpt.cs" />
@@ -159,7 +159,7 @@
     <Compile Include="AST\Statement\IfContinueStatement.cs" />
     <Compile Include="AST\Statement\IfStatement.cs" />
     <Compile Include="AST\Statement\IfThenStatement.cs" />
-    <Compile Include="AST\Classes\ImportDirective.cs" />
+    <Compile Include="AST\ResolvedSemantics\ImportDirective.cs" />
     <Compile Include="AST\Sequences\ImportDirectives.cs" />
     <Compile Include="AST\Expression\InclusiveOrExpression.cs" />
     <Compile Include="AST\Classes\IndexerBody.cs" />
@@ -179,7 +179,7 @@
     <Compile Include="AST\Sequences\LambdaParameterList.cs" />
     <Compile Include="AST\Expression\LogicalNegationExpression.cs" />
     <Compile Include="AST\Expression\MemberAccess.cs" />
-    <Compile Include="AST\Classes\MemberType.cs" />
+    <Compile Include="AST\ResolvedSemantics\MemberType.cs" />
     <Compile Include="AST\Classes\MethodBodyExpressionBlock.cs" />
     <Compile Include="AST\Declaration\MethodDeclaration.cs" />
     <Compile Include="AST\Classes\MethodDeclarationName.cs" />
@@ -230,7 +230,7 @@
     <Compile Include="AST\Declaration\PackageDeclaration.cs" />
     <Compile Include="AST\Sequences\PackageDeclarations.cs" />
     <Compile Include="AST\Sequences\DeclarationSequence.cs" />
-    <Compile Include="AST\Classes\PackageOrTypeExpr.cs" />
+    <Compile Include="AST\ResolvedSemantics\PackageOrTypeExpr.cs" />
     <Compile Include="AST\Classes\ParameterArray.cs" />
     <Compile Include="AST\Classes\ParameterModifier.cs" />
     <Compile Include="AST\Expression\ParenthesizedExpression.cs" />
@@ -243,10 +243,10 @@
     <Compile Include="AST\Expression\PreIncrementExpression.cs" />
     <Compile Include="AST\Declaration\PropertyDeclaration.cs" />
     <Compile Include="AST\Classes\PropertyInitializer.cs" />
-    <Compile Include="AST\Classes\QualifiedAliasMember.cs" />
+    <Compile Include="AST\ResolvedSemantics\QualifiedAliasMember.cs" />
     <Compile Include="AST\Declaration\RaiseAccessorDeclaration.cs" />
     <Compile Include="AST\Optional\RaiseAccessorDeclarationOpt.cs" />
-    <Compile Include="AST\Classes\RankSpecifier.cs" />
+    <Compile Include="AST\ResolvedSemantics\RankSpecifier.cs" />
     <Compile Include="AST\Sequences\RankSpecifiers.cs" />
     <Compile Include="AST\Register\Register.cs" />
     <Compile Include="AST\Register\RegisterBinaryOperator.cs" />
@@ -276,11 +276,11 @@
     <Compile Include="AST\Statement\SyncThenStatement.cs" />
     <Compile Include="AST\Statement\ThrowStatement.cs" />
     <Compile Include="AST\Statement\TryStatement.cs" />
-    <Compile Include="AST\Classes\Type.cs" />
+    <Compile Include="AST\ResolvedSemantics\Type.cs" />
     <Compile Include="AST\Sequences\TypeArguments.cs" />
     <Compile Include="AST\Classes\TypeDeclarationName.cs" />
-    <Compile Include="AST\Classes\TypeExpression.cs" />
-    <Compile Include="AST\Classes\TypeExpressionOrArray.cs" />
+    <Compile Include="AST\ResolvedSemantics\TypeExpression.cs" />
+    <Compile Include="AST\ResolvedSemantics\TypeExpressionOrArray.cs" />
     <Compile Include="AST\Sequences\TypeList.cs" />
     <Compile Include="AST\Expression\TypeofExpression.cs" />
     <Compile Include="AST\Classes\TypeParameterConstraint.cs" />
@@ -443,7 +443,9 @@
     <Compile Include="Context\EmitContext.cs" />
     <Compile Include="Context\FlowAnalysisContext.cs" />
     <Compile Include="Context\ResolveContext.cs" />
+    <Compile Include="Context\SymbolResolveContext.cs" />
     <Compile Include="TypeSystem\AliasNamespaceReference.cs" />
+    <Compile Include="TypeSystem\AttributeTypeReference.cs" />
     <Compile Include="TypeSystem\MethodTypeParameterWithInheritedConstraints.cs" />
     <Compile Include="TypeSystem\VSharpAttribute.cs" />
     <Compile Include="TypeSystem\MemberTypeOrNamespaceReference.cs" />

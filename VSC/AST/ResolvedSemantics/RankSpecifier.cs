@@ -16,5 +16,20 @@ namespace VSC.AST {
                     foreach (var ds in _dim_separators)
                         _dimension++;
 				}
+
+            public override string ToString()
+            {
+                if (_dim_separators == null)
+                    return "[]";
+                else
+                {
+                    string res = "[,";
+                    for (int i = 1; i < _dimension; i++)
+                        res += ",";
+
+                    return res + "]";
+
+                }
+            }
 }
 }

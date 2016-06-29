@@ -45,5 +45,16 @@ namespace VSC.AST {
                 return true;
           
             }
+            public override object DoResolve(Context.ResolveContext rc)
+            {
+                foreach (ImportDirective imp in _import_directives)
+                    imp.DoResolve(rc);
+
+
+                foreach (var decl in _package_or_type_declarations)
+                    decl.DoResolve(rc);
+
+                return this;
+            }
 }
 }

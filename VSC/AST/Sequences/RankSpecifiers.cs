@@ -11,5 +11,12 @@ namespace VSC.AST {
 			public RankSpecifiers(RankSpecifier _RankSpecifier,RankSpecifiers _RankSpecifiers) : base(_RankSpecifier,_RankSpecifiers)
 				{
 				}
+            public override string ToString()
+            {
+                string res = "";
+                foreach (var rs in this)
+                    res += rs.ToString();
+                return res;
+            }
 }
 }

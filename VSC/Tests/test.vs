@@ -1,8 +1,12 @@
-		// this method is 
-import Std;
+package Std{
+
+}
+
 // 1
 package ConsoleApplication1
 {
+import Std;
+import Std.Errr;
 /* 2 */
 	public delegate void Handler<T,U,V>(T x, U y, V z) 
 							where T:IComparable!<T>

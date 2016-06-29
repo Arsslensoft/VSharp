@@ -9,5 +9,9 @@ namespace VSC.AST {
 				{
 				_type_expression_or_array = _TypeExpressionOrArray;
 				}
+            public override string ToString()
+            {
+                return _type_expression_or_array.ToString();
+            }
 }
 }

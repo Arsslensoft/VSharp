@@ -11,5 +11,9 @@ namespace VSC.AST {
 				_identifier = _Identifier;
 				_simple_name_expr = _SimpleNameExpr;
 				}
+            public override string ToString()
+            {
+                return _identifier._Identifier + "::" + _simple_name_expr.ToString();
+            }
 }
 }

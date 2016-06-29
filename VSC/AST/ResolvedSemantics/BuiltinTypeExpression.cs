@@ -21,5 +21,18 @@ namespace VSC.AST {
 				_builtin_type = _BuiltinType;
 				_pointer_stars = _PointerStars;
 				}
+            public override string ToString()
+            {
+
+                string type = _builtin_type._Keyword;
+                    if (_isnullable)
+                        type += "?";
+                    else if (_pointer_stars != null)
+                        foreach (var ps in _pointer_stars)
+                            type += "*";
+
+                    return type;
+                
+            }
 }
 }

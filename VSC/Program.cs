@@ -11,6 +11,8 @@ using VSC.Base.GoldParser.Grammar;
 using VSC.Base.GoldParser.Parser;
 using VSC.Base.GoldParser.Semantic;
 using VSC.Context;
+using VSC.TypeSystem;
+using VSC.TypeSystem.Resolver;
 
 namespace VSC
 {
@@ -41,7 +43,14 @@ namespace VSC
                 CompilerContext cctx = new CompilerContext();
                 SymbolResolveContext srctx = new SymbolResolveContext(file, cctx);
                 cu.Resolve(srctx);
+                VSharpProjectContent vspc = new VSharpProjectContent();
+                IProjectContent pc =   vspc.AddOrUpdateFiles(srctx.unresolvedFile);
+                
+                ICompilation comp = pc.CreateCompilation();
+                ResolveContext rctx = new ResolveContext(comp, cctx);
+                cu.DoResolve(rctx);
             }
+
             st.Stop();
             Console.WriteLine(st.Elapsed);
         }

@@ -28,7 +28,7 @@ namespace VSC.Base
 	/// </summary>
 	public class ResolveResult
 	{
-		readonly IType type;
+		internal IType type;
 		
 		public ResolveResult(IType type)
 		{

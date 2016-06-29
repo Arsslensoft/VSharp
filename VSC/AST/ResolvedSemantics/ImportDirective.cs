@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using VSC.Base;
 using VSC.Base.GoldParser.Semantic;
 using VSC.TypeSystem;
 using VSC.TypeSystem.Resolver;
@@ -52,6 +53,13 @@ namespace VSC.AST {
                     }
                 }
     
+            }
+            public override object DoResolve(Context.ResolveContext rc)
+            {
+               ResolveResult rr = rc.ResolveType(_package_or_type_expr, NameLookupMode.TypeInUsingDeclaration);
+                if (rr.IsError)
+                    rc.Compiler.Report.Error(3, _package_or_type_expr.Location, "The package `{0}` does not exist in the current context", _package_or_type_expr.ToString());
+                return false;
             }
   
 }

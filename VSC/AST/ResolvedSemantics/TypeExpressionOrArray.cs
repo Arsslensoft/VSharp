@@ -16,5 +16,9 @@ namespace VSC.AST {
 				_type_expression = _TypeExpression;
 				_rank_specifiers = _RankSpecifiers;
 				}
+            public override string ToString()
+            {
+                return _type_expression.ToString() + _rank_specifiers.ToString();
+            }
 }
 }

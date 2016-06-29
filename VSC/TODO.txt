@@ -18,3 +18,6 @@ Member lookup
 	* Type Parameters lookup
 	* Extension methods lookup
 	* Namespace lookup
+
+
+Error message code = 3
