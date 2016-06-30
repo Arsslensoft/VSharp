@@ -25,5 +25,9 @@ namespace VSC.AST {
 				_const_variable_initializer = _ConstVariableInitializer;
 				_opt_const_declarators = _OptConstDeclarators;
 				}
+            public override object DoResolve(Context.ResolveContext rc)
+            {
+                return base.DoResolve(rc);
+            }
 }
 }

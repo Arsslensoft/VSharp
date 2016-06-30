@@ -4,7 +4,7 @@ using VSC.Base.GoldParser.Semantic;
 using VSC.Context;
 
 namespace VSC.AST {
-    public class Statement : Semantic, IFlow, IAstCloneable, IEmit, IResolve
+    public class Statement : Semantic, IFlow, IEmit, IResolve
     {
  			
             public virtual bool Emit(EmitContext ec)
@@ -23,9 +23,6 @@ namespace VSC.AST {
             {
                 return this;
             }
-            public virtual object CloneTo(CloneContext ctx)
-            {
-                return this;
-            }
+        
 }
 }

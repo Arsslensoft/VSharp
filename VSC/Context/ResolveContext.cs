@@ -1,4 +1,3 @@
-﻿
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -15,16 +14,32 @@ using VSC.TypeSystem.Resolver;
 namespace VSC.Context
 {
 
-
-    public class BlockContext : ResolveContext
+    /// <summary>
+    /// Allows controlling which nodes are resolved by the resolve visitor.
+    /// </summary>
+    /// <seealso cref="ResolveVisitor"/>
+    public interface IResolveVisitorNavigator
     {
-
+        /// <summary>
+        /// Notifies the navigator that an implicit conversion was applied.
+        /// </summary>
+        /// <param name="expression">The expression that was resolved.</param>
+        /// <param name="result">The resolve result of the expression.</param>
+        /// <param name="conversion">The conversion applied to the expressed.</param>
+        /// <param name="targetType">The target type of the conversion.</param>
+        void ProcessConversion(Expression expression, ResolveResult result, Conversion conversion, IType targetType);
     }
+
 
    public class ResolveContext
     {
        internal VSharpResolver _resolver;
-     
+       readonly Dictionary<Expression, ConversionWithTargetType> conversionDict = new Dictionary<Expression, ConversionWithTargetType>();
+       
+
+       IResolveVisitorNavigator navigator;
+
+
        public VSharpResolver Resolver { get { return _resolver; } }
        public void CreateResolver(ICompilation c)
        {
@@ -40,6 +55,30 @@ namespace VSC.Context
            Compiler = cctx;
        }
        public CompilerContext Compiler { get; set; }
+
+
+       public ResolveResult Resolve(Expression expr)
+       {
+           return null;
+
+       }
+       public ResolveResult Resolve(BinaryExpression expr)
+       {
+           expr._resolved_left =   Resolve(expr._left);
+           expr._resolved_right = Resolve(expr._right);
+           ResolveResult rr = _resolver.ResolveBinaryOperator(expr._operator, expr._resolved_left, expr._resolved_right);
+           ProcessConversionsInBinaryOperatorResult(expr._left, expr._right, rr);
+           return rr;
+       }
+       public bool TypeDefinitionExists(TypeDeclarationName name, bool ispartial)
+       {
+           int parameters = 0;
+           if (name._opt_type_parameter_list._type_parameters != null)
+               parameters = name._opt_type_parameter_list._type_parameters.Count();
+
+  
+           return false;
+       }
 
         #region Types
        public static KnownTypeCode GetTypeCodeForPrimitiveType(string keyword)
@@ -84,7 +123,7 @@ namespace VSC.Context
        }
        IType ResolveTypeSymbol(VSC.AST.Type type, NameLookupMode lookupMode = NameLookupMode.Type, bool isattribute = false)
        {
-           return null;
+           return ResolveType(type,lookupMode, isattribute).type;
        }
        List<IType> ResolveTypeArguments(IEnumerable<VSC.AST.Type> typeArguments)
        {
@@ -95,7 +134,8 @@ namespace VSC.Context
            
            return result;
        }
-
+    
+   
        public ResolveResult ResolveType(SimpleNameExpr type, NameLookupMode lookupMode = NameLookupMode.Type, bool isattribute = false)
        {
            var typeArguments = ResolveTypeArguments(type._opt_type_argument_list._type_arguments); 
@@ -229,7 +269,92 @@ namespace VSC.Context
        }
         #endregion
 
+       #region Conversion
+
+       internal struct ConversionWithTargetType
+       {
+           public readonly Conversion Conversion;
+           public readonly IType TargetType;
+
+           public ConversionWithTargetType(Conversion conversion, IType targetType)
+           {
+               this.Conversion = conversion;
+               this.TargetType = targetType;
+           }
+       }
+     
+       /// <summary>
+       /// Convert 'rr' to the target type using the specified conversion.
+       /// </summary>
+       void ProcessConversion(Expression expr, ResolveResult rr, VSC.TypeSystem.Conversion conversion, IType targetType)
+       {
+           //AnonymousFunctionConversion afc = conversion as AnonymousFunctionConversion;
+           //if (afc != null)
+           //{
+             
+           //    if (afc.Hypothesis != null)
+           //        afc.Hypothesis.MergeInto(this, afc.ReturnType);
+           //    if (afc.ExplicitlyTypedLambda != null)
+           //        afc.ExplicitlyTypedLambda.ApplyReturnType(this, afc.ReturnType);
+            
+           //}
+           if (expr != null &&  conversion != Conversion.IdentityConversion)
+           {
+               navigator.ProcessConversion(expr, rr, conversion, targetType);
+               conversionDict[expr] = new ConversionWithTargetType(conversion, targetType);
+           }
+       }
 
 
+
+       /// <summary>
+       /// Convert 'rr' to the target type.
+       /// </summary>
+       void ProcessConversion(Expression expr, ResolveResult rr, IType targetType)
+       {
+           if (expr == null)
+               return;
+           ProcessConversion(expr, rr, _resolver.conversions.ImplicitConversion(rr, targetType), targetType);
+       }
+        void ProcessConversionResult(Expression expr, ConversionResolveResult rr)
+       {
+           if (rr != null && !(rr is CastResolveResult))
+               ProcessConversion(expr, rr.Input, rr.Conversion, rr.Type);
+       }
+
+       void ProcessConversionResults(IEnumerable<Expression> expr, IEnumerable<ResolveResult> conversionResolveResults)
+       {
+           Debug.Assert(expr.Count() == conversionResolveResults.Count());
+           using (var e1 = expr.GetEnumerator())
+           {
+               using (var e2 = conversionResolveResults.GetEnumerator())
+               {
+                   while (e1.MoveNext() && e2.MoveNext())
+                   {
+                       ProcessConversionResult(e1.Current, e2.Current as ConversionResolveResult);
+                   }
+               }
+           }
+       }
+    public  ResolveResult ProcessConversionsInBinaryOperatorResult(Expression left, Expression right, ResolveResult rr)
+       {
+           OperatorResolveResult orr = rr as OperatorResolveResult;
+           if (orr != null && orr.Operands.Count == 2)
+           {
+               ProcessConversionResult(left, orr.Operands[0] as ConversionResolveResult);
+               ProcessConversionResult(right, orr.Operands[1] as ConversionResolveResult);
+           }
+           else
+           {
+               InvocationResolveResult irr = rr as InvocationResolveResult;
+               if (irr != null && irr.Arguments.Count == 2)
+               {
+                   ProcessConversionResult(left, irr.Arguments[0] as ConversionResolveResult);
+                   ProcessConversionResult(right, irr.Arguments[1] as ConversionResolveResult);
+               }
+           }
+           return rr;
+       }
+       #endregion
     }
 }

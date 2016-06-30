@@ -10,9 +10,12 @@ namespace VSC.AST {
 				{
 				_expression = _Expression;
 				}
-			[Rule("<break statement> ::= break ';'")]
-			public BreakStatement( Semantic _symbol75, Semantic _symbol31)
-				{
-				}
+            [Rule("<break statement> ::= break ';'")]
+            public BreakStatement(Semantic _symbol75, Semantic _symbol31)
+            {
+
+            }
+
+
 }
 }

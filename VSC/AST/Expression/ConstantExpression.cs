@@ -223,6 +223,12 @@ namespace VSC.AST {
                 return StringHelper.StringFromVerbatimLiteral(value.Substring(1, value.Length - 2));
             else return StringHelper.StringFromVSharpLiteral(value.Substring(1, value.Length - 2));
         }
+
+        public override object DoResolve(Context.ResolveContext rc)
+        {
+            return ConstantExpr;
+        }
+        
     }
     public class PrimitiveConstantExpression : ConstantExpression
     {

@@ -19,5 +19,6 @@ Member lookup
 	* Extension methods lookup
 	* Namespace lookup
 
+Clone All declarations
 
 Error message code = 3

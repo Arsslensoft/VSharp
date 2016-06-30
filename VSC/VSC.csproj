@@ -99,7 +99,7 @@
     <Compile Include="AST\Statement\CheckedStatement.cs" />
     <Compile Include="AST\Classes\ClassBase.cs" />
     <Compile Include="AST\Declaration\ClassDeclaration.cs" />
-    <Compile Include="AST\Classes\CompilationUnit.cs" />
+    <Compile Include="AST\CompilationUnit.cs" />
     <Compile Include="AST\Expression\ConditionalAndExpression.cs" />
     <Compile Include="AST\Expression\ConditionalExpression.cs" />
     <Compile Include="AST\Expression\ConditionalOrExpression.cs" />
@@ -264,7 +264,7 @@
     <Compile Include="AST\Expression\SimpleNameExpr.cs" />
     <Compile Include="AST\Expression\SizeofExpression.cs" />
     <Compile Include="AST\Statement\StatementExpList.cs" />
-    <Compile Include="AST\Statement\StatementList.cs" />
+    <Compile Include="AST\Sequences\StatementList.cs" />
     <Compile Include="AST\Declaration\StructDeclaration.cs" />
     <Compile Include="AST\Expression\SuperAccess.cs" />
     <Compile Include="AST\Statement\SwitchLabel.cs" />
@@ -304,7 +304,6 @@
     <Compile Include="AST\Statement.cs" />
     <Compile Include="AST\Declaration.cs" />
     <Compile Include="AST\Semantic.cs" />
-    <Compile Include="AST\IAstCloneable.cs" />
     <Compile Include="AST\IEmit.cs" />
     <Compile Include="AST\IFlow.cs" />
     <Compile Include="AST\IResolve.cs" />
@@ -438,7 +437,6 @@
     <Compile Include="Base\ResolveResult.cs" />
     <Compile Include="Base\Settings.cs" />
     <Compile Include="Base\TreeTraversal.cs" />
-    <Compile Include="Context\CloneContext.cs" />
     <Compile Include="Context\CompilerContext.cs" />
     <Compile Include="Context\EmitContext.cs" />
     <Compile Include="Context\FlowAnalysisContext.cs" />
@@ -480,7 +478,6 @@
     <Compile Include="TypeSystem\Resolver\ByReferenceResolveResult.cs" />
     <Compile Include="TypeSystem\Resolver\CastResolveResult.cs" />
     <Compile Include="TypeSystem\Resolver\ConstantResolveResult.cs" />
-    <Compile Include="TypeSystem\Resolver\Conversion.cs" />
     <Compile Include="TypeSystem\Resolver\ConversionResolveResult.cs" />
     <Compile Include="TypeSystem\Resolver\VSharpConversions.cs" />
     <Compile Include="TypeSystem\Resolver\ErrorResolveResult.cs" />

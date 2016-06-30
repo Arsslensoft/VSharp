@@ -11,9 +11,9 @@ namespace VSC.AST {
 				{
                     val = bool.Parse(_symbol150.Name);
                     literal = _symbol150.Name;
+                    ConstantExpr = new BoolConstant(val, _symbol150.position);
 				}
-
-        
+         
 
 }
 }

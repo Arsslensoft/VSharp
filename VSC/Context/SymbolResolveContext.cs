@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -15,8 +15,15 @@ namespace VSC.Context
 {
     public class SymbolResolveContext
     {
-      
+
+        public static List<VSharpUnresolvedTypeDefinition> DefaultTypes;
+       
         
+        static SymbolResolveContext()
+        {
+            DefaultTypes = new List<VSharpUnresolvedTypeDefinition>();
+        }
+
         public CompilerContext Compiler { get; set; }
         internal UsingScope usingScope;
         internal VSharpUnresolvedTypeDefinition currentTypeDefinition;
@@ -54,10 +61,19 @@ namespace VSC.Context
             this.usingScope = unresolvedFile.RootUsingScope;
             DefaultTypeDefinition = CreateTypeDefinition("default", true);
             DefaultTypeDefinition.GlobalTypeDefinition = false;
+            DefaultTypeDefinition.IsPartial = true;
+            DefaultTypeDefinition.IsSealed = true;
+            DefaultTypeDefinition.IsStatic = true;
+            DefaultTypeDefinition.IsSynthetic = true;
+           
+
             currentTypeDefinition = DefaultTypeDefinition;
             IsInMemberAccess = false;
         }
-
+        public void AddDefaultType()
+        {
+            DefaultTypes.Add(DefaultTypeDefinition);
+        }
 
         public DomRegion MakeRegion(Location start, Location end)
         {

@@ -6,7 +6,7 @@ using VSC.Context;
 namespace VSC.AST
 {
    
-    public abstract class Expression : Semantic, IResolve, IEmitExpression, IFlow, IAstCloneable
+    public abstract class Expression : Semantic, IResolve, IEmitExpression, IFlow
     {
         public virtual bool Emit(EmitContext ec)
         {
@@ -32,9 +32,6 @@ namespace VSC.AST
         {
             return this;
         }
-        public virtual object CloneTo(CloneContext ctx)
-        {
-            return this;
-        }
+   
     }
 }

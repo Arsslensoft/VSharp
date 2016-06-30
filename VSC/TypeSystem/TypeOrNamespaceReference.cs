@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using VSC.Base;
 using VSC.TypeSystem.Resolver;
 

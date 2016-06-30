@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.IO;
+using System.Reflection;
 using VSC.Base.GoldParser.Semantic;
 using VSC.Context;
 namespace VSC.AST {
@@ -230,7 +232,7 @@ namespace VSC.AST {
     [Terminal("void")]
     [Terminal("where")]
     [Terminal("while")]
-	public class Semantic : SemanticToken
+	public class Semantic : SemanticToken, ICloneable
     {
         string _name = null;
         public static Location TranslateLocation(VSC.Base.GoldParser.Parser.LineInfo li)
@@ -247,6 +249,120 @@ namespace VSC.AST {
         }
         public virtual void EmitComment(string comment, EmitContext ec)
         {
+        }
+
+        /// <summary>
+        /// Clone the object, and returning a reference to a cloned object.
+        /// </summary>
+        /// <returns>Reference to the new cloned 
+        /// object.</returns>
+        public object Clone()
+        {
+            //First we create an instance of this specific type.
+            object newObject = Activator.CreateInstance(this.GetType());
+
+            //We get the array of fields for the new type instance.
+            FieldInfo[] fields = newObject.GetType().GetFields();
+
+            int i = 0;
+
+            foreach (FieldInfo fi in this.GetType().GetFields())
+            {
+                //We query if the fiels support the ICloneable interface.
+                System.Type ICloneType = fi.FieldType.GetInterface("ICloneable", true);
+
+                if (ICloneType != null)
+                {
+                    //Getting the ICloneable interface from the object.
+                    ICloneable IClone = (ICloneable)fi.GetValue(this);
+
+                    //We use the clone method to set the new value to the field.
+                    fields[i].SetValue(newObject, IClone.Clone());
+                }
+                else
+                {
+                    // If the field doesn't support the ICloneable 
+                    // interface then just set it.
+                    fields[i].SetValue(newObject, fi.GetValue(this));
+                }
+
+                //Now we check if the object support the 
+                //IEnumerable interface, so if it does
+                //we need to enumerate all its items and check if 
+                //they support the ICloneable interface.
+                System.Type IEnumerableType = fi.FieldType.GetInterface
+                                ("IEnumerable", true);
+                if (IEnumerableType != null)
+                {
+                    //Get the IEnumerable interface from the field.
+                    IEnumerable IEnum = (IEnumerable)fi.GetValue(this);
+
+                    //This version support the IList and the 
+                    //IDictionary interfaces to iterate on collections.
+                    System.Type IListType = fields[i].FieldType.GetInterface
+                                        ("IList", true);
+                    System.Type IDicType = fields[i].FieldType.GetInterface
+                                        ("IDictionary", true);
+
+                    int j = 0;
+                    if (IListType != null)
+                    {
+                        //Getting the IList interface.
+                        IList list = (IList)fields[i].GetValue(newObject);
+
+                        foreach (object obj in IEnum)
+                        {
+                            //Checking to see if the current item 
+                            //support the ICloneable interface.
+                            ICloneType = obj.GetType().
+                                GetInterface("ICloneable", true);
+
+                            if (ICloneType != null)
+                            {
+                                //If it does support the ICloneable interface, 
+                                //we use it to set the clone of
+                                //the object in the list.
+                                ICloneable clone = (ICloneable)obj;
+
+                                list[j] = clone.Clone();
+                            }
+
+                            //NOTE: If the item in the list is not 
+                            //support the ICloneable interface then in the 
+                            //cloned list this item will be the same 
+                            //item as in the original list
+                            //(as long as this type is a reference type).
+
+                            j++;
+                        }
+                    }
+                    else if (IDicType != null)
+                    {
+                        //Getting the dictionary interface.
+                        IDictionary dic = (IDictionary)fields[i].
+                                            GetValue(newObject);
+                        j = 0;
+
+                        foreach (DictionaryEntry de in IEnum)
+                        {
+                            //Checking to see if the item 
+                            //support the ICloneable interface.
+                            ICloneType = de.Value.GetType().
+                                GetInterface("ICloneable", true);
+
+                            if (ICloneType != null)
+                            {
+                                ICloneable clone = (ICloneable)de.Value;
+
+                                dic[de.Key] = clone.Clone();
+                            }
+                            j++;
+                        }
+                    }
+                }
+                i++;
+            }
+            return newObject;
         }
     }
 }

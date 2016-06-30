@@ -18,5 +18,11 @@ namespace VSC.AST {
                 _left = left;
                 _right_type = right;
             }
+
+            public override object DoResolve(Context.ResolveContext rc)
+            {
+
+                return base.DoResolve(rc);
+            }
 }
 }

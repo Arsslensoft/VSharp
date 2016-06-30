@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -16,6 +16,24 @@ using VSC.TypeSystem.Resolver;
 
 namespace VSC
 {
+    class K<I> where I:class
+    {
+      public  class J<L>
+        {
+            public I S(L k)
+            {
+                return null;
+            }
+        }
+    }
+    class T<H> where H:class
+    {
+        void J()
+        {
+            K<H>.J<int> s = new K<H>.J<int>();
+            s.S(5);
+        }
+    }
     class Program
     {
       static  CompiledGrammar grammar = CompiledGrammar.Load(typeof(Program), "VS.egt");
@@ -43,6 +61,7 @@ namespace VSC
                 CompilerContext cctx = new CompilerContext();
                 SymbolResolveContext srctx = new SymbolResolveContext(file, cctx);
                 cu.Resolve(srctx);
+                srctx.AddDefaultType();
                 VSharpProjectContent vspc = new VSharpProjectContent();
                 IProjectContent pc =   vspc.AddOrUpdateFiles(srctx.unresolvedFile);
                 
@@ -56,6 +75,7 @@ namespace VSC
         }
         static void Main(string[] args)
         {
+           
             Parse(@"..\..\Tests\test.vs");
             //Parse(@"C:\Users\Arsslen\Desktop\a.vs");
             //Parse(@"C:\Users\Arsslen\Desktop\c.vs");

@@ -2,6 +2,7 @@ using System;
 using VSC.Base.GoldParser.Semantic;
 using VSC.TypeSystem;
 using VSC.TypeSystem.Resolver;
+
 namespace VSC.AST { 
 	public class PackageDeclaration : Declaration {
  			public OptAttributes _opt_attributes;

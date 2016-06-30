@@ -8,5 +8,9 @@ namespace VSC.AST {
 				{
                     AsmCode = _symbol72.Name;
 				}
+            public override object DoResolve(Context.ResolveContext rc)
+            {
+                return this;
+            }
 }
 }

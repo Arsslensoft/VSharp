@@ -40,7 +40,7 @@ public union U{
 		public int b;
 		
 	}
-    class Program<U> : TestInterface, TI!<U> where U:TestInterface
+  abstract sealed  class Program<U> : TestInterface, TI!<U> where U:TestInterface
     {
 	//10
 	public int operator ~>(int a,int b);

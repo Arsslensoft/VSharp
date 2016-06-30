@@ -1,0 +1,11 @@
+All generics declarations are resolved & emited on-demand
+	When the compiler encounters a generic declaration :
+		* The compiler must resolve the declaration without resolving it's children
+		* The compiler must link the declaration with the resolved symbol
+	When the compiler encounters a generic specialisation :
+		If the declaration is not bound to any generic parameter then
+			* The compiler must clone the linked declaration
+			* The compiler must specialize the declaration with the current new type
+			* The compiler must resolve the declaration and mark it as emittable
+		Else
+			* The compiler must specialize all parent declarations

@@ -1,4 +1,5 @@
 using System;
+using VSC.Base;
 using VSC.Base.GoldParser.Semantic;
 using VSC.TypeSystem;
 using VSC.TypeSystem.Resolver;
@@ -59,7 +60,21 @@ namespace VSC.AST {
 
                 rc.currentTypeDefinition = rc.DefaultTypeDefinition;
                 td.ApplyInterningProvider(rc.interningProvider);
+
+
+                if(UnresolvedType.IsAbstract && UnresolvedType.IsSealed)
+                    rc.Compiler.Report.Error(5, Location, "A declaration cannot be both sealed or static and abstract at the same time");
+
+             
                 return true;
+            }
+            public override object DoResolve(Context.ResolveContext rc)
+            {
+                if (rc.TypeDefinitionExists(_type_declaration_name, (_opt_modifiers._Modifiers & TypeSystem.Modifiers.PARTIAL) != 0))
+                    rc.Compiler.Report.Error(4, Location, "Duplicate type definition `{0}`", _type_declaration_name._identifier._Identifier);
+
+
+                return base.DoResolve(rc);
             }
 }
 }

@@ -1,4 +1,4 @@
-﻿// bsn GoldParser .NET Engine
+// bsn GoldParser .NET Engine
 // --------------------------
 // 
 // Copyright 2009, 2010 by Arsène von Wyss - avw@gmx.ch

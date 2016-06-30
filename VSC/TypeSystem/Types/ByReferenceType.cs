@@ -1,4 +1,3 @@
-﻿
 using System;
 using VSC.TypeSystem.Implementation;
 

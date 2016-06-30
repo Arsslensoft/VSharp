@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,7 +20,7 @@ namespace VSC.AST
         }
   
     }
-    public abstract class Declaration : Semantic, IFlow, IAstCloneable, IEmit, IResolve
+    public abstract class Declaration : Semantic, IFlow, IEmit, IResolve
     {
 
         public virtual bool Emit(EmitContext ec)
@@ -39,9 +39,6 @@ namespace VSC.AST
         {
             return this;
         }
-        public virtual object CloneTo(CloneContext ctx)
-        {
-            return this;
-        }
+      
     }
 }

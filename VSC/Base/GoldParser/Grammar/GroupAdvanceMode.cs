@@ -1,7 +1,7 @@
 // bsn GoldParser .NET Engine
 // --------------------------
 // 
-// Copyright 2009, 2010 by Arsène von Wyss - avw@gmx.ch
+// Copyright 2009, 2010 by Arsï¿½ne von Wyss - avw@gmx.ch
 // 
 // Development has been supported by Sirius Technologies AG, Basel
 // 
