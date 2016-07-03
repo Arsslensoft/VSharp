@@ -77,7 +77,7 @@ namespace VSC
         {
            
             Parse(@"..\..\Tests\test.vs");
-            //Parse(@"C:\Users\Arsslen\Desktop\a.vs");
+            Parse(@"C:\Users\Arsslen\Desktop\a.vs");
             //Parse(@"C:\Users\Arsslen\Desktop\c.vs");
             //Parse(@"C:\Users\Arsslen\Desktop\c.vs");
             //Parse(@"C:\Users\Arsslen\Desktop\a.vs");
