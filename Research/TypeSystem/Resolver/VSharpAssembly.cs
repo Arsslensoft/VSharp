@@ -83,7 +83,7 @@ namespace VSC.TypeSystem.Resolver
 					root = new NS(this);
 					Dictionary<string, NS> dict = new Dictionary<string, NS>(compilation.NameComparer);
 					dict.Add(string.Empty, root);
-					// Add namespaces declared in V# files, even if they're empty:
+					// Addition namespaces declared in V# files, even if they're empty:
 					foreach (var usingScope in projectContent.Files.OfType<CompilationSourceFile>().SelectMany(f => f.UsingScopes)) {
 						GetOrAddNamespace(dict, usingScope.NamespaceName);
 					}

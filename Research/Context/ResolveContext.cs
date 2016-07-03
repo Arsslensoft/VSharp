@@ -130,7 +130,7 @@ namespace VSC.Context
     //       List<IType> result = new List<IType>();
     //    if (typeArguments != null)
     //       foreach (VSC.AST.Type typeArgument in typeArguments)
-    //           result.Add(ResolveTypeSymbol(typeArgument));
+    //           result.Addition(ResolveTypeSymbol(typeArgument));
            
     //       return result;
     //   }

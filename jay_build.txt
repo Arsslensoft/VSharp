@@ -1,0 +1,1 @@
+jay -ctv < skeleton.cs E:\Projects\VSharp\Research\VSharpParser.jay > E:\Projects\VSharp\Research\VSharpParser.cs

@@ -16,6 +16,15 @@ namespace VSC.AST
     [Serializable]
     public sealed class Parameter : IUnresolvedParameter, IFreezable, ISupportsInterning
     {
+
+        public Parameter Clone()
+        {
+            Parameter p = (Parameter)MemberwiseClone();
+            if (attributes != null)
+                p.attributes = attributes;
+
+            return p;
+        }
         public void Error_DuplicateName(Report r)
         {
             r.Error(100, Location, "The parameter name `{0}' is a duplicate", Name);
@@ -374,7 +383,10 @@ namespace VSC.AST
                     FixedParameters[0].Type : null;
             }
         }
-
+        public bool IsEmpty
+        {
+            get { return parameters.Length == 0; }
+        }
         public Parameter[] FixedParameters
         {
             get
@@ -387,7 +399,16 @@ namespace VSC.AST
     {
         public static readonly ParametersCompiled EmptyReadOnlyParameters = new ParametersCompiled();
         public static readonly ParametersCompiled Undefined = new ParametersCompiled();
+        public ParametersCompiled Clone()
+        {
+            ParametersCompiled p = (ParametersCompiled)MemberwiseClone();
 
+            p.parameters = new Parameter[parameters.Length];
+            for (int i = 0; i < Count; ++i)
+                p.parameters[i] = this[i].Clone();
+
+            return p;
+        }
         private ParametersCompiled()
         {
             parameters = new Parameter[0];
@@ -427,5 +448,53 @@ namespace VSC.AST
         {
             get { return (Parameter)parameters[pos]; }
         }
+
+
+        public static ParametersCompiled CreateImplicitParameter(FullNamedExpression texpr, Location loc)
+        {
+            return new ParametersCompiled(
+                new[] { new Parameter(texpr, "value", ParameterModifier.None, null, loc) });
+        }
+        public static ParametersCompiled MergeGenerated(CompilerContext ctx, ParametersCompiled userParams, bool checkConflicts, Parameter compilerParams)
+        {
+            return MergeGenerated(ctx, userParams, checkConflicts,
+                new Parameter[] { compilerParams });
+        }
+
+        //
+        // Use this method when you merge compiler generated parameters with user parameters
+        //
+        public static ParametersCompiled MergeGenerated(CompilerContext ctx, ParametersCompiled userParams, bool checkConflicts, Parameter[] compilerParams)
+        {
+            Parameter[] all_params = new Parameter[userParams.Count + compilerParams.Length];
+            userParams.FixedParameters.CopyTo(all_params, 0);
+
+        
+            int last_filled = userParams.Count;
+            int index = 0;
+            foreach (Parameter p in compilerParams)
+            {
+                for (int i = 0; i < last_filled; ++i)
+                {
+                    while (p.Name == all_params[i].Name)
+                    {
+                        if (checkConflicts && i < userParams.Count)
+                        {
+                            ctx.Report.Error(316, userParams[i].Location,
+                                "The parameter name `{0}' conflicts with a compiler generated name", p.Name);
+                        }
+                        p.Name = '_' + p.Name;
+                    }
+                }
+                all_params[last_filled] = p;
+              
+                ++last_filled;
+            }
+
+            ParametersCompiled parameters = new ParametersCompiled(all_params);
+            parameters.has_params = userParams.has_params;
+            return parameters;
+        }
+
     }
 }

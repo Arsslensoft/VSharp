@@ -33,13 +33,13 @@ namespace VSC.TypeSystem.Implementation
 					specializedTypeParameters[i] = new SpecializedTypeParameter(methodDefinition.TypeParameters[i], this);
 				}
 				if (!isParameterized) {
-					// Add substitution that replaces the base method's type parameters with our specialized version
+					// Addition substitution that replaces the base method's type parameters with our specialized version
 					// but do this only if the type parameters on the baseMember have not already been substituted
 					substitutionWithoutSpecializedTypeParameters = this.Substitution;
 					AddSubstitution(new TypeParameterSubstitution(null, specializedTypeParameters));
 				}
 			}
-			// Add the main substitution after the method type parameter specialization.
+			// Addition the main substitution after the method type parameter specialization.
 			AddSubstitution(substitution);
 			if (substitutionWithoutSpecializedTypeParameters != null) {
 				// If we already have a substitution without specialized type parameters, update that:

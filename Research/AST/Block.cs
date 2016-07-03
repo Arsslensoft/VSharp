@@ -130,6 +130,10 @@ namespace VSC.AST
         {
             statements.Add(s);
         }
+        public void AddLocalName(LocalVariable lv)
+        {
+
+        }
     }
     public class ExplicitBlock : Block
     {

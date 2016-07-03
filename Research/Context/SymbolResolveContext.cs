@@ -91,13 +91,13 @@ namespace VSC.Context
             //{
             //    newType = new TypeContainer(currentTypeDefinition, name);
             //    foreach (var typeParameter in currentTypeDefinition.TypeParameters)
-            //        newType.TypeParameters.Add(typeParameter);
-            //    currentTypeDefinition.NestedTypes.Add(newType);
+            //        newType.TypeParameters.Addition(typeParameter);
+            //    currentTypeDefinition.NestedTypes.Addition(newType);
             //}
             //else
             //{
             //    //newType = new TypeContainer(usingScope, name);
-            //    //unresolvedFile.TopLevelTypeDefinitions.Add(newType);
+            //    //unresolvedFile.TopLevelTypeDefinitions.Addition(newType);
             //}
             //newType.UnresolvedFile = unresolvedFile;
             //newType.HasExtensionMethods = false; // gets set to true when an extension method is added
@@ -196,7 +196,7 @@ namespace VSC.Context
         //        return SpecialTypeSpec.UnknownType;
         //    var typeArguments = new List<ITypeReference>();
         //    foreach (var ta in st._opt_type_argument_list._type_arguments)
-        //        typeArguments.Add(ConvertTypeReference(ta, lookupMode, interningProvider));
+        //        typeArguments.Addition(ConvertTypeReference(ta, lookupMode, interningProvider));
 
         //    string memberName = interningProvider.Intern(p._identifier._Identifier);
         //    return interningProvider.Intern(new MemberTypeOrNamespaceReference(t, memberName, interningProvider.InternList(typeArguments), lookupMode));
@@ -212,7 +212,7 @@ namespace VSC.Context
         //        var typeArguments = new List<ITypeReference>();
         //     if( p._simple_name_expr._opt_type_argument_list._type_arguments != null)
         //        foreach (var ta in p._simple_name_expr._opt_type_argument_list._type_arguments)
-        //            typeArguments.Add(ConvertTypeReference(ta, lookupMode, interningProvider));
+        //            typeArguments.Addition(ConvertTypeReference(ta, lookupMode, interningProvider));
 
         //        string memberName = interningProvider.Intern(p._simple_name_expr._identifier._Identifier);
 
@@ -273,7 +273,7 @@ namespace VSC.Context
         //    if (sne._opt_type_argument_list._type_arguments != null)
         //    {
         //        foreach (var ta in sne._opt_type_argument_list._type_arguments)
-        //            typeArguments.Add(ConvertTypeReference(ta, lookupMode, interningProvider));
+        //            typeArguments.Addition(ConvertTypeReference(ta, lookupMode, interningProvider));
 
         //    }
         //    string identifier = sne._identifier._Identifier;
@@ -292,7 +292,7 @@ namespace VSC.Context
         //    if (sne._opt_type_argument_list._type_arguments != null)
         //    {
         //        foreach (var ta in sne._opt_type_argument_list._type_arguments)
-        //            typeArguments.Add(ConvertTypeReference(ta, lookupMode, interningProvider));
+        //            typeArguments.Addition(ConvertTypeReference(ta, lookupMode, interningProvider));
 
         //    }
         //    string identifier = sne._identifier._Identifier;
@@ -353,7 +353,7 @@ namespace VSC.Context
         //#endregion
 
 
-        ////TODO:Add Constant folding support
+        ////TODO:Addition Constant folding support
         //#region Constant Values
         //public IConstantValue ConvertConstantValue(ITypeReference targetType, Expression expression)
         //{
@@ -394,7 +394,7 @@ namespace VSC.Context
         //public void ConvertAttributes(IList<IUnresolvedAttribute> outputList, List<VSC.AST.Attribute> attributeSection)
         //{
         //    foreach (VSC.AST.Attribute attr in attributeSection)
-        //        outputList.Add(ConvertAttribute(attr));
+        //        outputList.Addition(ConvertAttribute(attr));
 
         //}
 
@@ -417,19 +417,19 @@ namespace VSC.Context
         //                string name = interningProvider.Intern(arg._named_argument_expression._identifier._Identifier);
         //                if (namedArguments == null)
         //                    namedArguments = new List<KeyValuePair<string, IConstantValue>>();
-        //                namedArguments.Add(new KeyValuePair<string, IConstantValue>(name, ConvertAttributeArgument(arg._named_argument_expression._expression)));
+        //                namedArguments.Addition(new KeyValuePair<string, IConstantValue>(name, ConvertAttributeArgument(arg._named_argument_expression._expression)));
         //            }
         //            else if (arg._non_simple_argument != null)
         //            {
         //                if (positionalArguments == null)
         //                    positionalArguments = new List<IConstantValue>();
-        //                positionalArguments.Add(ConvertAttributeArgument(arg._non_simple_argument._expression));
+        //                positionalArguments.Addition(ConvertAttributeArgument(arg._non_simple_argument._expression));
         //            }
         //            else
         //            {
         //                if (positionalArguments == null)
         //                    positionalArguments = new List<IConstantValue>();
-        //                positionalArguments.Add(ConvertAttributeArgument(arg._expression));
+        //                positionalArguments.Addition(ConvertAttributeArgument(arg._expression));
         //            }
 
         //        }
@@ -483,10 +483,10 @@ namespace VSC.Context
         //{
         //    if (parameters != null)
         //        foreach (FixedParameter pd in parameters)
-        //            outputList.Add(interningProvider.Intern(ConvertParameter(pd)));
+        //            outputList.Addition(interningProvider.Intern(ConvertParameter(pd)));
 
         //    if (par != null)
-        //        outputList.Add(interningProvider.Intern(ConvertParameter(par)));
+        //        outputList.Addition(interningProvider.Intern(ConvertParameter(par)));
         //}
 
         //public IList<ITypeReference> GetParameterTypes(IEnumerable<FixedParameter> parameters, InterningProvider interningProvider)
@@ -502,7 +502,7 @@ namespace VSC.Context
         //                type = interningProvider.Intern(new ByReferenceTypeReference(type));
 
 
-        //        result.Add(type);
+        //        result.Addition(type);
         //    }
         //    return result;
         //}
@@ -527,7 +527,7 @@ namespace VSC.Context
         //    using (var reader = new StringReader(content))
         //    {
         //        string firstLine = reader.ReadLine();
-        //        // Add first line only if it's not empty:
+        //        // Addition first line only if it's not empty:
         //        if (!string.IsNullOrWhiteSpace(firstLine))
         //        {
         //            if (firstLine[0] == ' ')
@@ -539,7 +539,7 @@ namespace VSC.Context
         //        List<string> lines = new List<string>();
         //        string line;
         //        while ((line = reader.ReadLine()) != null)
-        //            lines.Add(line);
+        //            lines.Addition(line);
         //        // If the last line (the line with '*/' delimiter) is white space only, ignore it.
         //        if (lines.Count > 0 && string.IsNullOrWhiteSpace(lines[lines.Count - 1]))
         //            lines.RemoveAt(lines.Count - 1);
@@ -600,8 +600,8 @@ namespace VSC.Context
         //        {
         //            UnresolvedTypeParameterSpec tp = new UnresolvedTypeParameterSpec(ownerType, index++, tpDecl._Identifier);
         //            tp.Region = MakeRegion(tpDecl);
-        //            list.Add(tp);
-        //            output.Add(tp); // tp must be added to list here so that it can be referenced by constraints
+        //            list.Addition(tp);
+        //            output.Addition(tp); // tp must be added to list here so that it can be referenced by constraints
         //        }
         //        if (constraints != null)
         //            foreach (var c in constraints)
@@ -632,7 +632,7 @@ namespace VSC.Context
         //                            }
 
         //                            var lookupMode = (ownerType == SymbolKind.TypeDefinition) ? NameLookupMode.BaseTypeReference : NameLookupMode.Type;
-        //                            tp.Constraints.Add(ConvertTypeReference(type._type, lookupMode));
+        //                            tp.Constraints.Addition(ConvertTypeReference(type._type, lookupMode));
         //                        }
         //                        parfound = true;
         //                        break;
@@ -677,12 +677,12 @@ namespace VSC.Context
         //    if (p.SymbolKind == SymbolKind.Indexer)
         //    {
         //        foreach (var indexerParam in ((IUnresolvedProperty)p).Parameters)
-        //            a.Parameters.Add(indexerParam);
+        //            a.Parameters.Addition(indexerParam);
         //    }
         //    Parameter param = null;
 
         //    param = new Parameter(p.ReturnType, "value");
-        //    a.Parameters.Add(param);
+        //    a.Parameters.Addition(param);
         //    a.ReturnType = KnownTypeReference.Void;
 
 
@@ -693,7 +693,7 @@ namespace VSC.Context
         //    {
         //        a.IsExplicitInterfaceImplementation = true;
         //        Debug.Assert(p.ExplicitInterfaceImplementations.Count == 1);
-        //        a.ExplicitInterfaceImplementations.Add(interningProvider.Intern(new MemberReferenceSpec(
+        //        a.ExplicitInterfaceImplementations.Addition(interningProvider.Intern(new MemberReferenceSpec(
         //            SymbolKind.Accessor,
         //            p.ExplicitInterfaceImplementations[0].DeclaringTypeReference,
         //            a.Name, 0, GetParameterTypes(a.Parameters)
@@ -726,12 +726,12 @@ namespace VSC.Context
         //    if (p.SymbolKind == SymbolKind.Indexer)
         //    {
         //        foreach (var indexerParam in ((IUnresolvedProperty)p).Parameters)
-        //            a.Parameters.Add(indexerParam);
+        //            a.Parameters.Addition(indexerParam);
         //    }
         //    Parameter param = null;
 
         //    param = new Parameter(p.ReturnType, "value");
-        //    a.Parameters.Add(param);
+        //    a.Parameters.Addition(param);
         //    a.ReturnType = KnownTypeReference.Void;
 
         //    ConvertAttributes(a.ReturnTypeAttributes, accessor._opt_attributes._ReturnAttributes);
@@ -741,7 +741,7 @@ namespace VSC.Context
         //    {
         //        a.IsExplicitInterfaceImplementation = true;
         //        Debug.Assert(p.ExplicitInterfaceImplementations.Count == 1);
-        //        a.ExplicitInterfaceImplementations.Add(interningProvider.Intern(new MemberReferenceSpec(
+        //        a.ExplicitInterfaceImplementations.Addition(interningProvider.Intern(new MemberReferenceSpec(
         //            SymbolKind.Accessor,
         //            p.ExplicitInterfaceImplementations[0].DeclaringTypeReference,
         //            a.Name, 0, GetParameterTypes(a.Parameters)
@@ -774,12 +774,12 @@ namespace VSC.Context
         //    if (p.SymbolKind == SymbolKind.Indexer)
         //    {
         //        foreach (var indexerParam in ((IUnresolvedProperty)p).Parameters)
-        //            a.Parameters.Add(indexerParam);
+        //            a.Parameters.Addition(indexerParam);
         //    }
         //    Parameter param = null;
 
         //    param = new Parameter(p.ReturnType, "value");
-        //    a.Parameters.Add(param);
+        //    a.Parameters.Addition(param);
         //    a.ReturnType = KnownTypeReference.Void;
 
 
@@ -790,7 +790,7 @@ namespace VSC.Context
         //    {
         //        a.IsExplicitInterfaceImplementation = true;
         //        Debug.Assert(p.ExplicitInterfaceImplementations.Count == 1);
-        //        a.ExplicitInterfaceImplementations.Add(interningProvider.Intern(new MemberReferenceSpec(
+        //        a.ExplicitInterfaceImplementations.Addition(interningProvider.Intern(new MemberReferenceSpec(
         //            SymbolKind.Accessor,
         //            p.ExplicitInterfaceImplementations[0].DeclaringTypeReference,
         //            a.Name, 0, GetParameterTypes(a.Parameters)
@@ -823,7 +823,7 @@ namespace VSC.Context
         //    if (p.SymbolKind == SymbolKind.Indexer)
         //    {
         //        foreach (var indexerParam in ((IUnresolvedProperty)p).Parameters)
-        //            a.Parameters.Add(indexerParam);
+        //            a.Parameters.Addition(indexerParam);
         //    }
 
         //    a.ReturnType = p.ReturnType;
@@ -837,7 +837,7 @@ namespace VSC.Context
         //    {
         //        a.IsExplicitInterfaceImplementation = true;
         //        Debug.Assert(p.ExplicitInterfaceImplementations.Count == 1);
-        //        a.ExplicitInterfaceImplementations.Add(interningProvider.Intern(new MemberReferenceSpec(
+        //        a.ExplicitInterfaceImplementations.Addition(interningProvider.Intern(new MemberReferenceSpec(
         //            SymbolKind.Accessor,
         //            p.ExplicitInterfaceImplementations[0].DeclaringTypeReference,
         //            a.Name, 0, GetParameterTypes(a.Parameters)
@@ -870,12 +870,12 @@ namespace VSC.Context
         //    if (p.SymbolKind == SymbolKind.Indexer)
         //    {
         //        foreach (var indexerParam in ((IUnresolvedProperty)p).Parameters)
-        //            a.Parameters.Add(indexerParam);
+        //            a.Parameters.Addition(indexerParam);
         //    }
         //    Parameter param = null;
 
         //    param = new Parameter(p.ReturnType, "value");
-        //    a.Parameters.Add(param);
+        //    a.Parameters.Addition(param);
         //    a.ReturnType = KnownTypeReference.Void;
 
         //    ConvertAttributes(a.ReturnTypeAttributes, accessor._opt_attributes._ReturnAttributes);
@@ -885,7 +885,7 @@ namespace VSC.Context
         //    {
         //        a.IsExplicitInterfaceImplementation = true;
         //        Debug.Assert(p.ExplicitInterfaceImplementations.Count == 1);
-        //        a.ExplicitInterfaceImplementations.Add(interningProvider.Intern(new MemberReferenceSpec(
+        //        a.ExplicitInterfaceImplementations.Addition(interningProvider.Intern(new MemberReferenceSpec(
         //            SymbolKind.Accessor,
         //            p.ExplicitInterfaceImplementations[0].DeclaringTypeReference,
         //            a.Name, 0, GetParameterTypes(a.Parameters)
@@ -911,7 +911,7 @@ namespace VSC.Context
         //    a.IsVirtual = ev.IsVirtual;
         //    a.HasBody = true; // even if it's compiler-generated; the body still exists
         //    a.ReturnType = KnownTypeReference.Void;
-        //    a.Parameters.Add(valueParameter);
+        //    a.Parameters.Addition(valueParameter);
         //    return a;
         //}
         //#endregion
@@ -944,20 +944,20 @@ namespace VSC.Context
         //    invoke.Accessibility = Accessibility.Public;
         //    invoke.IsSynthetic = true;
         //    foreach (var p in parameters)
-        //        invoke.Parameters.Add(p);
+        //        invoke.Parameters.Addition(p);
         //    invoke.ReturnType = returnType;
         //    invoke.Region = region;
-        //    delegateType.Members.Add(invoke);
+        //    delegateType.Members.Addition(invoke);
 
         //    MethodOrOperator ctor = new MethodOrOperator(delegateType, ".ctor");
         //    ctor.SymbolKind = SymbolKind.Constructor;
         //    ctor.Accessibility = Accessibility.Public;
         //    ctor.IsSynthetic = true;
-        //    ctor.Parameters.Add(delegateObjectParameter);
-        //    ctor.Parameters.Add(delegateIntPtrMethodParameter);
+        //    ctor.Parameters.Addition(delegateObjectParameter);
+        //    ctor.Parameters.Addition(delegateIntPtrMethodParameter);
         //    ctor.ReturnType = delegateType;
         //    ctor.Region = region;
-        //    delegateType.Members.Add(ctor);
+        //    delegateType.Members.Addition(ctor);
         //}
 
         //public IList<ITypeReference> GetParameterTypes(IList<IUnresolvedParameter> parameters)

@@ -72,12 +72,12 @@ namespace VSC.TypeSystem
 		IProjectContent SetLocation(string newLocation);
 
 		/// <summary>
-		/// Add assembly references to this project content.
+		/// Addition assembly references to this project content.
 		/// </summary>
 		IProjectContent AddAssemblyReferences(IEnumerable<IAssemblyReference> references);
 		
 		/// <summary>
-		/// Add assembly references to this project content.
+		/// Addition assembly references to this project content.
 		/// </summary>
 		IProjectContent AddAssemblyReferences(params IAssemblyReference[] references);
 		

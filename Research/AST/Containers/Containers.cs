@@ -19,6 +19,121 @@ namespace VSC.AST
     [Serializable]
     public abstract class MemberContainer : UnresolvedEntitySpec, IUnresolvedMember, IAstNode, IResolve
     {
+
+
+        //
+        // Common modifiers allowed in a class declaration
+        //
+        protected const Modifiers AllowedModifiersClass =
+            Modifiers.NEW |
+            Modifiers.PUBLIC |
+            Modifiers.PROTECTED |
+            Modifiers.INTERNAL |
+            Modifiers.PRIVATE |
+            Modifiers.STATIC |
+            Modifiers.VIRTUAL |
+            Modifiers.SEALED |
+            Modifiers.OVERRIDE |
+            Modifiers.ABSTRACT |
+            Modifiers.EXTERN;
+
+        //
+        // Common modifiers allowed in a struct declaration
+        //
+        protected const Modifiers AllowedModifiersStruct =
+            Modifiers.NEW |
+            Modifiers.PUBLIC |
+            Modifiers.PROTECTED |
+            Modifiers.INTERNAL |
+            Modifiers.PRIVATE |
+            Modifiers.STATIC |
+            Modifiers.OVERRIDE |
+            Modifiers.EXTERN;
+
+        //
+        // Common modifiers allowed in a interface declaration
+        //
+        protected const Modifiers AllowedModifiersInterface =
+            Modifiers.NEW;
+
+        // <summary>
+        //   Checks the object @mod modifiers to be in @allowed.
+        //   Returns the new mask.  Side effect: reports any
+        //   incorrect attributes. 
+        // </summary>
+        public static Modifiers Check(Modifiers allowed, Modifiers mod, Modifiers def_access, Location l)
+        {
+            int invalid_flags = (~(int)allowed) & ((int)mod & ((int)Modifiers.TOP - 1));
+            int i;
+
+            if (invalid_flags == 0)
+            {
+                //
+                // If no accessibility bits provided
+                // then provide the defaults.
+                //
+                if ((mod & Modifiers.AccessibilityMask) == 0)
+                {
+                    mod |= def_access;
+                    if (def_access != 0)
+                        mod |= Modifiers.DEFAULT_ACCESS_MODIFIER;
+                    return mod;
+                }
+
+                return mod;
+            }
+
+            for (i = 1; i < (int)Modifiers.TOP; i <<= 1)
+            {
+                if ((i & invalid_flags) == 0)
+                    continue;
+
+                Error_InvalidModifier((Modifiers)i, l, CompilerContext.report);
+            }
+
+            return allowed & mod;
+        }
+
+        static void Error_InvalidModifier(Modifiers mod, Location l, Report Report)
+        {
+            Report.Error(106, l, "The modifier `{0}' is not valid for this item",
+                GetModifierName(mod));
+        }
+        static public string GetModifierName(Modifiers i)
+        {
+            string s = "";
+
+            switch (i)
+            {
+                case Modifiers.NEW:
+                    s = "new"; break;
+                case Modifiers.PUBLIC:
+                    s = "public"; break;
+                case Modifiers.PROTECTED:
+                    s = "protected"; break;
+                case Modifiers.INTERNAL:
+                    s = "friend"; break;
+                case Modifiers.PRIVATE:
+                    s = "private"; break;
+                case Modifiers.ABSTRACT:
+                    s = "abstract"; break;
+                case Modifiers.SEALED:
+                    s = "final"; break;
+                case Modifiers.STATIC:
+                    s = "static"; break;
+                case Modifiers.READONLY:
+                    s = "readonly"; break;
+                case Modifiers.VIRTUAL:
+                    s = "virtual"; break;
+                case Modifiers.OVERRIDE:
+                    s = "override"; break;
+                case Modifiers.EXTERN:
+                    s = "extern"; break;
+
+            }
+
+            return s;
+        }
         public virtual void SetConstraints(List<TypeParameterConstraints> constraints_list)
         {
             var tparams = member_name.TypeParameters;
@@ -144,21 +259,28 @@ namespace VSC.AST
                     return null;
             }
         }
-        /// <summary>
-        ///   Modifier flags that the user specified in the source code
-        /// </summary>
-        protected Modifiers mod_flags;
-        public Modifiers ModFlags
+
+        public void CheckModifiersAndSetNames(Modifiers mods, Modifiers allowed_mods, Modifiers def_mod, MemberName name)
         {
-            set
-            {
-                mod_flags = value;
-            }
+            member_name = name;
+            mod_flags = mods;
+              mod_flags=   Check(allowed_mods, mods, def_mod, name.Location);
+            ApplyModifiers(mods);
+        }
+
+        protected FullNamedExpression type_expr;
+        public FullNamedExpression TypeExpression
+        {
             get
             {
-                return mod_flags;
+                return type_expr;
+            }
+            set
+            {
+                type_expr = value;
             }
         }
+
         protected MemberName member_name;
         public MemberName MemberName
         {
@@ -482,6 +604,7 @@ namespace VSC.AST
     [Serializable]
     public class TypeContainer : UnresolvedTypeDefinitionSpec, IAstNode, IResolve
     {
+        public VSharpAttributes UnattachedAttributes;
         string comment = "";
         public string DocComment
         {
@@ -501,6 +624,38 @@ namespace VSC.AST
         public MemberName MemberName
         {
             get { return member_name; }
+        }
+
+
+        public void ApplyModifiers( VSC.TypeSystem.Modifiers modifiers)
+        {
+            Accessibility = GetAccessibility(modifiers) ?? (DeclaringTypeDefinition != null ? Accessibility.Private : Accessibility.Internal);
+            IsAbstract = (modifiers & (VSC.TypeSystem.Modifiers.ABSTRACT | VSC.TypeSystem.Modifiers.STATIC)) != 0;
+            IsSealed = (modifiers & (VSC.TypeSystem.Modifiers.SEALED | VSC.TypeSystem.Modifiers.STATIC)) != 0;
+            IsShadowing = (modifiers & VSC.TypeSystem.Modifiers.NEW) != 0;
+            IsPartial = (modifiers & VSC.TypeSystem.Modifiers.PARTIAL) != 0;
+        }
+        public Accessibility? GetAccessibility(VSC.TypeSystem.Modifiers modifiers)
+        {
+            switch (modifiers & VSC.TypeSystem.Modifiers.AccessibilityMask)
+            {
+                case VSC.TypeSystem.Modifiers.PRIVATE:
+                    return Accessibility.Private;
+                case VSC.TypeSystem.Modifiers.INTERNAL:
+                    return Accessibility.Internal;
+                case VSC.TypeSystem.Modifiers.PROTECTED | VSC.TypeSystem.Modifiers.INTERNAL:
+                    return Accessibility.ProtectedOrInternal;
+                case VSC.TypeSystem.Modifiers.PROTECTED:
+                    return Accessibility.Protected;
+                case VSC.TypeSystem.Modifiers.PUBLIC:
+                    return Accessibility.Public;
+                default:
+                    return null;
+            }
+        }
+        public virtual void SetBaseTypes(List<FullNamedExpression> baseTypes)
+        {
+            BaseTypes.AddRange(baseTypes.Cast<ITypeReference>());
         }
         public virtual void SetConstraints(List<TypeParameterConstraints> constraints_list)
         {

@@ -16,7 +16,7 @@ namespace VSC.TypeSystem.Implementation
 		
 		IUnresolvedTypeDefinition declaringTypeDefinition;
 
-        Modifiers modflags = Modifiers.NONE;
+      protected  Modifiers mod_flags = Modifiers.NONE;
 		string name = string.Empty;
 		protected IList<IUnresolvedAttribute> attributes;
 		internal RareFields rareFields;
@@ -140,11 +140,11 @@ namespace VSC.TypeSystem.Implementation
 		}
         public Modifiers ModFlags
         {
-            get { return modflags; }
+            get { return mod_flags; }
             set
             {
                 ThrowIfFrozen();
-                modflags = value;
+                mod_flags = value;
             }
         }
 		internal virtual RareFields WriteRareFields()

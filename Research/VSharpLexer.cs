@@ -2254,7 +2254,7 @@ namespace VSC
                 //    acd.Line = Location.Row;
                 //    acd.Col = Location.Column;
 
-                //    AsmCodes.Add(acd);
+                //    AsmCodes.Addition(acd);
 
                 //}
             //}

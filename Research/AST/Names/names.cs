@@ -464,21 +464,21 @@ namespace VSC.AST
 
         readonly string alias;
 
-		public QualifiedAlias (string alias, string identifier, Location l)
-			: base (null, identifier, l)
+        public QualifiedAlias(string alias, string identifier, Location l, NameLookupMode lookupMode = NameLookupMode.Type)
+            : base(null, identifier, l, lookupMode)
 		{
 			this.alias = alias;
 		}
 
-		public QualifiedAlias (string alias, string identifier, TypeArguments targs, Location l)
-			: base (null, identifier, targs, l)
+        public QualifiedAlias(string alias, string identifier, TypeArguments targs, Location l, NameLookupMode lookupMode = NameLookupMode.Type)
+			: base (null, identifier, targs, l, lookupMode)
 		{
 			this.alias = alias;
       
 		}
 
-        public QualifiedAlias(string alias, string identifier, int arity, Location l)
-			: base (null, identifier, arity, l)
+        public QualifiedAlias(string alias, string identifier, int arity, Location l, NameLookupMode lookupMode = NameLookupMode.Type)
+			: base (null, identifier, arity, l,lookupMode)
 		{
 			this.alias = alias;
 		}
