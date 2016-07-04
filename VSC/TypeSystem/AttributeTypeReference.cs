@@ -44,7 +44,7 @@ namespace VSC.TypeSystem
 				bool t2IsAttribute = (t2.GetDefinition() != null && t2.GetDefinition().IsDerivedFrom(attrTypeDef));
 				if (t2IsAttribute && !t1IsAttribute)
 					return true;
-				// If both types exist and are attributes, C# considers that to be an ambiguity, but we are less strict.
+				// If both types exist and are attributes, V# considers that to be an ambiguity, but we are less strict.
 			}
 			return false;
 		}

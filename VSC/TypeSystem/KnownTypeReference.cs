@@ -11,7 +11,7 @@ namespace VSC.TypeSystem
 		// The order of type codes at the beginning must correspond to those in System.TypeCode.
 		
 		/// <summary>
-		/// Not one of the known types.
+		/// LogicalNot one of the known types.
 		/// </summary>
 		None,
 		/// <summary><c>object</c> (Std.Object)</summary>

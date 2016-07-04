@@ -215,7 +215,7 @@ namespace VSC.TypeSystem.Resolver
             c.AddError(additionalErrors);
             if (CalculateCandidate(c))
             {
-                //candidates.Add(c);
+                //candidates.Addition(c);
             }
 
             if (this.AllowExpandingParams && member.Parameters.Count > 0
@@ -226,7 +226,7 @@ namespace VSC.TypeSystem.Resolver
                 // consider expanded form only if it isn't obviously wrong
                 if (CalculateCandidate(expandedCandidate))
                 {
-                    //candidates.Add(expandedCandidate);
+                    //candidates.Addition(expandedCandidate);
 
                     if (expandedCandidate.ErrorCount < c.ErrorCount)
                         return expandedCandidate.Errors;

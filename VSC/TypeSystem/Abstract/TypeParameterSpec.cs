@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-
+using VSC.AST;
 using VSC.Base;
 
 namespace VSC.TypeSystem.Implementation
@@ -262,7 +262,7 @@ namespace VSC.TypeSystem.Implementation
             {
                 if (this.HasDefaultConstructorConstraint || this.HasValueTypeConstraint)
                 {
-                    if (filter == null || filter(UnresolvedMethodSpec.DummyConstructor))
+                    if (filter == null || filter(MethodOrOperator.DummyConstructor))
                     {
                         return new[] { ResolvedMethodSpec.GetDummyConstructor(compilation, this) };
                     }

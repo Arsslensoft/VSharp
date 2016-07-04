@@ -30,6 +30,10 @@ namespace VSC
     }
    public class CompilerSettings
    {
+       public string DocumentationFile { get; set; }
+        [Option("tabsize", Required = false, DefaultValue = 8,
+HelpText = "Tab size")]
+       public int TabSize { get; set; }
        [Option("ovfc", Required = false, DefaultValue = false,
 HelpText = "Enable overflow checking")]
        public bool CheckForOverflow { get; set; }

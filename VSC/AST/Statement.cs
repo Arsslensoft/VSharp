@@ -1,28 +1,24 @@
-using System;
-using VSC.AST;
-using VSC.Base.GoldParser.Semantic;
-using VSC.Context;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace VSC.AST {
-    public class Statement : Semantic, IFlow, IEmit, IResolve
+namespace VSC.AST
+{
+   public abstract class Statement
     {
- 			
-            public virtual bool Emit(EmitContext ec)
+        public Location loc;
+        protected bool reachable;
+
+        public bool IsUnreachable
+        {
+            get
             {
-                return true;
+                return !reachable;
             }
-            public virtual FlowState DoFlowAnalysis(FlowAnalysisContext fc)
-            {
-                return FlowState.Valid;
-            }
-            public virtual bool Resolve(SymbolResolveContext rc)
-            {
-                return true;
-            }
-            public virtual object DoResolve(ResolveContext rc)
-            {
-                return this;
-            }
-        
-}
+        }
+
+     
+    }
 }

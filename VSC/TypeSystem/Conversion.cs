@@ -10,7 +10,7 @@ namespace VSC.TypeSystem
 	{
 		#region Conversion factory methods
 		/// <summary>
-		/// Not a valid conversion.
+		/// LogicalNot a valid conversion.
 		/// </summary>
 		public static readonly Conversion None = new InvalidConversion();
 		

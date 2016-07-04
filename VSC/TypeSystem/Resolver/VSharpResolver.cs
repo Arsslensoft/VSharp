@@ -110,9 +110,9 @@ namespace VSC.TypeSystem.Resolver
         /// <summary>left | right</summary>
         BitwiseOr,
         /// <summary>left &amp;&amp; right</summary>
-        ConditionalAnd,
+        LogicalAnd,
         /// <summary>left || right</summary>
-        ConditionalOr,
+        LogicalOr,
         /// <summary>left ^ right</summary>
         ExclusiveOr,
 
@@ -123,27 +123,27 @@ namespace VSC.TypeSystem.Resolver
         /// <summary>left == right</summary>
         Equality,
         /// <summary>left != right</summary>
-        InEquality,
+        Inequality,
         /// <summary>left &lt; right</summary>
         LessThan,
         /// <summary>left &lt;= right</summary>
         LessThanOrEqual,
 
         /// <summary>left + right</summary>
-        Add,
+        Addition,
         /// <summary>left - right</summary>
-        Subtract,
+        Subtraction,
         /// <summary>left * right</summary>
         Multiply,
         /// <summary>left / right</summary>
-        Divide,
+        Division,
         /// <summary>left % right</summary>
         Modulus,
 
         /// <summary>left &lt;&lt; right</summary>
-        ShiftLeft,
+        LeftShift,
         /// <summary>left &gt;&gt; right</summary>
-        ShiftRight,
+        RightShift,
 
 
         /// <summary>left &lt;~ right</summary>
@@ -165,15 +165,15 @@ namespace VSC.TypeSystem.Resolver
         Any,
 
         /// <summary>Logical not (!a)</summary>
-        Not,
+        LogicalNot,
         /// <summary>Bitwise not (~a)</summary>
-        BitNot,
+        OnesComplement,
         /// <summary>Unary minus (-a)</summary>
-        Minus,
+        UnaryNegation,
         /// <summary>Unary plus (+a)</summary>
-        Plus,
+        UnaryPlus,
         /// <summary>Pre increment (++a)</summary>
-        Increment,
+        PreIncrement,
         /// <summary>Pre decrement (--a)</summary>
         Decrement,
         /// <summary>Post increment (a++)</summary>
@@ -596,9 +596,9 @@ namespace VSC.TypeSystem.Resolver
                     return ExpressionType.And;
                 case BinaryOperatorType.BitwiseOr:
                     return ExpressionType.Or;
-                case BinaryOperatorType.ConditionalAnd:
+                case BinaryOperatorType.LogicalAnd:
                     return ExpressionType.AndAlso;
-                case BinaryOperatorType.ConditionalOr:
+                case BinaryOperatorType.LogicalOr:
                     return ExpressionType.OrElse;
                 case BinaryOperatorType.ExclusiveOr:
                     return ExpressionType.ExclusiveOr;
@@ -608,25 +608,25 @@ namespace VSC.TypeSystem.Resolver
                     return ExpressionType.GreaterThanOrEqual;
                 case BinaryOperatorType.Equality:
                     return ExpressionType.Equal;
-                case BinaryOperatorType.InEquality:
+                case BinaryOperatorType.Inequality:
                     return ExpressionType.NotEqual;
                 case BinaryOperatorType.LessThan:
                     return ExpressionType.LessThan;
                 case BinaryOperatorType.LessThanOrEqual:
                     return ExpressionType.LessThanOrEqual;
-                case BinaryOperatorType.Add:
+                case BinaryOperatorType.Addition:
                     return checkForOverflow ? ExpressionType.AddChecked : ExpressionType.Add;
-                case BinaryOperatorType.Subtract:
+                case BinaryOperatorType.Subtraction:
                     return checkForOverflow ? ExpressionType.SubtractChecked : ExpressionType.Subtract;
                 case BinaryOperatorType.Multiply:
                     return checkForOverflow ? ExpressionType.MultiplyChecked : ExpressionType.Multiply;
-                case BinaryOperatorType.Divide:
+                case BinaryOperatorType.Division:
                     return ExpressionType.Divide;
                 case BinaryOperatorType.Modulus:
                     return ExpressionType.Modulo;
-                case BinaryOperatorType.ShiftLeft:
+                case BinaryOperatorType.LeftShift:
                     return ExpressionType.LeftShift;
-                case BinaryOperatorType.ShiftRight:
+                case BinaryOperatorType.RightShift:
                     return ExpressionType.RightShift;
 
                     // special implementation
@@ -677,15 +677,15 @@ namespace VSC.TypeSystem.Resolver
         {
             switch (op)
             {
-                case UnaryOperatorType.Not:
+                case UnaryOperatorType.LogicalNot:
                     return ExpressionType.Not;
-                case UnaryOperatorType.BitNot:
+                case UnaryOperatorType.OnesComplement:
                     return ExpressionType.OnesComplement;
-                case UnaryOperatorType.Minus:
+                case UnaryOperatorType.UnaryNegation:
                     return checkForOverflow ? ExpressionType.NegateChecked : ExpressionType.Negate;
-                case UnaryOperatorType.Plus:
+                case UnaryOperatorType.UnaryPlus:
                     return ExpressionType.UnaryPlus;
-                case UnaryOperatorType.Increment:
+                case UnaryOperatorType.PreIncrement:
                     return ExpressionType.PreIncrementAssign;
                 case UnaryOperatorType.Decrement:
                     return ExpressionType.PreDecrementAssign;
@@ -743,7 +743,7 @@ namespace VSC.TypeSystem.Resolver
 			VSharpOperators.OperatorMethod[] methodGroup;
 			VSharpOperators operators = VSharpOperators.Get(compilation);
 			switch (op) {
-				case UnaryOperatorType.Increment:
+				case UnaryOperatorType.PreIncrement:
 				case UnaryOperatorType.Decrement:
 				case UnaryOperatorType.PostIncrement:
 				case UnaryOperatorType.PostDecrement:
@@ -754,16 +754,16 @@ namespace VSC.TypeSystem.Resolver
 						return UnaryOperatorResolveResult(expression.Type, op, expression, isNullable);
 					else
 						return new ErrorResolveResult(expression.Type);
-				case UnaryOperatorType.Plus:
+				case UnaryOperatorType.UnaryPlus:
 					methodGroup = operators.UnaryPlusOperators;
 					break;
-				case UnaryOperatorType.Minus:
+				case UnaryOperatorType.UnaryNegation:
 					methodGroup = CheckForOverflow ? operators.CheckedUnaryMinusOperators : operators.UncheckedUnaryMinusOperators;
 					break;
-				case UnaryOperatorType.Not:
+				case UnaryOperatorType.LogicalNot:
 					methodGroup = operators.LogicalNegationOperators;
 					break;
-				case UnaryOperatorType.BitNot:
+				case UnaryOperatorType.OnesComplement:
 					if (type.Kind == TypeKind.Enum) {
 						if (expression.IsCompileTimeConstant && !isNullable && expression.ConstantValue != null) {
 							// evaluate as (E)(~(U)x);
@@ -831,15 +831,15 @@ namespace VSC.TypeSystem.Resolver
 			if (isNullable && type.Kind == TypeKind.Null)
 				code = TypeCode.SByte; // cause promotion of null to int32
 			switch (op) {
-				case UnaryOperatorType.Minus:
+				case UnaryOperatorType.UnaryNegation:
 					if (code == TypeCode.UInt32) {
 						type = compilation.FindType(KnownTypeCode.Int64);
 						return Convert(expression, MakeNullable(type, isNullable),
 						               isNullable ? Conversion.ImplicitNullableConversion : Conversion.ImplicitNumericConversion);
 					}
-					goto case UnaryOperatorType.Plus;
-				case UnaryOperatorType.Plus:
-				case UnaryOperatorType.BitNot:
+					goto case UnaryOperatorType.UnaryPlus;
+				case UnaryOperatorType.UnaryPlus:
+				case UnaryOperatorType.OnesComplement:
 					if (code >= TypeCode.Char && code <= TypeCode.UInt16) {
 						type = compilation.FindType(KnownTypeCode.Int32);
 						return Convert(expression, MakeNullable(type, isNullable),
@@ -855,15 +855,15 @@ namespace VSC.TypeSystem.Resolver
 		static string GetOverloadableOperatorName(UnaryOperatorType op)
 		{
 			switch (op) {
-				case UnaryOperatorType.Not:
+				case UnaryOperatorType.LogicalNot:
 					return "op_LogicalNot";
-				case UnaryOperatorType.BitNot:
+				case UnaryOperatorType.OnesComplement:
 					return "op_OnesComplement";
-				case UnaryOperatorType.Minus:
+				case UnaryOperatorType.UnaryNegation:
 					return "op_UnaryNegation";
-				case UnaryOperatorType.Plus:
+				case UnaryOperatorType.UnaryPlus:
 					return "op_UnaryPlus";
-				case UnaryOperatorType.Increment:
+				case UnaryOperatorType.PreIncrement:
 				case UnaryOperatorType.PostIncrement:
 					return "op_Increment";
 				case UnaryOperatorType.Decrement:
@@ -896,9 +896,9 @@ namespace VSC.TypeSystem.Resolver
 				// - If the user overloads a bitwise operator, that implicitly creates the corresponding logical operator.
 				// - If both inputs are compile-time constants, it doesn't matter that we don't short-circuit.
 				// - If inputs aren't compile-time constants, we don't evaluate anything, so again it doesn't matter that we don't short-circuit
-				if (op == BinaryOperatorType.ConditionalAnd) {
+				if (op == BinaryOperatorType.LogicalAnd) {
 					overloadableOperatorName = GetOverloadableOperatorName(BinaryOperatorType.BitwiseAnd);
-				} else if (op == BinaryOperatorType.ConditionalOr) {
+				} else if (op == BinaryOperatorType.LogicalOr) {
 					overloadableOperatorName = GetOverloadableOperatorName(BinaryOperatorType.BitwiseOr);
 				} else if (op == BinaryOperatorType.NullCoalescing) {
 					// null coalescing operator is not overloadable and needs to be handled separately
@@ -930,15 +930,15 @@ namespace VSC.TypeSystem.Resolver
 			{
 				isNullable = true;
 			}
-			if (op == BinaryOperatorType.ShiftLeft || op == BinaryOperatorType.ShiftRight) {
+			if (op == BinaryOperatorType.LeftShift || op == BinaryOperatorType.RightShift) {
 				// special case: the shift operators allow "var x = null << null", producing int?.
 				if (lhsType.Kind == TypeKind.Null && rhsType.Kind == TypeKind.Null)
 					isNullable = true;
 				// for shift operators, do unary promotion independently on both arguments
-				lhs = UnaryNumericPromotion(UnaryOperatorType.Plus, ref lhsType, isNullable, lhs);
-				rhs = UnaryNumericPromotion(UnaryOperatorType.Plus, ref rhsType, isNullable, rhs);
+				lhs = UnaryNumericPromotion(UnaryOperatorType.UnaryPlus, ref lhsType, isNullable, lhs);
+				rhs = UnaryNumericPromotion(UnaryOperatorType.UnaryPlus, ref rhsType, isNullable, rhs);
 			} else {
-				bool allowNullableConstants = op == BinaryOperatorType.Equality || op == BinaryOperatorType.InEquality;
+				bool allowNullableConstants = op == BinaryOperatorType.Equality || op == BinaryOperatorType.Inequality;
 				if (!BinaryNumericPromotion(isNullable, ref lhs, ref rhs, allowNullableConstants))
 					return new ErrorResolveResult(lhs.Type);
 			}
@@ -952,13 +952,13 @@ namespace VSC.TypeSystem.Resolver
 				case BinaryOperatorType.Multiply:
 					methodGroup = operators.MultiplicationOperators;
 					break;
-				case BinaryOperatorType.Divide:
+				case BinaryOperatorType.Division:
 					methodGroup = operators.DivisionOperators;
 					break;
 				case BinaryOperatorType.Modulus:
 					methodGroup = operators.RemainderOperators;
 					break;
-				case BinaryOperatorType.Add:
+				case BinaryOperatorType.Addition:
 					methodGroup = operators.AdditionOperators;
 					{
 						if (lhsType.Kind == TypeKind.Enum) {
@@ -1004,7 +1004,7 @@ namespace VSC.TypeSystem.Resolver
 							return new ErrorResolveResult(SpecialTypeSpec.NullType);
 					}
 					break;
-				case BinaryOperatorType.Subtract:
+				case BinaryOperatorType.Subtraction:
 					methodGroup = operators.SubtractionOperators;
 					{
 						if (lhsType.Kind == TypeKind.Enum) {
@@ -1061,10 +1061,10 @@ namespace VSC.TypeSystem.Resolver
 							return new ErrorResolveResult(SpecialTypeSpec.NullType);
 					}
 					break;
-				case BinaryOperatorType.ShiftLeft:
+				case BinaryOperatorType.LeftShift:
 					methodGroup = operators.ShiftLeftOperators;
 					break;
-				case BinaryOperatorType.ShiftRight:
+				case BinaryOperatorType.RightShift:
 					methodGroup = operators.ShiftRightOperators;
 					break;
                 case BinaryOperatorType.RotateRight:
@@ -1076,7 +1076,7 @@ namespace VSC.TypeSystem.Resolver
 
 
 				case BinaryOperatorType.Equality:
-				case BinaryOperatorType.InEquality:
+				case BinaryOperatorType.Inequality:
 				case BinaryOperatorType.LessThan:
 				case BinaryOperatorType.GreaterThan:
 				case BinaryOperatorType.LessThanOrEqual:
@@ -1093,7 +1093,7 @@ namespace VSC.TypeSystem.Resolver
                         {
 							return BinaryOperatorResolveResult(compilation.FindType(KnownTypeCode.Boolean), lhs, op, rhs);
 						}
-						if (op == BinaryOperatorType.Equality || op == BinaryOperatorType.InEquality) {
+						if (op == BinaryOperatorType.Equality || op == BinaryOperatorType.Inequality) {
 							if (lhsType.IsReferenceType == true && rhsType.IsReferenceType == true) {
 								// If it's a reference comparison
 								if (op == BinaryOperatorType.Equality)
@@ -1111,7 +1111,7 @@ namespace VSC.TypeSystem.Resolver
 							case BinaryOperatorType.Equality:
 								methodGroup = operators.ValueEqualityOperators;
 								break;
-							case BinaryOperatorType.InEquality:
+							case BinaryOperatorType.Inequality:
 								methodGroup = operators.ValueInequalityOperators;
 								break;
 							case BinaryOperatorType.LessThan:
@@ -1164,10 +1164,10 @@ namespace VSC.TypeSystem.Resolver
 						}
 					}
 					break;
-				case BinaryOperatorType.ConditionalAnd:
+				case BinaryOperatorType.LogicalAnd:
 					methodGroup = operators.LogicalAndOperators;
 					break;
-				case BinaryOperatorType.ConditionalOr:
+				case BinaryOperatorType.LogicalOr:
 					methodGroup = operators.LogicalOrOperators;
 					break;
 				default:
@@ -1271,13 +1271,13 @@ namespace VSC.TypeSystem.Resolver
 			// evaluate as (U)((U)x – (U)y)
 			IType elementType = GetEnumUnderlyingType(enumType);
 			if (lhs.IsCompileTimeConstant && rhs.IsCompileTimeConstant && !isNullable && elementType.Kind != TypeKind.Enum) {
-				var rr = ResolveBinaryOperator(BinaryOperatorType.Subtract, ResolveCast(elementType, lhs), ResolveCast(elementType, rhs));
+				var rr = ResolveBinaryOperator(BinaryOperatorType.Subtraction, ResolveCast(elementType, lhs), ResolveCast(elementType, rhs));
 				rr = WithCheckForOverflow(false).ResolveCast(elementType, rr);
 				if (rr.IsCompileTimeConstant)
 					return rr;
 			}
 			IType resultType = MakeNullable(elementType, isNullable);
-			return BinaryOperatorResolveResult(resultType, lhs, BinaryOperatorType.Subtract, rhs, isNullable);
+			return BinaryOperatorResolveResult(resultType, lhs, BinaryOperatorType.Subtraction, rhs, isNullable);
 		}
 		
 		/// <summary>
@@ -1407,13 +1407,13 @@ namespace VSC.TypeSystem.Resolver
 		static string GetOverloadableOperatorName(BinaryOperatorType op)
 		{
 			switch (op) {
-				case BinaryOperatorType.Add:
+				case BinaryOperatorType.Addition:
 					return "op_Addition";
-				case BinaryOperatorType.Subtract:
+				case BinaryOperatorType.Subtraction:
 					return "op_Subtraction";
 				case BinaryOperatorType.Multiply:
 					return "op_Multiply";
-				case BinaryOperatorType.Divide:
+				case BinaryOperatorType.Division:
 					return "op_Division";
 				case BinaryOperatorType.Modulus:
 					return "op_Modulus";
@@ -1423,9 +1423,9 @@ namespace VSC.TypeSystem.Resolver
 					return "op_BitwiseOr";
 				case BinaryOperatorType.ExclusiveOr:
 					return "op_ExclusiveOr";
-				case BinaryOperatorType.ShiftLeft:
+				case BinaryOperatorType.LeftShift:
 					return "op_LeftShift";
-				case BinaryOperatorType.ShiftRight:
+				case BinaryOperatorType.RightShift:
 					return "op_RightShift";
                 case BinaryOperatorType.RotateLeft:
                     return "op_LeftRotate";
@@ -1435,7 +1435,7 @@ namespace VSC.TypeSystem.Resolver
                     return "op_Is";
 				case BinaryOperatorType.Equality:
 					return "op_Equality";
-				case BinaryOperatorType.InEquality:
+				case BinaryOperatorType.Inequality:
 					return "op_Inequality";
 				case BinaryOperatorType.GreaterThan:
 					return "op_GreaterThan";
@@ -2734,7 +2734,7 @@ namespace VSC.TypeSystem.Resolver
 					return Convert(input, boolean, c);
 				}
 			}
-			return ResolveUnaryOperator(UnaryOperatorType.Not, Convert(input, boolean, c));
+			return ResolveUnaryOperator(UnaryOperatorType.LogicalNot, Convert(input, boolean, c));
 		}
 		
 		public ResolveResult ResolveConditional(ResolveResult condition, ResolveResult trueExpression, ResolveResult falseExpression)
@@ -2952,19 +2952,19 @@ namespace VSC.TypeSystem.Resolver
                 case AssignmentOperatorType.Assign:
                     return null;
                 case AssignmentOperatorType.Add:
-                    return BinaryOperatorType.Add;
+                    return BinaryOperatorType.Addition;
                 case AssignmentOperatorType.Subtract:
-                    return BinaryOperatorType.Subtract;
+                    return BinaryOperatorType.Subtraction;
                 case AssignmentOperatorType.Multiply:
                     return BinaryOperatorType.Multiply;
                 case AssignmentOperatorType.Divide:
-                    return BinaryOperatorType.Divide;
+                    return BinaryOperatorType.Division;
                 case AssignmentOperatorType.Modulus:
                     return BinaryOperatorType.Modulus;
                 case AssignmentOperatorType.ShiftLeft:
-                    return BinaryOperatorType.ShiftLeft;
+                    return BinaryOperatorType.LeftShift;
                 case AssignmentOperatorType.ShiftRight:
-                    return BinaryOperatorType.ShiftRight;
+                    return BinaryOperatorType.RightShift;
                 case AssignmentOperatorType.RotateLeft:
                     return BinaryOperatorType.RotateLeft;
                 case AssignmentOperatorType.RotateRight:

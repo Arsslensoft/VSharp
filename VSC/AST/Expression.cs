@@ -1,30 +1,55 @@
-using System;
-using VSC.AST;
-using VSC.Base.GoldParser.Semantic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using VSC.Base;
 using VSC.Context;
+using VSC.TypeSystem;
+using VSC.TypeSystem.Resolver;
 
 namespace VSC.AST
 {
    
-    public abstract class Expression : Semantic, IResolve, IEmitExpression, IFlow
+     /// <remarks>
+    ///   Base class for expressions
+    /// </remarks>
+    public abstract class Expression : IAstNode, IResolve
     {
-        public virtual bool Emit(EmitContext ec)
+  
+        protected ITypeReference type;
+        protected Location loc;
+
+        public ITypeReference Type
         {
-            return true;
+            get { return type; }
+            set { type = value; }
         }
-        public virtual bool EmitFromStack(EmitContext ec)
+
+
+        public Location Location
         {
-            return true;
+            get { return loc; }
         }
-        public virtual bool EmitToStack(EmitContext ec)
+
+        public virtual bool IsNull
         {
-            return true;
+            get
+            {
+                return false;
+            }
         }
-        public virtual FlowState DoFlowAnalysis(FlowAnalysisContext fc)
+
+        public virtual string GetSignatureForError()
         {
-            return FlowState.Valid;
+            return type.ToString();
         }
-        public virtual bool Resolve(SymbolResolveContext rc)
+        public virtual void AcceptVisitor(IVisitor vis)
+        {
+            vis.Visit(this);
+        }
+
+        public virtual bool Resolve(ResolveContext rc)
         {
             return true;
         }
@@ -32,6 +57,18 @@ namespace VSC.AST
         {
             return this;
         }
-   
+       
     }
+    /// <summary>
+	///   This is just a base class for expressions that can
+	///   appear on statements (invocations, object creation,
+	///   assignments, post/pre increment and decrement).  The idea
+	///   being that they would support an extra Emition interface that
+	///   does not leave a result on the stack.
+	/// </summary>
+    public abstract class ExpressionStatement : Expression
+    {
+
+    }
+ 
 }

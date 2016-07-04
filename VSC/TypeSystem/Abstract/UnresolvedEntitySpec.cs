@@ -15,9 +15,10 @@ namespace VSC.TypeSystem.Implementation
 		// - store regions in more compact form (e.g. assume both file names are identical; use ushort for columns)
 		
 		IUnresolvedTypeDefinition declaringTypeDefinition;
-		
+
+      protected  Modifiers mod_flags = Modifiers.NONE;
 		string name = string.Empty;
-		IList<IUnresolvedAttribute> attributes;
+		protected IList<IUnresolvedAttribute> attributes;
 		internal RareFields rareFields;
 		
 		// 1 byte per enum + 2 bytes for flags
@@ -37,7 +38,7 @@ namespace VSC.TypeSystem.Implementation
 		internal const ushort FlagHasExtensionMethods = 0x0080;
 		internal const ushort FlagHasNoExtensionMethods = 0x0100;
         internal const ushort FlagPartialTypeDefinition = 0x0200;
-		// flags for UnresolvedMemberSpec:
+		// flags for MemberContainer:
 		internal const ushort FlagExplicitInterfaceImplementation = 0x0040;
 		internal const ushort FlagVirtual = 0x0080;
 		internal const ushort FlagOverride = 0x0100;
@@ -137,7 +138,15 @@ namespace VSC.TypeSystem.Implementation
 				symbolKind = value;
 			}
 		}
-		
+        public Modifiers ModFlags
+        {
+            get { return mod_flags; }
+            set
+            {
+                ThrowIfFrozen();
+                mod_flags = value;
+            }
+        }
 		internal virtual RareFields WriteRareFields()
 		{
 			ThrowIfFrozen();

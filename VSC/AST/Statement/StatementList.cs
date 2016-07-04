@@ -1,21 +1,76 @@
-using System;
-using VSC.Base.GoldParser.Semantic;
 namespace VSC.AST {
-    public class StatementList : Statement
-    {
- 			public Statement _statement;
-			public StatementList _statement_list;
+//
+	// Simple version of statement list not requiring a block
+	//
+	public class StatementList : Statement
+	{
+/*		List<Statement> statements;
 
-			[Rule("<statement list> ::= <statement>")]
-			public StatementList(Statement _Statement)
-				{
-				_statement = _Statement;
-				}
-			[Rule("<statement list> ::= <statement list> <statement>")]
-			public StatementList(StatementList _StatementList,Statement _Statement)
-				{
-				_statement_list = _StatementList;
-				_statement = _Statement;
-				}
-}
+		public StatementList (Statement first, Statement second)
+		{
+			statements = new List<Statement> { first, second };
+		}
+
+		#region Properties
+		public IList<Statement> Statements {
+			get {
+				return statements;
+			}
+		}
+		#endregion
+
+		public void Add (Statement statement)
+		{
+			statements.Add (statement);
+		}
+
+		public override bool Resolve (BlockContext ec)
+		{
+			foreach (var s in statements)
+				s.Resolve (ec);
+
+			return true;
+		}
+
+		protected override void DoEmit (EmitContext ec)
+		{
+			foreach (var s in statements)
+				s.Emit (ec);
+		}
+
+		protected override bool DoFlowAnalysis (FlowAnalysisContext fc)
+		{
+			foreach (var s in statements)
+				s.FlowAnalysis (fc);
+
+			return false;
+		}
+
+		public override Reachability MarkReachable (Reachability rc)
+		{
+			base.MarkReachable (rc);
+
+			Reachability res = rc;
+			foreach (var s in statements)
+				res = s.MarkReachable (rc);
+
+			return res;
+		}
+
+		protected override void CloneTo (CloneContext clonectx, Statement target)
+		{
+			StatementList t = (StatementList) target;
+
+			t.statements = new List<Statement> (statements.Count);
+			foreach (Statement s in statements)
+				t.statements.Add (s.Clone (clonectx));
+		}
+		
+		public override object Accept (StructuralVisitor visitor)
+		{
+			return visitor.Visit (this);
+		}*/
+	}
+
+
 }

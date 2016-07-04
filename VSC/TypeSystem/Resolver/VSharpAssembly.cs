@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using VSC.AST;
 using VSC.Base;
 using VSC.TypeSystem.Implementation;
 
@@ -59,7 +60,8 @@ namespace VSC.TypeSystem.Resolver
 				return result;
 			} else {
 				result = new List<IAttribute>();
-				foreach (var unresolvedFile in projectContent.Files.OfType<VSharpUnresolvedFile>()) {
+                foreach (var unresolvedFile in projectContent.Files.OfType<CompilationSourceFile>())
+                {
 					var attributes = assemblyAttributes ? unresolvedFile.AssemblyAttributes : unresolvedFile.ModuleAttributes;
 					var context = new VSharpTypeResolveContext(this, unresolvedFile.RootUsingScope.Resolve(compilation));
 					foreach (var unresolvedAttr in attributes) {
@@ -81,8 +83,8 @@ namespace VSC.TypeSystem.Resolver
 					root = new NS(this);
 					Dictionary<string, NS> dict = new Dictionary<string, NS>(compilation.NameComparer);
 					dict.Add(string.Empty, root);
-					// Add namespaces declared in V# files, even if they're empty:
-					foreach (var usingScope in projectContent.Files.OfType<VSharpUnresolvedFile>().SelectMany(f => f.UsingScopes)) {
+					// Addition namespaces declared in V# files, even if they're empty:
+					foreach (var usingScope in projectContent.Files.OfType<CompilationSourceFile>().SelectMany(f => f.UsingScopes)) {
 						GetOrAddNamespace(dict, usingScope.NamespaceName);
 					}
 					foreach (var pair in GetTypes()) {

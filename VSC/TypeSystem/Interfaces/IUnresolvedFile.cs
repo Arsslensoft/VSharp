@@ -54,9 +54,6 @@ namespace VSC.TypeSystem
 		/// </summary>
 		IUnresolvedMember GetMember(Location location);
 		
-		/// <summary>
-		/// Gets the parser errors.
-		/// </summary>
-		IList<ErrorMessage> Errors { get; }
+
 	}
 }

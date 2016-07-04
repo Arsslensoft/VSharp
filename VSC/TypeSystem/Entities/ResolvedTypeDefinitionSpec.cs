@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using VSC.AST;
 using VSC.Base;
 
 namespace VSC.TypeSystem.Implementation
@@ -258,7 +259,7 @@ namespace VSC.TypeSystem.Implementation
 				    || kind == TypeKind.Enum || kind == TypeKind.Struct)
 				{
 					contextPerMember.Add(parts[0].CreateResolveContext(parentContext).WithCurrentTypeDefinition(this));
-					unresolvedMembers.Add(UnresolvedMethodSpec.CreateDefaultConstructor(parts[0]));
+					unresolvedMembers.Add(MethodOrOperator.CreateDefaultConstructor(parts[0]));
 				}
 			}
 			result = new MemberList(contextPerMember, unresolvedMembers);

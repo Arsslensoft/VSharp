@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using VSC.AST;
 using VSC.Base;
 using VSC.TypeSystem.Implementation;
 
@@ -18,8 +19,8 @@ namespace VSC.TypeSystem.Resolver
 		readonly UsingScope parent;
 		DomRegion region;
 		string shortName = "";
-		IList<TypeOrNamespaceReference> usings;
-		IList<KeyValuePair<string, TypeOrNamespaceReference>> usingAliases;
+		IList<TypeNameExpression> usings;
+        IList<KeyValuePair<string, TypeNameExpression>> usingAliases;
 		IList<string> externAliases;
 		
 		protected override void FreezeInternal()
@@ -97,19 +98,21 @@ namespace VSC.TypeSystem.Resolver
 //				namespaceName = value;
 //			}
 		}
-		
-		public IList<TypeOrNamespaceReference> Usings {
+
+        public IList<TypeNameExpression> Usings
+        {
 			get {
 				if (usings == null)
-					usings = new List<TypeOrNamespaceReference>();
+                    usings = new List<TypeNameExpression>();
 				return usings;
 			}
 		}
-		
-		public IList<KeyValuePair<string, TypeOrNamespaceReference>> UsingAliases {
+
+        public IList<KeyValuePair<string, TypeNameExpression>> UsingAliases
+        {
 			get {
 				if (usingAliases == null)
-					usingAliases = new List<KeyValuePair<string, TypeOrNamespaceReference>>();
+                    usingAliases = new List<KeyValuePair<string, TypeNameExpression>>();
 				return usingAliases;
 			}
 		}

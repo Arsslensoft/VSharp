@@ -40,6 +40,11 @@ namespace VSC.TypeSystem
 		/// Gets whether this parameter is a V# 'params' parameter.
 		/// </summary>
 		bool IsParams { get; }
+
+        /// <summary>
+        /// Gets whether this parameter is a V# 'self' parameter.
+        /// </summary>
+        bool IsSelf { get; }
 		
 		/// <summary>
 		/// Gets whether this parameter is optional.

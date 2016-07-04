@@ -46,6 +46,7 @@ namespace VSC.TypeSystem.Implementation
 		
 		public SymbolKind OwnerType {
 			get { return ownerType; }
+            set { ownerType = value; }
 		}
 		
 		public int Index {

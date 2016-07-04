@@ -30,8 +30,8 @@ namespace VSC.TypeSystem.Implementation
 			activeTypes.Push(def);
 			// Note that we also need to push non-type definitions, e.g. for protecting against
 			// cyclic inheritance in type parameters (where T : S where S : T).
-			// The output check doesn't help there because we call Add(type) only at the end.
-			// We can't simply call this.Add(type); at the start because that would return in an incorrect order.
+			// The output check doesn't help there because we call Addition(type) only at the end.
+			// We can't simply call this.Addition(type); at the start because that would return in an incorrect order.
 			
 			// Avoid outputting a type more than once - necessary for "diamond" multiple inheritance
 			// (e.g. C implements I1 and I2, and both interfaces derive from Object)
@@ -45,11 +45,11 @@ namespace VSC.TypeSystem.Implementation
 					}
 					CollectBaseTypes(baseType);
 				}
-				// Add(type) at the end - we want a type to be output only after all its base types were added.
+				// Addition(type) at the end - we want a type to be output only after all its base types were added.
 				this.Add(type);
-				// Note that this is not the same as putting the this.Add() call in front and then reversing the list.
-				// For the diamond inheritance, Add() at the start produces "C, I1, Object, I2",
-				// while Add() at the end produces "Object, I1, I2, C".
+				// Note that this is not the same as putting the this.Addition() call in front and then reversing the list.
+				// For the diamond inheritance, Addition() at the start produces "C, I1, Object, I2",
+				// while Addition() at the end produces "Object, I1, I2, C".
 			}
 			activeTypes.Pop();
 		}

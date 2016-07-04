@@ -9,6 +9,11 @@ namespace VSC.TypeSystem
 	/// </summary>
 	public interface IUnresolvedEntity : INamedElement, IHasAccessibility
 	{
+        /// <summary>
+        /// Gets the modifier flags
+        /// </summary>
+        Modifiers ModFlags { get; }
+
 		/// <summary>
 		/// Gets the entity type.
 		/// </summary>

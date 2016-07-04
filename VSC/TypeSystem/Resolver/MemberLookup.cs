@@ -480,7 +480,7 @@ namespace VSC.TypeSystem.Resolver
 					}
 				}
 				
-				// Add the new nested type.
+				// Addition the new nested type.
 				if (newNestedTypes == null)
 					newNestedTypes = new List<IType>();
 				newNestedTypes.Add(nestedType);
@@ -584,7 +584,7 @@ namespace VSC.TypeSystem.Resolver
                         }
                     }
 
-                    // Add the new member
+                    // Addition the new member
                     if (method != null)
                     {
                         if (newMethods == null)
@@ -674,7 +674,7 @@ namespace VSC.TypeSystem.Resolver
             {
                 // If there are methods, make a MethodGroupResolveResult.
                 // Note that a conflict between a member and a method (possible with multiple interface inheritance)
-                // is only a warning, not an error, and the C# compiler will prefer the method group.
+                // is only a warning, not an error, and the V# compiler will prefer the method group.
                 List<MethodListWithDeclaringType> methodLists = new List<MethodListWithDeclaringType>();
                 foreach (var lookupGroup in lookupGroups)
                 {
@@ -741,7 +741,7 @@ namespace VSC.TypeSystem.Resolver
         /// The declaring type.
         /// </summary>
         /// <remarks>
-        /// Not all methods in this list necessarily have this as their declaring type.
+        /// LogicalNot all methods in this list necessarily have this as their declaring type.
         /// For example, this program:
         /// <code>
         ///  class Base {

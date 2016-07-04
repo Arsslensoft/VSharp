@@ -1,5 +1,0 @@
-E:\Projects\VSharp\Research\bin\Debug\VSC.exe.config
-E:\Projects\VSharp\Research\bin\Debug\VSC.exe
-E:\Projects\VSharp\Research\bin\Debug\VSC.pdb
-E:\Projects\VSharp\Research\obj\Debug\VSC.exe
-E:\Projects\VSharp\Research\obj\Debug\VSC.pdb
