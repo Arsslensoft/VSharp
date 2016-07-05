@@ -11,115 +11,6 @@ namespace VSC.AST
     	//
 	// Argument expression used for invocation
 	//
-    public class Argument
-    {
-        public enum AType : byte
-        {
-            None = 0,
-            Ref = 1,			// ref modifier used
-            Out = 2,			// out modifier used
-            Default = 3,		// argument created from default parameter value
-            DynamicTypeName = 4,	// System.Type argument for dynamic binding
-            ExtensionType = 5,	// Instance expression inserted as the first argument
-
-            // Conditional instance expression inserted as the first argument
-            ExtensionTypeConditionalAccess = 5 | ConditionalAccessFlag,
-
-            ConditionalAccessFlag = 1 << 7
-        }
-
-        public readonly AType ArgType;
-        public Expression Expr;
-        public readonly Location loc;
-        public Argument(Expression expr, AType type, Location l)
-        {
-            this.Expr = expr;
-            this.ArgType = type;
-            this.loc = l;
-        }
-
-        public Argument(Expression expr, Location l)
-        {
-            this.Expr = expr; this.loc = l;
-        }
-
-        #region Properties
-
-        public bool IsByRef
-        {
-            get { return ArgType == AType.Ref || ArgType == AType.Out; }
-        }
-
-        public bool IsDefaultArgument
-        {
-            get { return ArgType == AType.Default; }
-        }
-
-        public bool IsExtensionType
-        {
-            get
-            {
-                return (ArgType & AType.ExtensionType) == AType.ExtensionType;
-            }
-        }
-
-        public ParameterModifier Modifier
-        {
-            get
-            {
-                switch (ArgType)
-                {
-                    case AType.Out:
-                        return ParameterModifier.Out;
-
-                    case AType.Ref:
-                        return ParameterModifier.Ref;
-
-                    default:
-                        return ParameterModifier.None;
-                }
-            }
-        }
-
-
-        #endregion
-    }
-    public class MovableArgument : Argument
-    {
-        public MovableArgument(Argument arg, Location l)
-            : this(arg.Expr, arg.ArgType,arg.loc)
-        {
-        }
-
-        protected MovableArgument(Expression expr, AType modifier, Location l)
-            : base(expr, modifier, l)
-        {
-        }
-
-    }
-    public class NamedArgument : MovableArgument
-    {
-        public readonly string Name;
-        public readonly bool CtorArgument = true;
-
-        public NamedArgument(string name, Location loc, Expression expr)
-            : this(name, loc, expr, AType.None)
-        {
-            CtorArgument = false;
-        }
-
-        public NamedArgument(string name, Location loc, Expression expr, AType modifier)
-            : base(expr, modifier, loc)
-        {
-            this.Name = name;
-  
-        }
-
-        public Location Location
-        {
-            get { return loc; }
-        }
-    }
     public class Arguments
     {
         sealed class ArgumentsOrdered : Arguments
@@ -168,7 +59,7 @@ namespace VSC.AST
                 if (!arg.CtorArgument && arg.Expr is IConstantValue)
                     il.Add(new KeyValuePair<string, IConstantValue>(arg.Name, arg.Expr as IConstantValue));
                 else if(!arg.CtorArgument)
-                    CompilerContext.report.Error(0, arg.loc, "Attribute named argument expression must be a constant");
+                    CompilerContext.report.Error(1, arg.loc, "Attribute named argument expression must be a constant");
 
             return il;
         }
@@ -179,7 +70,7 @@ namespace VSC.AST
                 if (arg.CtorArgument &&arg.Expr is IConstantValue)
                     il.Add(new KeyValuePair<string, IConstantValue>(arg.Name, arg.Expr as IConstantValue));
                 else if(arg.CtorArgument)
-                    CompilerContext.report.Error(0, arg.loc, "Attribute named argument expression must be a constant");
+                    CompilerContext.report.Error(1, arg.loc, "Attribute named argument expression must be a constant");
 
             return il;
         }
@@ -190,7 +81,7 @@ namespace VSC.AST
                 if (arg.Expr is IConstantValue)
                     il.Add(arg.Expr as IConstantValue);
                 else
-                    CompilerContext.report.Error(0, arg.loc, "Attribute argument expression must be a constant");
+                    CompilerContext.report.Error(1, arg.loc, "Attribute argument expression must be a constant");
 
             return il;
         }

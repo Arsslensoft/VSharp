@@ -12,11 +12,4 @@ namespace VSC.AST
         bool Emit(EmitContext ec);
        
     }
-  public interface IEmitExpression  : IEmit
-    {
-      bool EmitToStack(EmitContext ec);
-      bool EmitFromStack(EmitContext ec);    
-    }
-
-    
 }

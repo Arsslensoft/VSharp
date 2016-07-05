@@ -951,7 +951,7 @@ namespace VSC.TypeSystem.Resolver
                     {
                         if (arguments[i].IsCompileTimeConstant && conversions[i].IsValid && !conversions[i].IsUserDefined)
                         {
-                            argument = new VSharpResolver(compilation).WithCheckForOverflow(CheckForOverflow).ResolveCast(parameterType, argument);
+                            argument = new ResolveContext(compilation).WithCheckForOverflow(CheckForOverflow).ResolveCast(parameterType, argument);
                         }
                         else
                         {

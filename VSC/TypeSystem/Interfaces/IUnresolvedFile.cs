@@ -3,10 +3,7 @@ using System.Collections.Generic;
 
 namespace VSC.TypeSystem
 {
-	[Obsolete("IParsedFile was renamed to IUnresolvedFile", true)]
-	public interface IParsedFile {}
-	
-	/// <summary>
+    /// <summary>
 	/// Represents a single file that was parsed.
 	/// </summary>
 	public interface IUnresolvedFile

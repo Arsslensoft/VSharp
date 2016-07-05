@@ -7,6 +7,8 @@ using System.Text;
 using System.Threading.Tasks;
 using VSC.AST;
 using VSC.Base;
+using VSC.TypeSystem;
+using VSC.TypeSystem.Resolver;
 
 namespace VSC
 {
@@ -25,6 +27,13 @@ namespace VSC
             //  Tokenizer cs = new Tokenizer(ssr,csf,ps,mc.Compiler.Report);
             VSharpParser vp = new VSharpParser(ssr, csf, csf.Compiler.Report, ps);
             vp.parse();
+
+
+            // Resolve
+            VSharpProjectContent pc = new VSharpProjectContent();
+            ICompilation c = pc.AddOrUpdateFiles(csf).CreateCompilation();
+            ResolveContext rc = new ResolveContext(c,csf.Compiler.Report);
+            csf.Resolve(rc);
             st.Stop();
             Console.WriteLine(st.Elapsed);
         }

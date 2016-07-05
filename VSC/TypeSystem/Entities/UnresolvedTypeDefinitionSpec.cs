@@ -14,7 +14,7 @@ namespace VSC.TypeSystem.Implementation
 		TypeKind kind = TypeKind.Class;
 		string namespaceName;
 		IList<ITypeReference> baseTypes;
-		IList<IUnresolvedTypeParameter> typeParameters;
+		public  IList<IUnresolvedTypeParameter> typeParameters;
 		IList<IUnresolvedTypeDefinition> nestedTypes;
 		IList<IUnresolvedMember> members;
 		
@@ -50,11 +50,20 @@ namespace VSC.TypeSystem.Implementation
 		
 		public UnresolvedTypeDefinitionSpec(IUnresolvedTypeDefinition declaringTypeDefinition, string name)
 		{
-			this.SymbolKind = SymbolKind.TypeDefinition;
-			this.DeclaringTypeDefinition = declaringTypeDefinition;
-			this.namespaceName = declaringTypeDefinition.Namespace;
-			this.Name = name;
-			this.UnresolvedFile = declaringTypeDefinition.UnresolvedFile;
+		    if (declaringTypeDefinition.Name != "default")
+		    {
+		        this.SymbolKind = SymbolKind.TypeDefinition;
+		        this.DeclaringTypeDefinition = declaringTypeDefinition;
+		        this.namespaceName = declaringTypeDefinition.Namespace;
+		        this.Name = name;
+		        this.UnresolvedFile = declaringTypeDefinition.UnresolvedFile;
+		    }
+		    else
+		    {
+                this.SymbolKind = SymbolKind.TypeDefinition;
+                this.namespaceName = declaringTypeDefinition.Namespace;
+                this.Name = name;
+		    }
 		}
 		
 		protected override void FreezeInternal()

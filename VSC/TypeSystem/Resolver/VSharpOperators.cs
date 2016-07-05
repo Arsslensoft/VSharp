@@ -266,7 +266,7 @@ namespace VSC.TypeSystem.Resolver
 		{
 			public virtual bool CanEvaluateAtCompileTime { get { return false; } }
 			
-			public virtual object Invoke(VSharpResolver resolver, object input)
+			public virtual object Invoke(ResolveContext resolver, object input)
 			{
 				throw new NotSupportedException();
 			}
@@ -293,7 +293,7 @@ namespace VSC.TypeSystem.Resolver
 				get { return true; }
 			}
 			
-			public override object Invoke(VSharpResolver resolver, object input)
+			public override object Invoke(ResolveContext resolver, object input)
 			{
 				if (input == null)
 					return null;
@@ -425,7 +425,7 @@ namespace VSC.TypeSystem.Resolver
 		internal class BinaryOperatorMethod : OperatorMethod
 		{
 			public virtual bool CanEvaluateAtCompileTime { get { return false; } }
-			public virtual object Invoke(VSharpResolver resolver, object lhs, object rhs) {
+			public virtual object Invoke(ResolveContext resolver, object lhs, object rhs) {
 				throw new NotSupportedException();
 			}
 			
@@ -457,7 +457,7 @@ namespace VSC.TypeSystem.Resolver
 				get { return true; }
 			}
 			
-			public override object Invoke(VSharpResolver resolver, object lhs, object rhs)
+			public override object Invoke(ResolveContext resolver, object lhs, object rhs)
 			{
 				if (lhs == null || rhs == null)
 					return null;
@@ -602,7 +602,7 @@ namespace VSC.TypeSystem.Resolver
 				get { return canEvaluateAtCompileTime; }
 			}
 			
-			public override object Invoke(VSharpResolver resolver, object lhs, object rhs)
+			public override object Invoke(ResolveContext resolver, object lhs, object rhs)
 			{
 				return string.Concat(lhs, rhs);
 			}
@@ -769,7 +769,7 @@ namespace VSC.TypeSystem.Resolver
 				get { return Type != TypeCode.Object; }
 			}
 			
-			public override object Invoke(VSharpResolver resolver, object lhs, object rhs)
+			public override object Invoke(ResolveContext resolver, object lhs, object rhs)
 			{
 				if (lhs == null && rhs == null)
 					return !Negate; // ==: true; !=: false
@@ -815,7 +815,7 @@ namespace VSC.TypeSystem.Resolver
 				get { return baseMethod.CanEvaluateAtCompileTime; }
 			}
 			
-			public override object Invoke(VSharpResolver resolver, object lhs, object rhs)
+			public override object Invoke(ResolveContext resolver, object lhs, object rhs)
 			{
 				return baseMethod.Invoke(resolver, lhs, rhs);
 			}
@@ -915,7 +915,7 @@ namespace VSC.TypeSystem.Resolver
 				get { return true; }
 			}
 			
-			public override object Invoke(VSharpResolver resolver, object lhs, object rhs)
+			public override object Invoke(ResolveContext resolver, object lhs, object rhs)
 			{
 				if (lhs == null || rhs == null)
 					return null;

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -8,24 +8,7 @@ using VSC.TypeSystem.Implementation;
 
 namespace VSC.TypeSystem.Resolver
 {
-	public enum TypeInferenceAlgorithm
-	{
-		/// <summary>
-		/// V# 1.0 type inference.
-		/// </summary>
-		VSharp,
-		/// <summary>
-		/// Improved algorithm (not part of any specification) using FindTypeInBounds for fixing.
-		/// </summary>
-		Improved,
-		/// <summary>
-		/// Improved algorithm (not part of any specification) using FindTypeInBounds for fixing;
-		/// uses <see cref="IntersectionType"/> to report all results (in case of ambiguities).
-		/// </summary>
-		ImprovedReturnAllResults
-	}
-	
-	/// <summary>
+    /// <summary>
 	/// Implements V# 4.0 Type Inference (§7.5.2).
 	/// </summary>
 	public sealed class TypeInference

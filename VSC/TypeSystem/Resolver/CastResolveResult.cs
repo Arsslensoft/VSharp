@@ -15,7 +15,7 @@ namespace VSC.TypeSystem.Resolver
 		//    n = n + (long)i;
 		// The resolver will produce (and process) an CastResolveResult for the cast,
 		// (with Conversion = implicit numeric conversion)
-		// and then pass it into VSharpResolver.ResolveBinaryOperator().
+		// and then pass it into ResolveContext.ResolveBinaryOperator().
 		// That method normally wraps input arguments into another conversion
 		// (the implicit conversion applied by the operator).
 		// However, identity conversions do not cause the creation of ConversionResolveResult instances,

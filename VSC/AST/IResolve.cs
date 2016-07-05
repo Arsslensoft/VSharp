@@ -4,12 +4,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VSC.Context;
+using VSC.TypeSystem.Resolver;
 
 namespace VSC.AST
 {
-   public interface IResolve
+   public interface IResolveExpression
     {
-       object DoResolve(ResolveContext rc);
-       bool Resolve(ResolveContext rc);
+       Expression DoResolve(ResolveContext rc);
+    }
+
+    public interface IResolve
+    {
+        bool Resolve(ResolveContext rc);
     }
 }

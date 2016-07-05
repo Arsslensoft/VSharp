@@ -1,4 +1,5 @@
 using System;
+using VSC.AST;
 using VSC.Context;
 using VSC.TypeSystem.Implementation;
 
@@ -20,7 +21,7 @@ namespace VSC.TypeSystem.Resolver
 			this.assembly = assembly;
 			this.currentUsingScope = usingScope;
 			this.currentTypeDefinition = typeDefinition;
-            this.defaultTypeDefinition = new ResolvedTypeDefinitionSpec(this, SymbolResolveContext.DefaultTypes.ToArray());
+            this.defaultTypeDefinition = new ResolvedTypeDefinitionSpec(this, PackageContainer.DefaultTypesContainers.ToArray());
 			this.currentMember = member;
 		}
 		

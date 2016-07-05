@@ -136,7 +136,7 @@ namespace VSC.AST
             foreach (var c in Containers)
                 c.Resolve(rc);
 
-
+            RootPackage.Resolve(rc);
             return true;
         }
 
@@ -268,9 +268,9 @@ namespace VSC.AST
             return rctx;
         }
 
-        public VSharpResolver GetResolver(ICompilation compilation, Location loc)
+        public ResolveContext GetResolver(ICompilation compilation, Location loc)
         {
-            return new VSharpResolver(GetTypeResolveContext(compilation, loc));
+            return new ResolveContext(GetTypeResolveContext(compilation, loc));
         }
 
         public string GetDocumentation(IUnresolvedEntity entity)

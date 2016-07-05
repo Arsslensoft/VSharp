@@ -74,7 +74,7 @@ namespace VSC.TypeSystem.Resolver
 					return result;
 				} else {
 					result = new List<INamespace>();
-					VSharpResolver resolver = new VSharpResolver(parentContext.WithUsingScope(this));
+					ResolveContext resolver = new ResolveContext(parentContext.WithUsingScope(this));
 					foreach (var u in usingScope.Usings) {
 						INamespace ns = u.ResolveNamespace(resolver);
 						if (ns != null && !result.Contains(ns))
@@ -93,7 +93,7 @@ namespace VSC.TypeSystem.Resolver
 				if (result != null) {
 					return result;
 				} else {
-					VSharpResolver resolver = new VSharpResolver(parentContext.WithUsingScope(this));
+					ResolveContext resolver = new ResolveContext(parentContext.WithUsingScope(this));
 					result = new KeyValuePair<string, ResolveResult>[usingScope.UsingAliases.Count];
 					for (int i = 0; i < result.Count; i++) {
 						var rr = usingScope.UsingAliases[i].Value.Resolve(resolver);

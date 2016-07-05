@@ -84,7 +84,7 @@ namespace VSC.TypeSystem.Resolver
 		internal List<List<IMethod>> extensionMethods;
 		
 		// the resolver is used to fetch extension methods on demand
-		internal VSharpResolver resolver;
+		internal ResolveContext resolver;
 		
 		/// <summary>
 		/// Gets all candidate extension methods.
@@ -139,7 +139,7 @@ namespace VSC.TypeSystem.Resolver
 				var outputGroup = new List<IMethod>();
 				foreach (var method in methodGroup) {
 					IType[] inferredTypes;
-					if (VSharpResolver.IsEligibleExtensionMethod(this.TargetType, method, true, out inferredTypes)) {
+					if (ResolveContext.IsEligibleExtensionMethod(this.TargetType, method, true, out inferredTypes)) {
 						if (substituteInferredTypes && inferredTypes != null) {
 							outputGroup.Add(method.Specialize(new TypeParameterSubstitution(null, inferredTypes)));
 						} else {

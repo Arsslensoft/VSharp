@@ -37,15 +37,4 @@ namespace VSC.AST {
 	// to be expressions.  Depending on the return type of the delegate this will behave
 	// as either { expr (); return (); } or { return expr (); }
 	//
-    public class ContextualReturn : Return
-    {
-        ExpressionStatement statement;
-
-        public ContextualReturn(Expression expr)
-            : base(expr, expr.Location)
-        {
-        }
-    }
-
-
 }
