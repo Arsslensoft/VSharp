@@ -6,7 +6,7 @@ using VSC.Base;
 namespace VSC.TypeSystem.Resolver
 {
 	/// <summary>
-	/// Resolve result representing an array access.
+	/// ResolveScope result representing an array access.
 	/// </summary>
 	public class ArrayAccessResolveResult : ResolveResult
 	{

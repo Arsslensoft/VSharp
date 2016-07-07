@@ -59,11 +59,11 @@ namespace VSC.AST {
         //            lengths = new TemporaryVariableReference [rank];
         //    }
 
-        //    public override bool Resolve (BlockContext ec)
+        //    public override bool ResolveScope (BlockContext ec)
         //    {
         //        Block variables_block = for_each.variable.Block;
         //        copy = TemporaryVariableReference.Create (for_each.expr.Type, variables_block, loc);
-        //        copy.Resolve (ec);
+        //        copy.ResolveScope (ec);
 
         //        int rank = length_exprs.Length;
         //        Arguments list = new Arguments (rank);
@@ -71,23 +71,23 @@ namespace VSC.AST {
         //            var v = TemporaryVariableReference.Create (ec.BuiltinTypes.Int, variables_block, loc);
         //            variables[i] = v;
         //            counter[i] = new StatementExpression (new UnaryMutator (UnaryMutator.Mode.PostIncrement, v, Location.Null));
-        //            counter[i].Resolve (ec);
+        //            counter[i].ResolveScope (ec);
 
         //            if (rank == 1) {
-        //                length_exprs [i] = new MemberAccess (copy, "Length").Resolve (ec);
+        //                length_exprs [i] = new MemberAccess (copy, "Length").ResolveScope (ec);
         //            } else {
         //                lengths[i] = TemporaryVariableReference.Create (ec.BuiltinTypes.Int, variables_block, loc);
-        //                lengths[i].Resolve (ec);
+        //                lengths[i].ResolveScope (ec);
 
         //                Arguments args = new Arguments (1);
         //                args.Addition (new Argument (new IntConstant (ec.BuiltinTypes, i, loc)));
-        //                length_exprs [i] = new Invocation (new MemberAccess (copy, "GetLength"), args).Resolve (ec);
+        //                length_exprs [i] = new Invocation (new MemberAccess (copy, "GetLength"), args).ResolveScope (ec);
         //            }
 
         //            list.Addition (new Argument (v));
         //        }
 
-        //        var access = new ElementAccess (copy, list, loc).Resolve (ec);
+        //        var access = new ElementAccess (copy, list, loc).ResolveScope (ec);
         //        if (access == null)
         //            return false;
 
@@ -108,13 +108,13 @@ namespace VSC.AST {
 
         //        for_each.variable.Type = var_type;
 
-        //        var variable_ref = new LocalVariableReference (for_each.variable, loc).Resolve (ec);
+        //        var variable_ref = new LocalVariableReference (for_each.variable, loc).ResolveScope (ec);
         //        if (variable_ref == null)
         //            return false;
 
         //        for_each.body.AddScopeStatement (new StatementExpression (new CompilerAssign (variable_ref, access, Location.Null), for_each.type.Location));
 
-        //        return for_each.body.Resolve (ec);
+        //        return for_each.body.ResolveScope (ec);
         //    }
 
         //    protected override void DoEmit (EmitContext ec)
@@ -196,7 +196,7 @@ namespace VSC.AST {
         //                new As (lv.CreateReferenceExpression (bc, loc), new TypeExpression (dispose_variable.Type, loc), loc),
         //                loc), new NullLiteral (loc));
 
-        //            var m = bc.Module.PredefinedMembers.IDisposableDispose.Resolve (loc);
+        //            var m = bc.Module.PredefinedMembers.IDisposableDispose.ResolveScope (loc);
 
         //            var dispose_mg = MethodGroupExpr.CreatePredefined (m, idt, loc);
         //            dispose_mg.InstanceExpression = dispose_variable.CreateReferenceExpression (bc, loc);
@@ -297,7 +297,7 @@ namespace VSC.AST {
         //            return null;
         //        }
 
-        //        var method = iface_candidate.Resolve (loc);
+        //        var method = iface_candidate.ResolveScope (loc);
         //        if (method == null)
         //            return null;
 
@@ -334,14 +334,14 @@ namespace VSC.AST {
         //        return ps;
         //    }
 
-        //    public override bool Resolve (BlockContext ec)
+        //    public override bool ResolveScope (BlockContext ec)
         //    {
         //        bool is_dynamic = expr.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic;
 
         //        if (is_dynamic) {
         //            expr = Convert.ImplicitConversionRequired (ec, expr, ec.BuiltinTypes.IEnumerable, loc);
         //        } else if (expr.Type.IsNullableType) {
-        //            expr = new Nullable.UnwrapCall (expr).Resolve (ec);
+        //            expr = new Nullable.UnwrapCall (expr).ResolveScope (ec);
         //        }
 
         //        var get_enumerator_mg = ResolveGetEnumerator (ec);
@@ -351,7 +351,7 @@ namespace VSC.AST {
 
         //        var get_enumerator = get_enumerator_mg.BestCandidate;
         //        enumerator_variable = TemporaryVariableReference.Create (get_enumerator.ReturnType, variable.Block, loc);
-        //        enumerator_variable.Resolve (ec);
+        //        enumerator_variable.ResolveScope (ec);
 
         //        // Prepare bool MoveNext ()
         //        var move_next_mg = ResolveMoveNext (ec, get_enumerator);
@@ -367,7 +367,7 @@ namespace VSC.AST {
         //            return false;
         //        }
 
-        //        var current_pe = new PropertyExpr (current_prop, loc) { InstanceExpression = enumerator_variable }.Resolve (ec);
+        //        var current_pe = new PropertyExpr (current_prop, loc) { InstanceExpression = enumerator_variable }.ResolveScope (ec);
         //        if (current_pe == null)
         //            return false;
 
@@ -397,7 +397,7 @@ namespace VSC.AST {
         //                return false;
         //        }
 
-        //        var variable_ref = new LocalVariableReference (variable, loc).Resolve (ec);
+        //        var variable_ref = new LocalVariableReference (variable, loc).ResolveScope (ec);
         //        if (variable_ref == null)
         //            return false;
 
@@ -426,7 +426,7 @@ namespace VSC.AST {
         //                // No Dispose call needed
         //                //
         //                this.init = new SimpleAssign (enumerator_variable, init, Location.Null);
-        //                this.init.Resolve (ec);
+        //                this.init.ResolveScope (ec);
         //            }
         //        } else {
         //            //
@@ -437,7 +437,7 @@ namespace VSC.AST {
         //            statement = new Using (vd, statement, Location.Null);
         //        }
 
-        //        return statement.Resolve (ec);
+        //        return statement.ResolveScope (ec);
         //    }
 
         //    protected override void DoEmit (EmitContext ec)

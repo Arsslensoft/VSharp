@@ -9,9 +9,8 @@ namespace VSC.TypeSystem
 		/// Gets the fully qualified name of the class the return type is pointing to.
 		/// </summary>
 		/// <returns>
-		/// "System.Int32[]" for int[]<br/>
-		/// "System.Collections.Generic.List" for List&lt;string&gt;
-		/// "System.Environment.SpecialFolder" for Environment.SpecialFolder
+        /// "Std.Int32[]" for int[]<br/>
+        /// "Std.Collections.Generic.List" for List&lt;string&gt;
 		/// </returns>
 		string FullName { get; }
 		
@@ -33,10 +32,9 @@ namespace VSC.TypeSystem
 		/// <see cref="ReflectionHelper.ParseReflectionName(string)"/>.
 		/// </remarks>
 		/// <returns>
-		/// "System.Int32[]" for int[]<br/>
-		/// "System.Int32[][,]" for V# int[,][]<br/>
-		/// "System.Collections.Generic.List`1[[System.String]]" for List&lt;string&gt;
-		/// "System.Environment+SpecialFolder" for Environment.SpecialFolder
+        /// "Std.Int32[]" for int[]<br/>
+        /// "Std.Int32[][,]" for V# int[,][]<br/>
+        /// "Std.Collections.Generic.List`1[[System.String]]" for List&lt;string&gt;
 		/// </returns>
 		string ReflectionName { get; }
 		

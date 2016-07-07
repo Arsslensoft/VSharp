@@ -4,7 +4,7 @@ using VSC.Base;
 namespace VSC.TypeSystem.Resolver
 {
 	/// <summary>
-	/// Resolve result representing a 'foreach' loop.
+	/// ResolveScope result representing a 'foreach' loop.
 	/// </summary>
 	public class ForEachResolveResult : ResolveResult
 	{

@@ -24,7 +24,7 @@ namespace VSC.AST
         public ConstructorDeclaration(TypeContainer parent, string name, Modifiers mod, VSharpAttributes attrs, ParametersCompiled args, Location loc)
             : base(parent, KnownTypeReference.Void, mod, AllowedModifiers, new MemberName(name, loc), args, attrs)
         {
-
+            SymbolKind = SymbolKind.Constructor;
         }
 
     }

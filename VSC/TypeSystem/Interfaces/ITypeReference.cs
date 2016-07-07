@@ -9,7 +9,7 @@ namespace VSC.TypeSystem
 	public interface ITypeReference
 	{
 		// Keep this interface simple: I decided against having GetMethods/GetEvents etc. here,
-		// so that the Resolve step is never hidden from the consumer.
+		// so that the ResolveScope step is never hidden from the consumer.
 		
 		// I decided against implementing IFreezable here: IUnresolvedTypeDefinition can be used as ITypeReference,
 		// but when freezing the reference, one wouldn't expect the definition to freeze.

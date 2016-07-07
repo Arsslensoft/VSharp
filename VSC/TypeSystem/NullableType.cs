@@ -32,7 +32,7 @@ namespace VSC.TypeSystem
 			if (type == null)
 				throw new ArgumentNullException("type");
             ParameterizedTypeSpec pt = type as ParameterizedTypeSpec;
-			if (pt != null && pt.TypeParameterCount == 1 && pt.FullName == "System.Nullable")
+            if (pt != null && pt.TypeParameterCount == 1 && pt.FullName == "Std.Nullable")
 				return pt.GetTypeArgument(0);
 			else
 				return type;

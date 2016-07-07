@@ -9,8 +9,8 @@ namespace VSC.TypeSystem
 	[Serializable]
     public sealed class MethodTypeParameterWithInheritedConstraints : UnresolvedTypeParameterSpec
     {
-        public MethodTypeParameterWithInheritedConstraints(int index, string name)
-            : base(SymbolKind.Method, index, name)
+        public MethodTypeParameterWithInheritedConstraints(int index, string name,Location loc)
+            : base(SymbolKind.Method, index,loc, name)
         {
         }
 

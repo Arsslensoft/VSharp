@@ -304,10 +304,7 @@ namespace VSC.TypeSystem.Implementation
 			get { return accessibility == Accessibility.ProtectedOrInternal; }
 		}
 		
-		bool IHasAccessibility.IsProtectedAndInternal {
-			get { return accessibility == Accessibility.ProtectedAndInternal; }
-		}
-		
+	
 		public override string ToString()
 		{
 			StringBuilder b = new StringBuilder("[");
@@ -321,5 +318,7 @@ namespace VSC.TypeSystem.Implementation
 			b.Append(']');
 			return b.ToString();
 		}
+
+	
 	}
 }

@@ -6,18 +6,22 @@ namespace VSC.AST
 {
     public class PackageContainer : UsingScope, IAstNode, IResolve
     {
+        public IAstNode ParentNode { get; set; }
         public static PackageContainer CreateContainers(PackageContainer parent, MemberName mn,Location loc, CompilationSourceFile file)
         {
             if (mn.Left != null)
             {
-                PackageContainer left = CreateContainers(parent, mn.Left, loc,file);
-                PackageContainer current = new PackageContainer(left, mn.Name, loc,file);
+                PackageContainer left = CreateContainers(parent, mn.Left, loc, file);
+                PackageContainer current = new PackageContainer(left, mn.Name, loc, file);
                 left.AddChildNamespace(current);
                 return current;
             }
             else
-                return new PackageContainer(parent, mn.Name, loc,file);
-           
+            {
+             var c = new PackageContainer(parent, mn.Name, loc, file);
+                parent.AddChildNamespace(c);
+                return c;
+            }
         }
         public bool DeclarationFound { get; set; }
         public TypeContainer DefaultType { get; set; }
@@ -36,7 +40,7 @@ namespace VSC.AST
             DefaultType.IsSealed = true;
             DefaultType.IsStatic = true;
             DefaultType.IsSynthetic = false; DeclarationFound = false;
-           _containers.Add(DefaultType);
+           
            DefaultTypesContainers.Add(DefaultType);
             Parent = parent;
         }
@@ -51,7 +55,7 @@ namespace VSC.AST
            DefaultType.IsSealed = true;
             DefaultType.IsStatic = true;
             DefaultType.IsSynthetic = false; DeclarationFound = false;
-            _containers.Add(DefaultType); 
+           
             DefaultTypesContainers.Add(DefaultType);
         }
         // only types
@@ -93,7 +97,8 @@ namespace VSC.AST
                 Usings.Add(u as TypeNameExpression);
             else UsingAliases.Add(new KeyValuePair<string, TypeNameExpression>(imp.Alias.Value, u as TypeNameExpression));
         }
-        public bool Resolve(ResolveContext rc)
+
+        public void ResolveWithCurrentContext(ResolveContext rc)
         {
             foreach (var i in _imports)
                 i.Resolve(rc);
@@ -104,6 +109,22 @@ namespace VSC.AST
             foreach (var n in _ncontainers)
                 n.Resolve(rc);
 
+        }
+        public bool Resolve(ResolveContext rc)
+        {
+            ResolveContext previousResolver = rc;
+            try
+            {
+
+                rc = rc.WithCurrentUsingScope(this.ResolveScope(rc.Compilation));
+
+                ResolveWithCurrentContext(rc);
+
+            }
+            finally
+            {
+                rc = previousResolver;
+            }
 
             return true;
         }

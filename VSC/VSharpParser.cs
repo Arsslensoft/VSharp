@@ -1464,32 +1464,35 @@ case 11:
 case 12:
 #line 405 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
-		Import uc = new ImportPackage ((TypeNameExpression) yyVals[-1+yyTop], GetLocation (yyVals[-2+yyTop]));
+	  TypeNameExpression texpr = (TypeNameExpression) yyVals[-1+yyTop];
+	    texpr.lookupMode = NameLookupMode.TypeInUsingDeclaration;
+		Import uc = new ImportPackage (texpr, GetLocation (yyVals[-2+yyTop]));
 		current_package.AddImport (uc);
 	  }
   break;
 case 13:
-#line 410 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 412 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	var lt = (LocatedToken) yyVals[-3+yyTop];
 		if (lt.Value == "global") {
 			report.Warning (440, 2, lt.Location,
 		 "An alias named `global' will not be used when resolving `global::'. The global package will be used instead");
 	}
-
-		var un = new ImportPackageAlias (new AliasIdentifier (lt.Value, lt.Location), (TypeNameExpression) yyVals[-1+yyTop], GetLocation (yyVals[-4+yyTop]));
+	  TypeNameExpression texpr = (TypeNameExpression) yyVals[-1+yyTop];
+	  texpr.lookupMode = NameLookupMode.TypeInUsingDeclaration;
+		var un = new ImportPackageAlias (new AliasIdentifier (lt.Value, lt.Location), texpr, GetLocation (yyVals[-4+yyTop]));
 		current_package.AddImport (un);		
 	  }
   break;
 case 14:
-#line 421 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 424 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = null;
 	 }
   break;
 case 17:
-#line 439 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 442 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		VSharpAttributes attrs = (VSharpAttributes) yyVals[-2+yyTop];
 		var name = (MemberName) yyVals[0+yyTop];
@@ -1516,25 +1519,25 @@ case 17:
 		var ns = PackageContainer.CreateContainers (current_package,name,  GetLocation (yyVals[-1+yyTop]),file);
 		current_package = ns;
 		current_container = ns.DefaultType;
-		file.TopLevelTypeDefinitions.Add(current_container);
+		
 	  }
   break;
 case 18:
-#line 468 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 471 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	if (doc_support)
 			Lexer.doc_state = XmlCommentState.Allowed;
 	  }
   break;
 case 19:
-#line 473 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 476 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	    current_package = current_package.Parent;
 		current_container =current_package.DefaultType; 
 	  }
   break;
 case 20:
-#line 478 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 481 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	report.Error (44, lexer.Location, "Unexpected symbol `{0}', expecting `.' or `{{'", GetSymbolName (yyToken));
 
@@ -1544,35 +1547,35 @@ case 20:
 	  }
   break;
 case 23:
-#line 491 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 494 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 	  	yyVal = null;
 	  }
   break;
 case 24:
-#line 499 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 502 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[0+yyTop];
 		yyVal = new MemberName (lt.Value, lt.Location);
 	  }
   break;
 case 25:
-#line 504 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 507 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[0+yyTop];
 		yyVal = new MemberName ((MemberName) yyVals[-2+yyTop], lt.Value, lt.Location);		
 	  }
   break;
 case 26:
-#line 509 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 512 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new MemberName ("<invalid>", lexer.Location);
 	  }
   break;
 case 37:
-#line 543 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 546 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	
 		if (yyVals[0+yyTop] != null) {
@@ -1594,13 +1597,13 @@ case 37:
 	  }
   break;
 case 38:
-#line 563 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 566 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_package.DeclarationFound = true;
 	  }
   break;
 case 39:
-#line 566 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 569 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	current_package.UnattachedAttributes = (VSharpAttributes) yyVals[-1+yyTop];
 	report.Error (46, lexer.Location, "Attributes must be attached to class, delegate, enum, interface or struct");
@@ -1608,14 +1611,14 @@ case 39:
 	  }
   break;
 case 47:
-#line 599 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 602 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var sect = (List<VSC.AST.VSharpAttribute>) yyVals[0+yyTop];
 		yyVal = new VSharpAttributes (sect);
 	  }
   break;
 case 48:
-#line 604 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 607 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		VSharpAttributes attrs = yyVals[-1+yyTop] as VSharpAttributes;
 		var sect = (List<VSC.AST.VSharpAttribute>) yyVals[0+yyTop];
@@ -1627,20 +1630,20 @@ case 48:
 	  }
   break;
 case 49:
-#line 617 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 620 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_attribute_section = true;
 	  }
   break;
 case 50:
-#line 621 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 624 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_attribute_section = false;
 		yyVal = yyVals[0+yyTop];
 	  }
   break;
 case 51:
-#line 629 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 632 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_attr_target = (string) yyVals[-1+yyTop];
 		if (current_attr_target == "assembly" || current_attr_target == "module") {
@@ -1649,7 +1652,7 @@ case 51:
 	  }
   break;
 case 52:
-#line 636 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 639 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		/* when attribute target is invalid*/
 		if (current_attr_target == string.Empty)
@@ -1661,13 +1664,13 @@ case 52:
  	  }
   break;
 case 53:
-#line 646 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 649 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = yyVals[-2+yyTop];	
 	  }
   break;
 case 54:
-#line 650 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 653 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -1680,7 +1683,7 @@ case 54:
 	  }
   break;
 case 55:
-#line 661 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 664 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (CheckAttributeTarget (yyToken, GetTokenName (yyToken), GetLocation (yyVals[0+yyTop])).Length > 0)
 			Error_SyntaxError (yyToken);
@@ -1689,7 +1692,7 @@ case 55:
 	  }
   break;
 case 56:
-#line 671 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 674 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[0+yyTop];
 		yyVal = CheckAttributeTarget (yyToken, lt.Value, lt.Location);
@@ -1697,21 +1700,21 @@ case 56:
 	  }
   break;
 case 57:
-#line 676 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 679 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = "event"; }
   break;
 case 58:
-#line 677 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 680 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = "return";}
   break;
 case 59:
-#line 682 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 685 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new List<VSC.AST.VSharpAttribute> (4) { (VSC.AST.VSharpAttribute) yyVals[0+yyTop] };
 	  }
   break;
 case 60:
-#line 686 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 689 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	var attrs = (List<VSC.AST.VSharpAttribute>) yyVals[-2+yyTop];
 	if (attrs != null) 
@@ -1722,13 +1725,13 @@ case 60:
 	  }
   break;
 case 61:
-#line 698 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 701 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		++lexer.parsing_block;
 	  }
   break;
 case 62:
-#line 702 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 705 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		--lexer.parsing_block;
 		
@@ -1743,22 +1746,22 @@ case 62:
 	  }
   break;
 case 64:
-#line 721 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 724 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = null; HadAttributeParens = false;	  }
   break;
 case 65:
-#line 723 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 726 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = yyVals[-1+yyTop];
 		HadAttributeParens = true;
 	  }
   break;
 case 66:
-#line 731 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 734 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = null; }
   break;
 case 67:
-#line 733 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 736 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	Arguments a = new Arguments (4);
 		a.Add ((Argument) yyVals[0+yyTop]);
@@ -1766,7 +1769,7 @@ case 67:
 	  }
   break;
 case 68:
-#line 739 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 742 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Arguments a = new Arguments (4);
 	a.Add ((Argument) yyVals[0+yyTop]);  
@@ -1774,7 +1777,7 @@ case 68:
 	  }
   break;
 case 69:
-#line 745 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 748 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Arguments[] o = (Arguments[]) yyVals[-2+yyTop];
 	if (o [1] != null) {
@@ -1791,7 +1794,7 @@ case 69:
 	  }
   break;
 case 70:
-#line 760 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 763 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Arguments[] o = (Arguments[]) yyVals[-2+yyTop];
 		if (o [1] == null) {
@@ -1803,34 +1806,34 @@ case 70:
 	  }
   break;
 case 71:
-#line 773 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 776 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	 	yyVal = new Argument ((Expression) yyVals[0+yyTop], GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 73:
-#line 778 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 781 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = null;
 	  }
   break;
 case 74:
-#line 786 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 789 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		++lexer.parsing_block;
 	  }
   break;
 case 75:
-#line 790 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 793 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	--lexer.parsing_block;
 		var lt = (LocatedToken) yyVals[-3+yyTop];
-		yyVal = new NamedArgument (lt.Value, lt.Location, (Expression) yyVals[-1+yyTop]);	  
+		yyVal = new NamedArgument (lt.Value, lt.Location, (Expression) yyVals[0+yyTop]);	  
 	  }
   break;
 case 76:
-#line 799 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 802 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 
 	/* Avoid boxing in common case (no modifier)*/
@@ -1841,37 +1844,37 @@ case 76:
 	  }
   break;
 case 79:
-#line 815 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 818 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = null; }
   break;
 case 80:
-#line 817 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 820 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { 
 		yyVal = Argument.AType.Ref;
 	  }
   break;
 case 81:
-#line 821 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 824 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { 
 		yyVal = Argument.AType.Out;
 	  }
   break;
 case 84:
-#line 833 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 836 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_modifiers = true;
 		lexer.parsing_block = 0;
 	  }
   break;
 case 85:
-#line 838 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 841 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_modifiers = true;
 		lexer.parsing_block = 0;
 	  }
   break;
 case 99:
-#line 859 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 862 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		report.Error (49, lexer.Location, "Unexpected symbol `{0}' in class, struct, or interface member declaration",
 		GetSymbolName (yyToken));
@@ -1880,7 +1883,7 @@ case 99:
 	  }
   break;
 case 100:
-#line 869 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 872 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	current_local_parameters = current_type.PrimaryConstructorParameters;
 	if (current_local_parameters == null) {
@@ -1893,7 +1896,7 @@ case 100:
 	  }
   break;
 case 101:
-#line 880 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 883 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_local_parameters = null;
 		var t = current_type as ClassOrStructDeclaration;
@@ -1908,13 +1911,13 @@ case 101:
 	  }
   break;
 case 102:
-#line 899 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 902 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 
 	  }
   break;
 case 103:
-#line 903 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 906 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { 
 		lexer.ConstraintsParsing = true;
 		valid_param_mod = ParameterModifierType.PrimaryConstructor;
@@ -1923,7 +1926,7 @@ case 103:
 	  }
   break;
 case 104:
-#line 912 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 915 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		valid_param_mod = 0;
 		lexer.ConstraintsParsing = false;
@@ -1942,14 +1945,14 @@ case 104:
 	  }
   break;
 case 105:
-#line 929 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 932 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (doc_support)
 			Lexer.doc_state = XmlCommentState.Allowed;
 	  }
   break;
 case 106:
-#line 934 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 937 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		--lexer.parsing_declaration;
 	if (doc_support)
@@ -1957,19 +1960,19 @@ case 106:
 	  }
   break;
 case 107:
-#line 940 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 943 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	yyVal = pop_current_class ();
 	  }
   break;
 case 108:
-#line 944 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 947 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 	  }
   break;
 case 109:
-#line 953 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 956 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[0+yyTop];
 		var mod = (Modifiers) yyVals[-3+yyTop];
@@ -1984,7 +1987,7 @@ case 109:
 	  }
   break;
 case 110:
-#line 966 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 969 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (doc_support) {
 			current_field.DocComment = Lexer.consume_doc_comment ();
@@ -1998,7 +2001,7 @@ case 110:
 	  }
   break;
 case 111:
-#line 980 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 983 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -2006,7 +2009,7 @@ case 111:
 	  }
   break;
 case 116:
-#line 999 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1002 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  var lt = (LocatedToken) yyVals[-1+yyTop];
 	  	var cfd = new ConstantDeclaration (current_field as ConstantDeclaration, new MemberName (lt.Value, lt.Location));
@@ -2016,27 +2019,27 @@ case 116:
 	  }
   break;
 case 117:
-#line 1010 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1013 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		++lexer.parsing_block;
 	  }
   break;
 case 118:
-#line 1014 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1017 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		--lexer.parsing_block;
 		yyVal = yyVals[0+yyTop];
 	  }
   break;
 case 119:
-#line 1019 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1022 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		report.Error (53, lexer.Location, "A const field requires a value to be provided");
 		yyVal = null;
 	  }
   break;
 case 122:
-#line 1034 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1037 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	lexer.parsing_generic_declaration = false;
 
@@ -2051,7 +2054,7 @@ case 122:
 	  }
   break;
 case 123:
-#line 1049 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1052 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { 
 		if (doc_support) {
 			current_field.DocComment = Lexer.consume_doc_comment ();
@@ -2067,7 +2070,7 @@ case 123:
 	  }
   break;
 case 125:
-#line 1067 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1070 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	++lexer.parsing_block;
 		current_local_parameters = ParametersCompiled.EmptyReadOnlyParameters;
@@ -2075,7 +2078,7 @@ case 125:
 	  }
   break;
 case 126:
-#line 1073 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1076 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	--lexer.parsing_block;
 		current_field.ConstantValue = (IConstantValue) yyVals[0+yyTop];
@@ -2084,7 +2087,7 @@ case 126:
 	  }
   break;
 case 131:
-#line 1093 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1096 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		 var lt = (LocatedToken) yyVals[0+yyTop];
 	  	var fd = new FieldDeclaration (current_field, new MemberName (lt.Value, lt.Location));
@@ -2093,13 +2096,13 @@ case 131:
 	  }
   break;
 case 132:
-#line 1100 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1103 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		++lexer.parsing_block;
 	  }
   break;
 case 133:
-#line 1104 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1107 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		--lexer.parsing_block;
 		 var lt = (LocatedToken) yyVals[-3+yyTop];
@@ -2110,7 +2113,7 @@ case 133:
 	  }
   break;
 case 136:
-#line 1118 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1121 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		/* It has to be here for the parent to safely restore artificial block*/
 	  	Error_SyntaxError (yyToken);
@@ -2118,7 +2121,7 @@ case 136:
 	  }
   break;
 case 137:
-#line 1128 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1131 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (doc_support)
 			Lexer.doc_state = XmlCommentState.NotAllowed;
@@ -2127,7 +2130,7 @@ case 137:
 	  }
   break;
 case 138:
-#line 1135 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1138 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		MethodDeclaration method = (MethodDeclaration) yyVals[-2+yyTop];
 		method.Block = (ToplevelBlock) yyVals[0+yyTop];
@@ -2149,13 +2152,13 @@ case 138:
 	  }
   break;
 case 139:
-#line 1161 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1164 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		valid_param_mod = ParameterModifierType.All;
 	  }
   break;
 case 140:
-#line 1165 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1168 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		valid_param_mod = 0;
 		MemberName name = (MemberName) yyVals[-4+yyTop];
@@ -2178,7 +2181,7 @@ case 140:
 	  }
   break;
 case 141:
-#line 1186 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1189 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.ConstraintsParsing = false;
 
@@ -2191,26 +2194,26 @@ case 141:
 	  }
   break;
 case 142:
-#line 1200 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1203 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_generic_declaration = true;
 	  }
   break;
 case 143:
-#line 1205 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1208 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_generic_declaration = false;
 	  	valid_param_mod = ParameterModifierType.All;
 	  }
   break;
 case 144:
-#line 1210 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1213 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.ConstraintsParsing = true;
 	  }
   break;
 case 145:
-#line 1214 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1217 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.ConstraintsParsing = false;
 		valid_param_mod = 0;
@@ -2238,7 +2241,7 @@ case 145:
 	  }
   break;
 case 146:
-#line 1243 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1246 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	MemberName name = (MemberName) yyVals[-3+yyTop];
 		report.Error (56, name.Location, 
@@ -2258,7 +2261,7 @@ case 146:
 	  }
   break;
 case 147:
-#line 1264 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1267 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		current_local_parameters = ParametersCompiled.Undefined;
@@ -2276,18 +2279,18 @@ case 147:
 	  }
   break;
 case 151:
-#line 1289 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1292 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {yyVal = null;	 }
   break;
 case 152:
-#line 1294 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1297 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	++lexer.parsing_block;
 	start_block (GetLocation (yyVals[0+yyTop]));
 	 }
   break;
 case 153:
-#line 1299 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1302 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_block = 0;
 		current_block.AddStatement (new ContextualReturn ((Expression) yyVals[-1+yyTop]));
@@ -2297,18 +2300,18 @@ case 153:
 	 }
   break;
 case 154:
-#line 1309 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1312 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = ParametersCompiled.EmptyReadOnlyParameters;}
   break;
 case 156:
-#line 1315 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1318 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var pars_list = (List<Parameter>) yyVals[0+yyTop];
 	 	yyVal = new ParametersCompiled (pars_list.ToArray ());	
 	  }
   break;
 case 157:
-#line 1320 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1323 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var pars_list = (List<Parameter>) yyVals[-2+yyTop];
 		pars_list.Add ((Parameter) yyVals[0+yyTop]);
@@ -2318,7 +2321,7 @@ case 157:
 	  }
   break;
 case 158:
-#line 1328 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1331 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (yyVals[-2+yyTop] != null)
 			report.Error (57, ((Parameter) yyVals[-2+yyTop]).Location, "A params parameter must be the last parameter in a formal parameter list");
@@ -2327,7 +2330,7 @@ case 158:
 	  }
   break;
 case 159:
-#line 1335 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1338 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (yyVals[-2+yyTop] != null)
 			report.Error (57, ((Parameter) yyVals[-2+yyTop]).Location, "A params parameter must be the last parameter in a formal parameter list");
@@ -2337,20 +2340,20 @@ case 159:
 	  }
   break;
 case 160:
-#line 1343 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1346 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new ParametersCompiled (new Parameter[] { (Parameter) yyVals[0+yyTop] } );
 	  }
   break;
 case 161:
-#line 1347 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1350 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = ParametersCompiled.EmptyReadOnlyParameters;
 	  }
   break;
 case 162:
-#line 1355 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1358 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		parameters_bucket.Clear ();
 		Parameter p = (Parameter) yyVals[0+yyTop];
@@ -2360,7 +2363,7 @@ case 162:
 	  }
   break;
 case 163:
-#line 1363 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1366 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var pars = (List<Parameter>) yyVals[-2+yyTop];
 		Parameter p = (Parameter) yyVals[0+yyTop];
@@ -2379,14 +2382,14 @@ case 163:
 	  }
   break;
 case 164:
-#line 1386 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1389 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[0+yyTop];
 		yyVal = new Parameter ((FullNamedExpression) yyVals[-1+yyTop], lt.Value, (ParameterModifier) yyVals[-2+yyTop], (VSharpAttributes) yyVals[-3+yyTop], lt.Location);
 	  }
   break;
 case 165:
-#line 1394 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1397 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[-2+yyTop];
 		report.Error (60, lt.Location, "Array type specifier, [], must appear before parameter name");
@@ -2394,7 +2397,7 @@ case 165:
 	  }
   break;
 case 166:
-#line 1400 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1403 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 	 	Location l = GetLocation (yyVals[0+yyTop]);
@@ -2402,7 +2405,7 @@ case 166:
 	  }
   break;
 case 167:
-#line 1409 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1412 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 	  	Location l = GetLocation (yyVals[0+yyTop]);
@@ -2410,13 +2413,13 @@ case 167:
 	  }
   break;
 case 168:
-#line 1419 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1422 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	++lexer.parsing_block;
 	  }
   break;
 case 169:
-#line 1423 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1426 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	--lexer.parsing_block;
 
@@ -2451,18 +2454,18 @@ case 169:
 	  }
   break;
 case 170:
-#line 1458 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1461 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = ParameterModifier.None; 
 	}
   break;
 case 172:
-#line 1465 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1468 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = yyVals[0+yyTop];
 	  }
   break;
 case 173:
-#line 1469 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1472 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		ParameterModifier p2 = (ParameterModifier)yyVals[0+yyTop];
   		ParameterModifier mod = (ParameterModifier)yyVals[-1+yyTop] | p2;
@@ -2485,7 +2488,7 @@ case 173:
 	  }
   break;
 case 174:
-#line 1493 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1496 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	if ((valid_param_mod & ParameterModifierType.Ref) == 0)
 	  		Error_ParameterModifierNotValid ("ref", GetLocation (yyVals[0+yyTop]));
@@ -2494,7 +2497,7 @@ case 174:
 	  }
   break;
 case 175:
-#line 1500 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1503 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	 	if ((valid_param_mod & ParameterModifierType.Out) == 0)
 	 		Error_ParameterModifierNotValid ("out", GetLocation (yyVals[0+yyTop]));
@@ -2503,7 +2506,7 @@ case 175:
 	  }
   break;
 case 176:
-#line 1507 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1510 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if ((valid_param_mod & ParameterModifierType.Self) == 0)
 	 		Error_ParameterModifierNotValid ("self", GetLocation (yyVals[0+yyTop]));
@@ -2513,14 +2516,14 @@ case 176:
 	  }
   break;
 case 177:
-#line 1518 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1521 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[0+yyTop];
 		yyVal = new Parameter ((FullNamedExpression) yyVals[-1+yyTop], lt.Value, (ParameterModifier) yyVals[-2+yyTop], (VSharpAttributes) yyVals[-3+yyTop], lt.Location);
 	  }
   break;
 case 178:
-#line 1523 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1526 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		report.Error (66, GetLocation (yyVals[-4+yyTop]), "Cannot specify a default value for a parameter array");
 		
@@ -2529,20 +2532,20 @@ case 178:
 	  }
   break;
 case 179:
-#line 1530 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1533 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new Parameter ((FullNamedExpression) yyVals[-1+yyTop], null, (ParameterModifier) yyVals[-2+yyTop], (VSharpAttributes) yyVals[-3+yyTop], GetLocation(yyVals[-2+yyTop]));
 	  }
   break;
 case 180:
-#line 1538 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1541 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = ParameterModifier.Params;
 	  }
   break;
 case 181:
-#line 1542 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1545 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		ParameterModifier mod = (ParameterModifier)yyVals[0+yyTop];
 		if ((mod & ParameterModifier.Self) != 0) {
@@ -2554,13 +2557,13 @@ case 181:
 	  }
   break;
 case 182:
-#line 1552 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1555 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_DuplicateParameterModifier (GetLocation (yyVals[-1+yyTop]), ParameterModifier.Params);
 	  }
   break;
 case 183:
-#line 1562 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1565 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_generic_declaration = false;
 		if (doc_support)
@@ -2568,7 +2571,7 @@ case 183:
 	  }
   break;
 case 184:
-#line 1568 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1571 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var type = (FullNamedExpression) yyVals[-3+yyTop];
 		current_property = new PropertyDeclaration (current_type, type, (Modifiers) yyVals[-4+yyTop],
@@ -2583,7 +2586,7 @@ case 184:
 	  }
   break;
 case 185:
-#line 1581 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1584 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.PropertyParsing = false;
 		
@@ -2592,19 +2595,19 @@ case 185:
 	  }
   break;
 case 186:
-#line 1588 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1591 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_modifiers = true;
 	  }
   break;
 case 187:
-#line 1592 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1595 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_property = null;
 	  }
   break;
 case 188:
-#line 1599 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1602 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_generic_declaration = false;
 		if (doc_support)
@@ -2613,7 +2616,7 @@ case 188:
 	  }
   break;
 case 189:
-#line 1606 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1609 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var type = (FullNamedExpression) yyVals[-3+yyTop];
 		var property = new PropertyDeclaration (current_type, type, (Modifiers) yyVals[-4+yyTop],
@@ -2636,7 +2639,7 @@ case 189:
 	  }
   break;
 case 191:
-#line 1631 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1634 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		++lexer.parsing_block;
 		current_local_parameters = ParametersCompiled.EmptyReadOnlyParameters;
@@ -2644,7 +2647,7 @@ case 191:
 	  }
   break;
 case 192:
-#line 1637 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1640 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		--lexer.parsing_block;
 	((PropertyDeclaration)current_property).Initializer = (Expression) yyVals[-1+yyTop];
@@ -2654,13 +2657,13 @@ case 192:
 	  }
   break;
 case 195:
-#line 1654 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1657 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	valid_param_mod = ParameterModifierType.Params | ParameterModifierType.DefaultValue;
 	  }
   break;
 case 196:
-#line 1658 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1661 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		valid_param_mod = 0;
 		var type = (FullNamedExpression) yyVals[-5+yyTop];
@@ -2687,7 +2690,7 @@ case 196:
 	  }
   break;
 case 197:
-#line 1683 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1686 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
  		lexer.PropertyParsing = false;
 		current_local_parameters = null;
@@ -2702,20 +2705,20 @@ case 197:
 	  }
   break;
 case 198:
-#line 1699 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1702 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 
 	  }
   break;
 case 199:
-#line 1703 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1706 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_property.Getter = new IndexerGetterDeclaration (current_property, Modifiers.COMPILER_GENERATED, current_local_parameters, null, current_property.Location);
 		(current_property.Getter as MethodOrOperator).Block = (ToplevelBlock) yyVals[0+yyTop];
 	  }
   break;
 case 204:
-#line 1715 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1718 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	if (yyToken == Token.CLOSE_BRACE) {
 	 		report.Error (74, lexer.Location, "`{0}': property or indexer must have at least one accessor", current_property.GetSignatureForError ());
@@ -2728,7 +2731,7 @@ case 204:
 	  }
   break;
 case 205:
-#line 1729 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1732 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	
 	  
@@ -2749,7 +2752,7 @@ case 205:
 	  }
   break;
 case 206:
-#line 1748 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1751 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	if (yyVals[0+yyTop] != null) {
 	  	 (current_property.Getter as MethodOrOperator).Block = (ToplevelBlock) yyVals[0+yyTop];			
@@ -2770,7 +2773,7 @@ case 206:
 	  }
   break;
 case 207:
-#line 1770 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1773 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 
 		if (current_property.Setter != null) {
@@ -2794,7 +2797,7 @@ case 207:
 	  }
   break;
 case 208:
-#line 1792 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1795 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (yyVals[0+yyTop] != null) {		
 			(current_property.Setter as MethodOrOperator).Block = (ToplevelBlock) yyVals[0+yyTop];
@@ -2815,33 +2818,33 @@ case 208:
 	  }
   break;
 case 210:
-#line 1815 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1818 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	yyVal = null;
 	  }
   break;
 case 211:
-#line 1819 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1822 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	Error_SyntaxError (1043, yyToken, "Invalid accessor body");
 	  	yyVal = null;
 	  }
   break;
 case 212:
-#line 1830 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1833 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 
 	  }
   break;
 case 213:
-#line 1834 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1837 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.ConstraintsParsing = true;
 		push_current_container (new InterfaceDeclaration (current_container, (MemberName) yyVals[0+yyTop], (Modifiers) yyVals[-4+yyTop], (VSharpAttributes) yyVals[-5+yyTop], GetLocation(yyVals[-2+yyTop]),file));
 	  }
   break;
 case 214:
-#line 1840 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1843 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.ConstraintsParsing = false;
 
@@ -2857,7 +2860,7 @@ case 214:
 	  }
   break;
 case 215:
-#line 1854 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1857 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		--lexer.parsing_declaration;	  
 	if (doc_support)
@@ -2865,68 +2868,68 @@ case 215:
 	  }
   break;
 case 216:
-#line 1860 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1863 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = pop_current_class ();
 	  }
   break;
 case 217:
-#line 1864 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1867 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);	  
 	  }
   break;
 case 220:
-#line 1876 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1879 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_modifiers = true;
 		lexer.parsing_block = 0;
 	  }
   break;
 case 221:
-#line 1881 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1884 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_modifiers = true;
 		lexer.parsing_block = 0;
 	  }
   break;
 case 222:
-#line 1889 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1892 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	report.Error (78, GetLocation (yyVals[0+yyTop]), "Interfaces cannot contain fields or constants");
 	  }
   break;
 case 223:
-#line 1893 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1896 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		report.Error (78, GetLocation (yyVals[0+yyTop]), "Interfaces cannot contain fields or constants");
 	  }
   break;
 case 228:
-#line 1901 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1904 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	report.Error (79, GetLocation (yyVals[0+yyTop]), "Interfaces cannot contain operators");
 	  }
   break;
 case 229:
-#line 1905 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1908 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	report.Error (80, GetLocation (yyVals[0+yyTop]), "Interfaces cannot contain contructors");
 	  }
   break;
 case 230:
-#line 1909 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1912 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	 	report.Error (81, GetLocation (yyVals[0+yyTop]), "Interfaces cannot declare classes, structs, interfaces, delegates, or enumerations");
 	  }
   break;
 case 231:
-#line 1916 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1919 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  }
   break;
 case 232:
-#line 1919 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1922 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		OperatorDeclarationInfo decl = (OperatorDeclarationInfo) yyVals[-2+yyTop];
 		if (decl != null) {
@@ -2954,14 +2957,14 @@ case 232:
 	  }
   break;
 case 234:
-#line 1949 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1952 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		report.Error (82, GetLocation (yyVals[0+yyTop]), "User-defined operators cannot return void");
 		yyVal = new TypeExpression (KnownTypeReference.Void, GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 235:
-#line 1957 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1960 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		valid_param_mod = ParameterModifierType.DefaultValue;
 		if ((VSC.TypeSystem.Resolver.OperatorType ) yyVals[-1+yyTop] ==VSC.TypeSystem.Resolver.OperatorType.Is)
@@ -2969,7 +2972,7 @@ case 235:
 	  }
   break;
 case 236:
-#line 1963 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 1966 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		valid_param_mod = 0;
 
@@ -3012,107 +3015,107 @@ case 236:
 	  }
   break;
 case 238:
-#line 2008 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2011 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = VSC.TypeSystem.Resolver.OperatorType.LogicalNot; }
   break;
 case 239:
-#line 2009 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2012 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = VSC.TypeSystem.Resolver.OperatorType.OnesComplement;  }
   break;
 case 240:
-#line 2010 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2013 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = VSC.TypeSystem.Resolver.OperatorType.Increment;}
   break;
 case 241:
-#line 2011 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2014 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = VSC.TypeSystem.Resolver.OperatorType.Decrement; }
   break;
 case 242:
-#line 2012 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2015 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = VSC.TypeSystem.Resolver.OperatorType.True; }
   break;
 case 243:
-#line 2013 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2016 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = VSC.TypeSystem.Resolver.OperatorType.False;}
   break;
 case 244:
-#line 2015 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2018 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = VSC.TypeSystem.Resolver.OperatorType.Addition;  }
   break;
 case 245:
-#line 2016 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2019 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = VSC.TypeSystem.Resolver.OperatorType.Subtraction; }
   break;
 case 246:
-#line 2018 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2021 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = VSC.TypeSystem.Resolver.OperatorType.Multiply; 	 }
   break;
 case 247:
-#line 2019 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2022 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {  yyVal = VSC.TypeSystem.Resolver.OperatorType.Division; }
   break;
 case 248:
-#line 2020 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2023 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = VSC.TypeSystem.Resolver.OperatorType.Modulus;  }
   break;
 case 249:
-#line 2021 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2024 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = VSC.TypeSystem.Resolver.OperatorType.BitwiseAnd; 	 }
   break;
 case 250:
-#line 2022 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2025 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = VSC.TypeSystem.Resolver.OperatorType.BitwiseOr; 	}
   break;
 case 251:
-#line 2023 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2026 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = VSC.TypeSystem.Resolver.OperatorType.ExclusiveOr;	 }
   break;
 case 252:
-#line 2024 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2027 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = VSC.TypeSystem.Resolver.OperatorType.LeftShift; 	 }
   break;
 case 253:
-#line 2025 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2028 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = VSC.TypeSystem.Resolver.OperatorType.RightShift;  }
   break;
 case 254:
-#line 2026 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2029 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = VSC.TypeSystem.Resolver.OperatorType.Equality;}
   break;
 case 255:
-#line 2027 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2030 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = VSC.TypeSystem.Resolver.OperatorType.Inequality;	}
   break;
 case 256:
-#line 2028 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2031 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = VSC.TypeSystem.Resolver.OperatorType.GreaterThan;}
   break;
 case 257:
-#line 2029 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2032 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = VSC.TypeSystem.Resolver.OperatorType.LessThan; 	 }
   break;
 case 258:
-#line 2030 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2033 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = VSC.TypeSystem.Resolver.OperatorType.GreaterThanOrEqual; 	 }
   break;
 case 259:
-#line 2031 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2034 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = VSC.TypeSystem.Resolver.OperatorType.LessThanOrEqual; 	}
   break;
 case 260:
-#line 2033 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2036 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = VSC.TypeSystem.Resolver.OperatorType.Is;
 	  }
   break;
 case 261:
-#line 2040 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2043 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		valid_param_mod = ParameterModifierType.DefaultValue;
 	  }
   break;
 case 262:
-#line 2044 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2047 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		valid_param_mod = 0;
 
@@ -3132,13 +3135,13 @@ case 262:
 	  }
   break;
 case 263:
-#line 2062 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2065 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		valid_param_mod = ParameterModifierType.DefaultValue;
 	  }
   break;
 case 264:
-#line 2066 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2069 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	valid_param_mod = 0;
 		
@@ -3158,7 +3161,7 @@ case 264:
 	  }
   break;
 case 265:
-#line 2084 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2087 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	Error_SyntaxError (yyToken);
 		current_local_parameters = ParametersCompiled.EmptyReadOnlyParameters;
@@ -3166,7 +3169,7 @@ case 265:
 	  }
   break;
 case 266:
-#line 2090 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2093 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	Error_SyntaxError (yyToken);
 		current_local_parameters = ParametersCompiled.EmptyReadOnlyParameters;
@@ -3174,7 +3177,7 @@ case 266:
 	  }
   break;
 case 267:
-#line 2100 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2103 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { 
 		ConstructorDeclaration c = (ConstructorDeclaration) yyVals[-1+yyTop];
 		c.Block = (ToplevelBlock) yyVals[0+yyTop];
@@ -3188,7 +3191,7 @@ case 267:
 	  }
   break;
 case 268:
-#line 2117 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2120 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (doc_support) {
 			tmpComment = Lexer.consume_doc_comment ();
@@ -3199,7 +3202,7 @@ case 268:
 	  }
   break;
 case 269:
-#line 2126 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2129 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		valid_param_mod = 0;
 		current_local_parameters = (ParametersCompiled) yyVals[-1+yyTop];
@@ -3240,7 +3243,7 @@ case 269:
 	  }
   break;
 case 270:
-#line 2165 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2168 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (yyVals[0+yyTop] != null) {
 			var c = (ConstructorDeclaration) yyVals[-1+yyTop];
@@ -3257,51 +3260,51 @@ case 270:
 	  }
   break;
 case 272:
-#line 2183 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2186 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { current_block = null; yyVal = null; 	}
   break;
 case 275:
-#line 2193 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2196 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		++lexer.parsing_block;
 	  }
   break;
 case 276:
-#line 2197 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2200 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	--lexer.parsing_block;
 	yyVal = new ConstructorSuperInitializer ((Arguments) yyVals[-1+yyTop], GetLocation (yyVals[-4+yyTop]));
 	  }
   break;
 case 277:
-#line 2202 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2205 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		++lexer.parsing_block;
 	  }
   break;
 case 278:
-#line 2206 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2209 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	--lexer.parsing_block;
 		yyVal = new ConstructorSelfInitializer ((Arguments) yyVals[-1+yyTop], GetLocation (yyVals[-4+yyTop]));
 	  }
   break;
 case 279:
-#line 2211 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2214 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);	  
 		yyVal = new ConstructorSelfInitializer (null, GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 280:
-#line 2216 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2219 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = null;
 	  }
   break;
 case 281:
-#line 2224 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2227 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (doc_support) {
 			tmpComment = Lexer.consume_doc_comment ();
@@ -3312,7 +3315,7 @@ case 281:
 	  }
   break;
 case 282:
-#line 2233 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2236 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	 if (!(current_container is ClassDeclaration)){
 			report.Error (92, GetLocation(yyVals[-4+yyTop]), "Only class types can contain destructor");
@@ -3330,7 +3333,7 @@ case 282:
 	  }
   break;
 case 283:
-#line 2254 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2257 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_event_field = new EventFieldDeclaration (current_type, (FullNamedExpression) yyVals[-1+yyTop], (Modifiers) yyVals[-3+yyTop], (MemberName) yyVals[0+yyTop], (VSharpAttributes) yyVals[-4+yyTop]);
 		current_type.AddMember (current_event_field);
@@ -3344,7 +3347,7 @@ case 283:
 	  }
   break;
 case 284:
-#line 2268 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2271 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (doc_support) {
 				current_event_field.DocComment = Lexer.consume_doc_comment ();
@@ -3359,7 +3362,7 @@ case 284:
 	  }
   break;
 case 285:
-#line 2284 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2287 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_event = new EventDeclaration (current_type, (FullNamedExpression) yyVals[-2+yyTop], (Modifiers) yyVals[-4+yyTop], (MemberName) yyVals[-1+yyTop], (VSharpAttributes) yyVals[-5+yyTop]);
 		current_type.AddMember (current_event);
@@ -3368,7 +3371,7 @@ case 285:
 	  }
   break;
 case 286:
-#line 2291 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2294 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (current_container is InterfaceDeclaration)
 			report.Error (94, GetLocation (yyVals[-2+yyTop]), "Event in interface cannot have add or remove accessors");
@@ -3377,7 +3380,7 @@ case 286:
 	  }
   break;
 case 287:
-#line 2298 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2301 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (doc_support) {
 			current_event.DocComment = Lexer.consume_doc_comment ();
@@ -3390,7 +3393,7 @@ case 287:
 	  }
   break;
 case 288:
-#line 2311 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2314 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -3398,20 +3401,20 @@ case 288:
 	  }
   break;
 case 290:
-#line 2321 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2324 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	++lexer.parsing_block;
 	  }
   break;
 case 291:
-#line 2325 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2328 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	--lexer.parsing_block;
 		current_event_field.Initializer = (Expression) yyVals[0+yyTop];
 	  }
   break;
 case 296:
-#line 2343 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2346 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[0+yyTop];
 	  	var evd = new EventFieldDeclaration (current_event_field, lt.Value,lt.Location);
@@ -3420,13 +3423,13 @@ case 296:
 	  }
   break;
 case 297:
-#line 2350 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2353 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		++lexer.parsing_block;
 	  }
   break;
 case 298:
-#line 2354 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2357 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		--lexer.parsing_block;
 		var lt = (LocatedToken) yyVals[-3+yyTop];	  
@@ -3437,7 +3440,7 @@ case 298:
 	  }
   break;
 case 299:
-#line 2365 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2368 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (current_container is InterfaceDeclaration) {
 			report.Error (95, lexer.Location, "`{0}': event in interface cannot have an initializer",
@@ -3451,34 +3454,34 @@ case 299:
 	  }
   break;
 case 300:
-#line 2377 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2380 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = yyVals[0+yyTop];
 	  }
   break;
 case 303:
-#line 2386 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2389 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		report.Error (97, lexer.Location, "`{0}': event property must have add, remove and raise accessors",
 			current_event.GetSignatureForError ());
 	  }
   break;
 case 304:
-#line 2391 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2394 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		report.Error (97, lexer.Location, "`{0}': event property must have add, remove and raise accessors",
 			current_event.GetSignatureForError ());
 	  }
   break;
 case 305:
-#line 2396 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2399 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { 
 		report.Error (98, GetLocation (yyVals[0+yyTop]), "An add, raise or remove accessor expected");
 		yyVal = null;
 	  }
   break;
 case 306:
-#line 2404 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2407 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  
 	  	Modifiers mods = (Modifiers)yyVals[-1+yyTop];
@@ -3490,7 +3493,7 @@ case 306:
 	  }
   break;
 case 307:
-#line 2414 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2417 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.EventParsing = true;
 	  
@@ -3505,7 +3508,7 @@ case 307:
 	  }
   break;
 case 308:
-#line 2430 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2433 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {	
 	   	Modifiers mods = (Modifiers)yyVals[-1+yyTop];
 	  	current_event.RemoveAccessor = new RemoveEventAccessor(current_event, mods, (VSharpAttributes) yyVals[-2+yyTop], GetLocation (yyVals[0+yyTop]));
@@ -3515,7 +3518,7 @@ case 308:
 	  }
   break;
 case 309:
-#line 2438 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2441 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.EventParsing = true;
 	  
@@ -3530,14 +3533,14 @@ case 309:
 	  }
   break;
 case 310:
-#line 2454 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2457 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		report.Error (99, lexer.Location, "An add, raise or remove accessor must have a body");
 		yyVal = null;
 	  }
   break;
 case 312:
-#line 2463 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2466 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_type.UnattachedAttributes = (VSharpAttributes) yyVals[-1+yyTop];
 		report.Error (100, GetLocation (yyVals[-1+yyTop]), "An attribute is missing member declaration");
@@ -3545,7 +3548,7 @@ case 312:
 	  }
   break;
 case 313:
-#line 2474 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2477 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		report.Error (101, lexer.Location, "Unexpected symbol `}' in class, struct, or interface member declaration");
 		lexer.putback ('}');
@@ -3558,14 +3561,14 @@ case 313:
 	  }
   break;
 case 314:
-#line 2492 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2495 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (doc_support)
 			enumTypeComment = Lexer.consume_doc_comment ();
 	  }
   break;
 case 315:
-#line 2497 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2500 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (doc_support)
 			Lexer.doc_state = XmlCommentState.Allowed;
@@ -3580,7 +3583,7 @@ case 315:
 	  }
   break;
 case 316:
-#line 2510 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2513 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_modifiers = true;
 	  
@@ -3590,7 +3593,7 @@ case 316:
 	  }
   break;
 case 317:
-#line 2518 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2521 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	
 		
@@ -3606,26 +3609,26 @@ case 317:
 	  }
   break;
 case 319:
-#line 2536 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2539 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = yyVals[0+yyTop];
 	 }
   break;
 case 320:
-#line 2540 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2543 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	 	Error_TypeExpected (GetLocation (yyVals[-1+yyTop]));
 		yyVal = null;
 	 }
   break;
 case 325:
-#line 2555 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2558 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	yyVal = yyVals[0+yyTop];
   }
   break;
 case 326:
-#line 2562 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2565 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	var lt = (LocatedToken) yyVals[0+yyTop];
 	 	var em = new EnumMemberDeclaration ((EnumDeclaration) current_type, new MemberName (lt.Value, lt.Location), (VSharpAttributes) yyVals[-1+yyTop]);
@@ -3640,7 +3643,7 @@ case 326:
 	  }
   break;
 case 327:
-#line 2575 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2578 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	++lexer.parsing_block;
 		if (doc_support) {
@@ -3650,7 +3653,7 @@ case 327:
 	  }
   break;
 case 328:
-#line 2583 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2586 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { 
 		--lexer.parsing_block;
 		
@@ -3666,7 +3669,7 @@ case 328:
 	  }
   break;
 case 329:
-#line 2597 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2600 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 	  
@@ -3683,13 +3686,13 @@ case 329:
 	  }
   break;
 case 331:
-#line 2620 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2623 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		valid_param_mod = ParameterModifierType.Ref | ParameterModifierType.Out | ParameterModifierType.Params | ParameterModifierType.DefaultValue;
 	  }
   break;
 case 332:
-#line 2624 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2627 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		valid_param_mod = 0;
 
@@ -3701,13 +3704,13 @@ case 332:
 	  }
   break;
 case 333:
-#line 2634 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2637 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.ConstraintsParsing = false;
 	  }
   break;
 case 334:
-#line 2638 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2641 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (doc_support) {
 			current_delegate.DocComment = Lexer.consume_doc_comment ();
@@ -3723,13 +3726,13 @@ case 334:
 	  }
   break;
 case 336:
-#line 2656 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2659 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
   			yyVal = ComposedTypeSpecifier.CreateNullable (GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 338:
-#line 2664 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2667 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt1 = (LocatedToken) yyVals[-2+yyTop];
 		var lt2 = (LocatedToken) yyVals[-1+yyTop];
@@ -3737,7 +3740,7 @@ case 338:
 	  }
   break;
 case 339:
-#line 2670 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2673 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
   	    var lt1 = (LocatedToken) yyVals[-2+yyTop];
     	var lt2 = (LocatedToken) yyVals[-1+yyTop];
@@ -3745,7 +3748,7 @@ case 339:
 	  }
   break;
 case 341:
-#line 2680 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2683 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[-1+yyTop];
 		yyVal = new MemberAccess ((Expression) yyVals[-3+yyTop], lt.Value, (TypeArguments) yyVals[0+yyTop], lt.Location);
@@ -3753,41 +3756,41 @@ case 341:
 	  }
   break;
 case 342:
-#line 2686 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2689 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[-1+yyTop];
 		yyVal = new MemberAccess ((Expression) yyVals[-3+yyTop], lt.Value, (int) yyVals[0+yyTop], lt.Location);
 	  }
   break;
 case 343:
-#line 2694 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2697 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[-1+yyTop];
 		yyVal = new SimpleName (lt.Value, (TypeArguments)yyVals[0+yyTop], lt.Location);
 	  }
   break;
 case 344:
-#line 2699 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2702 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {  
 		var lt = (LocatedToken) yyVals[-1+yyTop];
 		yyVal = new SimpleName (lt.Value, (int) yyVals[0+yyTop], lt.Location);
 	  }
   break;
 case 346:
-#line 2711 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2714 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 			yyVal = yyVals[-1+yyTop];
 	  }
   break;
 case 347:
-#line 2715 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2718 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_TypeExpected (lexer.Location);
 		yyVal = new TypeArguments ();
 	  }
   break;
 case 348:
-#line 2723 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2726 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		TypeArguments type_args = new TypeArguments ();
 		type_args.Add ((FullNamedExpression) yyVals[0+yyTop]);
@@ -3796,7 +3799,7 @@ case 348:
 	  }
   break;
 case 349:
-#line 2730 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2733 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		TypeArguments type_args = (TypeArguments) yyVals[-2+yyTop];
 		type_args.Add ((FullNamedExpression) yyVals[0+yyTop]);
@@ -3804,13 +3807,13 @@ case 349:
 	  }
   break;
 case 350:
-#line 2742 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2745 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_generic_declaration = true;
 	  }
   break;
 case 351:
-#line 2746 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2749 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_generic_declaration = false;
 		var lt = (LocatedToken) yyVals[-2+yyTop];
@@ -3818,7 +3821,7 @@ case 351:
 	  }
   break;
 case 352:
-#line 2755 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2758 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	 	MemberName mn = (MemberName)yyVals[0+yyTop];
 	 	if (mn.TypeParameters != null)
@@ -3827,7 +3830,7 @@ case 352:
 	  }
   break;
 case 354:
-#line 2766 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2769 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_generic_declaration = false;	  
 		var lt = (LocatedToken) yyVals[-1+yyTop];
@@ -3835,28 +3838,28 @@ case 354:
 	  }
   break;
 case 355:
-#line 2775 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2778 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_generic_declaration = false;	  
 		yyVal = new MemberName (TypeDeclaration.DefaultIndexerName, GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 356:
-#line 2780 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2783 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_generic_declaration = false;
 		yyVal = new MemberName (TypeDeclaration.DefaultIndexerName, null, (TypeNameExpression) yyVals[-1+yyTop], GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 357:
-#line 2788 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2791 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[-2+yyTop];
 		yyVal = new SimpleName (lt.Value, (TypeArguments) yyVals[-1+yyTop], lt.Location);
 	  }
   break;
 case 358:
-#line 2793 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2796 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt1 = (LocatedToken) yyVals[-3+yyTop];
 		var lt2 = (LocatedToken) yyVals[-2+yyTop];
@@ -3865,7 +3868,7 @@ case 358:
 	  }
   break;
 case 359:
-#line 2800 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2803 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[-2+yyTop];
 		yyVal = new MemberAccess ((TypeNameExpression) yyVals[-3+yyTop], lt.Value, (TypeArguments) yyVals[-1+yyTop], lt.Location);
@@ -3873,13 +3876,13 @@ case 359:
 	  }
   break;
 case 361:
-#line 2810 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2813 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = yyVals[-1+yyTop];
 	  }
   break;
 case 362:
-#line 2817 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2820 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var tparams = new TypeParameters ();
 		tparams.Add ((UnresolvedTypeParameterSpec)yyVals[0+yyTop]);
@@ -3887,7 +3890,7 @@ case 362:
 	  }
   break;
 case 363:
-#line 2823 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2826 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var tparams = (TypeParameters) yyVals[-2+yyTop];
 		tparams.Add ((UnresolvedTypeParameterSpec)yyVals[0+yyTop]);
@@ -3896,51 +3899,52 @@ case 363:
 	  }
   break;
 case 364:
-#line 2833 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2836 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken)yyVals[0+yyTop];
 
-		yyVal = new UnresolvedTypeParameterSpec (SymbolKind.TypeDefinition,0,lt.Value);
+		yyVal = new UnresolvedTypeParameterSpec (SymbolKind.TypeDefinition,0,lt.Location,lt.Value);
+		
   	  }
   break;
 case 365:
-#line 2839 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2843 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
   	  	if (GetTokenName (yyToken) == "type")
 			report.Error (103, GetLocation (yyVals[0+yyTop]), "Type parameter declaration must be an identifier not a type");
 		else
 			Error_SyntaxError (yyToken);
 			
-  	  	yyVal = new UnresolvedTypeParameterSpec (SymbolKind.TypeDefinition, 0);
+  	  	yyVal = new UnresolvedTypeParameterSpec (SymbolKind.TypeDefinition, 0,Location.Null);
   	  }
   break;
 case 367:
-#line 2855 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2859 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new TypeExpression (KnownTypeReference.Void, GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 368:
-#line 2862 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2866 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_generic_declaration = true;
 	  }
   break;
 case 374:
-#line 2883 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2887 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	report.Error (104, GetLocation (yyVals[0+yyTop]), "Invalid parameter type `void'");
 	yyVal = new TypeExpression (VSC.TypeSystem.KnownTypeReference.Void, GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 376:
-#line 2892 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2896 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new ComposedType((FullNamedExpression) yyVals[-1+yyTop], (ComposedTypeSpecifier) yyVals[0+yyTop]);
 	  }
   break;
 case 377:
-#line 2899 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2903 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (yyVals[0+yyTop] != null) 
 			yyVal = new ComposedType ((TypeNameExpression) yyVals[-1+yyTop], (ComposedTypeSpecifier) yyVals[0+yyTop]);
@@ -3954,39 +3958,39 @@ case 377:
 	  }
   break;
 case 378:
-#line 2911 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2915 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new ComposedType ((TypeNameExpression) yyVals[-1+yyTop], (ComposedTypeSpecifier) yyVals[0+yyTop]);
 	  }
   break;
 case 380:
-#line 2919 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2923 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		report.Error(112, GetLocation (yyVals[0+yyTop]), "Keyword `void' cannot be used in this context");
 		yyVal = new TypeExpression (VSC.TypeSystem.KnownTypeReference.Void, GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 381:
-#line 2927 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2931 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (yyVals[0+yyTop] != null)
 			yyVal = new ComposedType ((FullNamedExpression) yyVals[-1+yyTop], (ComposedTypeSpecifier) yyVals[0+yyTop]);
 	  }
   break;
 case 382:
-#line 2932 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2936 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new ComposedType ((FullNamedExpression) yyVals[-1+yyTop], (ComposedTypeSpecifier) yyVals[0+yyTop]);
 	  }
   break;
 case 383:
-#line 2936 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2940 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new ComposedType (new TypeExpression (VSC.TypeSystem.KnownTypeReference.Void, GetLocation (yyVals[-1+yyTop])), (ComposedTypeSpecifier) yyVals[0+yyTop]);
 	  }
   break;
 case 384:
-#line 2943 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2947 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var types = new List<FullNamedExpression> (2);
 		types.Add ((FullNamedExpression) yyVals[0+yyTop]);
@@ -3994,7 +3998,7 @@ case 384:
 	  }
   break;
 case 385:
-#line 2949 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2953 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var types = (List<FullNamedExpression>) yyVals[-2+yyTop];
 		types.Add ((FullNamedExpression) yyVals[0+yyTop]);
@@ -4003,7 +4007,7 @@ case 385:
 	  }
   break;
 case 386:
-#line 2959 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2963 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (yyVals[0+yyTop] is ComposedType)
 			report.Error (105, GetLocation (yyVals[0+yyTop]), "Invalid base type `{0}'", ((ComposedType)yyVals[0+yyTop]).GetSignatureForError ());
@@ -4012,89 +4016,89 @@ case 386:
 	  }
   break;
 case 387:
-#line 2972 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2976 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {yyVal = new TypeExpression (VSC.TypeSystem.KnownTypeReference.Object, GetLocation (yyVals[0+yyTop])); }
   break;
 case 388:
-#line 2973 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2977 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {yyVal = new TypeExpression (VSC.TypeSystem.KnownTypeReference.String, GetLocation (yyVals[0+yyTop])); }
   break;
 case 389:
-#line 2974 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2978 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {yyVal = new TypeExpression (VSC.TypeSystem.KnownTypeReference.Boolean, GetLocation (yyVals[0+yyTop]));	 }
   break;
 case 390:
-#line 2975 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2979 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {yyVal = new TypeExpression (VSC.TypeSystem.KnownTypeReference.Single, GetLocation (yyVals[0+yyTop]));	 }
   break;
 case 391:
-#line 2976 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2980 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {yyVal = new TypeExpression (VSC.TypeSystem.KnownTypeReference.Double, GetLocation (yyVals[0+yyTop]));	 }
   break;
 case 393:
-#line 2981 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2985 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {yyVal = new TypeExpression (VSC.TypeSystem.KnownTypeReference.SByte, GetLocation (yyVals[0+yyTop])); 	}
   break;
 case 394:
-#line 2982 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2986 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {yyVal = new TypeExpression (VSC.TypeSystem.KnownTypeReference.Byte, GetLocation (yyVals[0+yyTop]));	}
   break;
 case 395:
-#line 2983 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2987 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {yyVal = new TypeExpression (VSC.TypeSystem.KnownTypeReference.Int16, GetLocation (yyVals[0+yyTop]));	 }
   break;
 case 396:
-#line 2984 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2988 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {yyVal = new TypeExpression (VSC.TypeSystem.KnownTypeReference.UInt16, GetLocation (yyVals[0+yyTop])); 	}
   break;
 case 397:
-#line 2985 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2989 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {yyVal = new TypeExpression (VSC.TypeSystem.KnownTypeReference.Int32, GetLocation (yyVals[0+yyTop])); 	}
   break;
 case 398:
-#line 2986 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2990 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {yyVal = new TypeExpression (VSC.TypeSystem.KnownTypeReference.UInt32, GetLocation (yyVals[0+yyTop])); 	}
   break;
 case 399:
-#line 2987 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2991 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {yyVal = new TypeExpression (VSC.TypeSystem.KnownTypeReference.Int64, GetLocation (yyVals[0+yyTop])); 	}
   break;
 case 400:
-#line 2988 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2992 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {yyVal = new TypeExpression (VSC.TypeSystem.KnownTypeReference.UInt64, GetLocation (yyVals[0+yyTop]));	 }
   break;
 case 401:
-#line 2989 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 2993 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {yyVal = new TypeExpression (VSC.TypeSystem.KnownTypeReference.Char, GetLocation (yyVals[0+yyTop])); 	}
   break;
 case 426:
-#line 3028 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3032 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		 yyVal = new NullLiteral (GetLocation (yyVals[0+yyTop]));
 	 }
   break;
 case 427:
-#line 3034 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3038 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { 	yyVal = new BoolLiteral (true, GetLocation (yyVals[0+yyTop])); 	}
   break;
 case 428:
-#line 3035 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3039 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { 	yyVal = new BoolLiteral (false, GetLocation (yyVals[0+yyTop]));	}
   break;
 case 429:
-#line 3040 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3044 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new InterpolatedString ((StringLiteral) yyVals[-2+yyTop], (List<Expression>) yyVals[-1+yyTop], (StringLiteral) yyVals[0+yyTop]);
 	  }
   break;
 case 430:
-#line 3044 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3048 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new InterpolatedString ((StringLiteral) yyVals[0+yyTop], null, null);
 	  }
   break;
 case 431:
-#line 3051 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3055 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var list = new List<Expression> ();
 		list.Add ((InterpolatedStringInsert) yyVals[0+yyTop]);
@@ -4102,7 +4106,7 @@ case 431:
 	  }
   break;
 case 432:
-#line 3057 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3061 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var list = (List<Expression>) yyVals[-2+yyTop];
 		list.Add ((StringLiteral) yyVals[-1+yyTop]);
@@ -4111,13 +4115,13 @@ case 432:
 	  }
   break;
 case 433:
-#line 3067 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3071 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new InterpolatedStringInsert ((Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 434:
-#line 3071 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3075 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new InterpolatedStringInsert ((Expression) yyVals[-2+yyTop]) {
 			Alignment = (Expression)yyVals[0+yyTop]
@@ -4125,13 +4129,13 @@ case 434:
 	  }
   break;
 case 435:
-#line 3077 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3081 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_interpolation_format = true;
 	  }
   break;
 case 436:
-#line 3081 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3085 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_interpolation_format = false;
 
@@ -4141,13 +4145,13 @@ case 436:
 	  }
   break;
 case 437:
-#line 3089 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3093 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_interpolation_format = true;
 	  }
   break;
 case 438:
-#line 3093 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3097 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_interpolation_format = false;
 
@@ -4158,54 +4162,54 @@ case 438:
 	  }
   break;
 case 443:
-#line 3126 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
-  {
-		yyVal = new ParenthesizedExpression ((Expression) yyVals[-1+yyTop], GetLocation (yyVals[-2+yyTop]));
-	  }
-  break;
-case 444:
 #line 3130 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new ParenthesizedExpression ((Expression) yyVals[-1+yyTop], GetLocation (yyVals[-2+yyTop]));
 	  }
   break;
+case 444:
+#line 3134 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+  {
+		yyVal = new ParenthesizedExpression ((Expression) yyVals[-1+yyTop], GetLocation (yyVals[-2+yyTop]));
+	  }
+  break;
 case 445:
-#line 3137 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3141 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[-1+yyTop];
 		yyVal = new MemberAccess ((Expression) yyVals[-3+yyTop], lt.Value, (TypeArguments) yyVals[0+yyTop], lt.Location, NameLookupMode.Expression);
 	  }
   break;
 case 446:
-#line 3142 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3146 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[-1+yyTop];
 		yyVal = new MemberAccess ((Expression) yyVals[-3+yyTop], lt.Value, (int) yyVals[0+yyTop], lt.Location, NameLookupMode.Expression);
 	  }
   break;
 case 447:
-#line 3147 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3151 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[-1+yyTop];
 		yyVal = new ConditionalMemberAccess ((Expression) yyVals[-4+yyTop], lt.Value, (TypeArguments) yyVals[0+yyTop], lt.Location);
 	  }
   break;
 case 448:
-#line 3152 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3156 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[-1+yyTop];
 		yyVal = new MemberAccess ((Expression) yyVals[-3+yyTop], lt.Value, (TypeArguments) yyVals[0+yyTop], lt.Location, NameLookupMode.Expression);
 	  }
   break;
 case 449:
-#line 3157 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3161 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[-1+yyTop];
 		yyVal = new MemberAccess (new SuperReference (GetLocation (yyVals[-3+yyTop])), lt.Value, (TypeArguments) yyVals[0+yyTop], lt.Location, NameLookupMode.Expression);
 	  }
   break;
 case 450:
-#line 3162 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3166 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt1 = (LocatedToken) yyVals[-2+yyTop];
 		var lt2 = (LocatedToken) yyVals[-1+yyTop];
@@ -4214,7 +4218,7 @@ case 450:
 	  }
   break;
 case 451:
-#line 3169 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3173 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt1 = (LocatedToken) yyVals[-2+yyTop];
 		var lt2 = (LocatedToken) yyVals[-1+yyTop];
@@ -4223,31 +4227,31 @@ case 451:
 	  }
   break;
 case 452:
-#line 3179 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3183 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new Invocation ((Expression) yyVals[-3+yyTop], (Arguments) yyVals[-1+yyTop]);
 	  }
   break;
 case 453:
-#line 3183 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3187 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new Invocation ((Expression) yyVals[-3+yyTop], (Arguments) yyVals[-1+yyTop]);
 	  }
   break;
 case 454:
-#line 3188 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3192 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new Invocation ((Expression) yyVals[-2+yyTop], null);
 	  }
   break;
 case 455:
-#line 3195 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3199 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { 	yyVal = null; 	}
   break;
 case 457:
-#line 3201 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3205 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	if (yyVals[-1+yyTop] == null) {
 	  		yyVal = new CollectionOrObjectInitializers (GetLocation (yyVals[-2+yyTop]));
@@ -4258,21 +4262,21 @@ case 457:
 	  }
   break;
 case 458:
-#line 3210 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3214 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	yyVal = new CollectionOrObjectInitializers ((List<Expression>) yyVals[-2+yyTop], GetLocation (yyVals[-3+yyTop]));
 	  }
   break;
 case 459:
-#line 3216 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3220 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {	 yyVal = null; 	}
   break;
 case 460:
-#line 3218 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3222 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {		yyVal = yyVals[0+yyTop];}
   break;
 case 461:
-#line 3223 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3227 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	 	var a = new List<Expression> ();
 	  	a.Add ((Expression) yyVals[0+yyTop]);
@@ -4280,7 +4284,7 @@ case 461:
 	  }
   break;
 case 462:
-#line 3229 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3233 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	var a = (List<Expression>)yyVals[-2+yyTop];
 	  	a.Add ((Expression) yyVals[0+yyTop]);
@@ -4288,21 +4292,21 @@ case 462:
 	  }
   break;
 case 463:
-#line 3234 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3238 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	Error_SyntaxError (yyToken);
 		yyVal = yyVals[-1+yyTop];
 	  }
   break;
 case 464:
-#line 3242 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3246 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	var lt = (LocatedToken) yyVals[-2+yyTop];
 	  	yyVal = new ElementInitializer (lt.Value, (Expression)yyVals[0+yyTop], lt.Location);
 	  }
   break;
 case 465:
-#line 3247 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3251 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (yyVals[-1+yyTop] == null)
 			yyVal = new CollectionElementInitializer (GetLocation (yyVals[-2+yyTop]));
@@ -4312,18 +4316,18 @@ case 465:
 	  }
   break;
 case 466:
-#line 3255 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3259 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	report.Error (106, GetLocation (yyVals[-1+yyTop]), "An element initializer cannot be empty");
 		yyVal = new CollectionElementInitializer (GetLocation (yyVals[-1+yyTop]));
 	  }
   break;
 case 469:
-#line 3267 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3271 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = null; 	 }
   break;
 case 471:
-#line 3273 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3277 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { 
 		Arguments list = new Arguments (4);
 		list.Add ((Argument) yyVals[0+yyTop]);
@@ -4331,7 +4335,7 @@ case 471:
 	  }
   break;
 case 472:
-#line 3279 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3283 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Arguments list = (Arguments) yyVals[-2+yyTop];
 		if (list [list.Count - 1] is NamedArgument)
@@ -4342,7 +4346,7 @@ case 472:
 	  }
   break;
 case 473:
-#line 3288 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3292 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Arguments list = (Arguments) yyVals[-2+yyTop];
 		NamedArgument a = (NamedArgument) yyVals[0+yyTop];
@@ -4358,7 +4362,7 @@ case 473:
 	  }
   break;
 case 474:
-#line 3302 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3306 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
   	if (lexer.putback_char == -1)
 	  		lexer.putback (')'); /* TODO: Wrong but what can I do*/
@@ -4367,62 +4371,62 @@ case 474:
 	  }
   break;
 case 475:
-#line 3309 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3313 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	report.Error (108, GetLocation (yyVals[-1+yyTop]), "An argument is missing");
 	  	yyVal = null;
 	  }
   break;
 case 476:
-#line 3317 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3321 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new Argument ((Expression) yyVals[0+yyTop], GetLocation(yyVals[0+yyTop]));
 	  }
   break;
 case 480:
-#line 3330 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3334 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { 
 		yyVal = new Argument ((Expression) yyVals[0+yyTop], Argument.AType.Ref, GetLocation(yyVals[-1+yyTop]));
 	  }
   break;
 case 481:
-#line 3334 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3338 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new Argument ((Expression) yyVals[0+yyTop], Argument.AType.Ref, GetLocation(yyVals[-1+yyTop]));
 	  }
   break;
 case 482:
-#line 3338 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3342 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { 
 		yyVal = new Argument ((Expression) yyVals[0+yyTop], Argument.AType.Out, GetLocation(yyVals[-1+yyTop]));
 	  }
   break;
 case 483:
-#line 3342 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3346 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new Argument ((Expression) yyVals[0+yyTop], Argument.AType.Out, GetLocation(yyVals[-1+yyTop]));
 	  }
   break;
 case 484:
-#line 3349 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3353 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new ParenthesizedExpression ((Expression) yyVals[-1+yyTop], GetLocation (yyVals[-2+yyTop]));
 	  }
   break;
 case 485:
-#line 3354 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3358 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new CheckedExpression ((Expression) yyVals[-1+yyTop], GetLocation (yyVals[-3+yyTop]));
 	  }
   break;
 case 486:
-#line 3358 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3362 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new UnCheckedExpression ((Expression) yyVals[-1+yyTop], GetLocation (yyVals[-3+yyTop]));
 	  }
   break;
 case 487:
-#line 3363 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3367 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[0+yyTop];
 		var lv = new LocalVariable (current_block, lt.Value, lt.Location);
@@ -4431,7 +4435,7 @@ case 487:
 	  }
   break;
 case 488:
-#line 3370 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3374 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[-2+yyTop];
 	var lv = new LocalVariable (current_block, lt.Value, lt.Location);
@@ -4442,13 +4446,13 @@ case 488:
 	  }
   break;
 case 490:
-#line 3386 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3390 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new ElementAccess ((Expression) yyVals[-3+yyTop], (Arguments) yyVals[-1+yyTop], GetLocation (yyVals[-2+yyTop]));
 	  }
   break;
 case 491:
-#line 3390 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3394 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new ElementAccess ((Expression) yyVals[-4+yyTop], (Arguments) yyVals[-1+yyTop], GetLocation (yyVals[-2+yyTop])) {
 			ConditionalAccess = true
@@ -4456,21 +4460,21 @@ case 491:
 	  }
   break;
 case 492:
-#line 3396 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3400 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new ElementAccess ((Expression) yyVals[-3+yyTop], (Arguments) yyVals[-1+yyTop], GetLocation (yyVals[-2+yyTop]));
 	  }
   break;
 case 493:
-#line 3401 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3405 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new ElementAccess ((Expression) yyVals[-2+yyTop], null, GetLocation (yyVals[-1+yyTop]));
 	  }
   break;
 case 494:
-#line 3409 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3413 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var list = new List<Expression> (4);
 		list.Add ((Expression) yyVals[0+yyTop]);
@@ -4478,7 +4482,7 @@ case 494:
 	  }
   break;
 case 495:
-#line 3415 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3419 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var list = (List<Expression>) yyVals[-2+yyTop];
 		list.Add ((Expression) yyVals[0+yyTop]);
@@ -4486,7 +4490,7 @@ case 495:
 	  }
   break;
 case 496:
-#line 3424 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3428 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Arguments args = new Arguments (4);
 		args.Add ((Argument) yyVals[0+yyTop]);
@@ -4494,7 +4498,7 @@ case 496:
 	  }
   break;
 case 497:
-#line 3430 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3434 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Arguments args = (Arguments) yyVals[-2+yyTop];
 	if (args [args.Count - 1] is NamedArgument && !(yyVals[0+yyTop] is NamedArgument))
@@ -4505,44 +4509,44 @@ case 497:
 	  }
   break;
 case 498:
-#line 3442 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3446 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	yyVal = new Argument ((Expression) yyVals[0+yyTop], GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 500:
-#line 3450 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3454 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new SelfReference (GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 501:
-#line 3457 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3461 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	 	yyVal = new ElementAccess (new SuperReference (GetLocation (yyVals[-3+yyTop])), (Arguments) yyVals[-1+yyTop], GetLocation (yyVals[-2+yyTop]));
 	  }
   break;
 case 502:
-#line 3461 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3465 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	Error_SyntaxError (yyToken);
 		yyVal = new ElementAccess (null, null, GetLocation (yyVals[-1+yyTop]));
 	  }
   break;
 case 503:
-#line 3469 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3473 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new UnaryMutatedExpression (UnaryMutatedExpression.Mode.PostIncrement, (Expression) yyVals[-1+yyTop], GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 504:
-#line 3476 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3480 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new UnaryMutatedExpression (UnaryMutatedExpression.Mode.PostDecrement, (Expression) yyVals[-1+yyTop], GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 505:
-#line 3483 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3487 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (yyVals[0+yyTop] != null) {			
 			yyVal = new NewInitializeExpression ((FullNamedExpression) yyVals[-4+yyTop], (Arguments) yyVals[-2+yyTop], (CollectionOrObjectInitializers) yyVals[0+yyTop], GetLocation (yyVals[-5+yyTop]));
@@ -4553,13 +4557,13 @@ case 505:
 	  }
   break;
 case 506:
-#line 3492 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3496 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new NewInitializeExpression ((FullNamedExpression) yyVals[-1+yyTop], null, (CollectionOrObjectInitializers) yyVals[0+yyTop], GetLocation (yyVals[-2+yyTop]));
 	  }
   break;
 case 507:
-#line 3501 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3505 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	yyVal = new ArrayCreation ((FullNamedExpression) yyVals[-5+yyTop], (List<Expression>) yyVals[-3+yyTop],
 				new ComposedTypeSpecifier (((List<Expression>) yyVals[-3+yyTop]).Count, GetLocation (yyVals[-4+yyTop])) {
@@ -4568,7 +4572,7 @@ case 507:
 	  }
   break;
 case 508:
-#line 3508 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3512 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  if (yyVals[0+yyTop] == null)
 	  		report.Error (109, GetLocation (yyVals[-3+yyTop]), "Array creation must have array size or array initializer");
@@ -4577,20 +4581,20 @@ case 508:
 	  }
   break;
 case 509:
-#line 3515 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3519 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new ImplicitlyTypedArrayCreation ((ComposedTypeSpecifier) yyVals[-1+yyTop], (ArrayInitializer) yyVals[0+yyTop], GetLocation (yyVals[-2+yyTop]));
 	  }
   break;
 case 510:
-#line 3519 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3523 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		report.Error (110, GetLocation (yyVals[-1+yyTop]), "Invalid rank specifier, expecting `,' or `]'");
 		yyVal = new ArrayCreation ((FullNamedExpression) yyVals[-5+yyTop], null, GetLocation (yyVals[-6+yyTop]));
 	  }
   break;
 case 511:
-#line 3524 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3528 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		/* It can be any of new expression, create the most common one*/
@@ -4598,32 +4602,32 @@ case 511:
 	  }
   break;
 case 512:
-#line 3532 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3536 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		++lexer.parsing_type;
 	  }
   break;
 case 513:
-#line 3536 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3540 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		--lexer.parsing_type;
 		yyVal = yyVals[0+yyTop];
 	  }
   break;
 case 514:
-#line 3544 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3548 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new NewAnonymousTypeExpression ((List<AnonymousTypeParameter>) yyVals[-1+yyTop], current_container, GetLocation (yyVals[-3+yyTop]));
 	  }
   break;
 case 517:
-#line 3555 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3559 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	 yyVal = null; 
 	 }
   break;
 case 519:
-#line 3563 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3567 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	var a = new List<AnonymousTypeParameter> (4);
 	  	a.Add ((AnonymousTypeParameter) yyVals[0+yyTop]);
@@ -4631,7 +4635,7 @@ case 519:
 	  }
   break;
 case 520:
-#line 3569 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3573 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	var a = (List<AnonymousTypeParameter>) yyVals[-2+yyTop];
 	  	a.Add ((AnonymousTypeParameter) yyVals[0+yyTop]);
@@ -4640,14 +4644,14 @@ case 520:
 	  }
   break;
 case 521:
-#line 3579 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3583 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken)yyVals[-2+yyTop];
 	  	yyVal = new AnonymousTypeParameter ((Expression)yyVals[0+yyTop], lt.Value, lt.Location);
 	  }
   break;
 case 522:
-#line 3584 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3588 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken)yyVals[0+yyTop];
 	  	yyVal = new AnonymousTypeParameter (new SimpleName (lt.Value, lt.Location),
@@ -4655,14 +4659,14 @@ case 522:
 	  }
   break;
 case 523:
-#line 3590 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3594 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	MemberAccess ma = (MemberAccess) yyVals[0+yyTop];
 	  	yyVal = new AnonymousTypeParameter (ma, ma.Name, ma.Location);
 	  }
   break;
 case 524:
-#line 3595 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3599 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		report.Error (113, lexer.Location,
 			"Invalid anonymous type member declarator. Anonymous type members must be a member assignment, simple name or member access expression");
@@ -4670,51 +4674,51 @@ case 524:
 	  }
   break;
 case 528:
-#line 3610 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3614 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	((ComposedTypeSpecifier) yyVals[-1+yyTop]).Next = (ComposedTypeSpecifier) yyVals[0+yyTop];
 	  	yyVal = yyVals[-1+yyTop];
 	  }
   break;
 case 529:
-#line 3618 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3622 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = ComposedTypeSpecifier.CreateArrayDimension (1, GetLocation (yyVals[-1+yyTop]));
 		
 	  }
   break;
 case 530:
-#line 3623 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3627 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = ComposedTypeSpecifier.CreateArrayDimension ((int)yyVals[-1+yyTop], GetLocation (yyVals[-2+yyTop]));
 	  }
   break;
 case 531:
-#line 3630 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3634 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = 2;
 	  }
   break;
 case 532:
-#line 3634 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3638 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = ((int) yyVals[-1+yyTop]) + 1;
 	  }
   break;
 case 533:
-#line 3641 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3645 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = null;
 	  }
   break;
 case 534:
-#line 3645 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3649 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = yyVals[0+yyTop];
 	  }
   break;
 case 535:
-#line 3652 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3656 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var ai = new ArrayInitializer (0, GetLocation (yyVals[-1+yyTop]));
 		ai.VariableDeclaration = current_variable;
@@ -4722,7 +4726,7 @@ case 535:
 	  }
   break;
 case 536:
-#line 3658 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3662 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var ai = new ArrayInitializer ((List<Expression>) yyVals[-2+yyTop], GetLocation (yyVals[-3+yyTop]));
 		ai.VariableDeclaration = current_variable;
@@ -4731,7 +4735,7 @@ case 536:
 	  }
   break;
 case 537:
-#line 3668 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3672 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var list = new List<Expression> (4);
 		list.Add ((Expression) yyVals[0+yyTop]);
@@ -4739,7 +4743,7 @@ case 537:
 	  }
   break;
 case 538:
-#line 3674 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3678 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var list = (List<Expression>) yyVals[-2+yyTop];
 		list.Add ((Expression) yyVals[0+yyTop]);
@@ -4747,39 +4751,39 @@ case 538:
 	  }
   break;
 case 539:
-#line 3683 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3687 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new TypeOfExpression ((FullNamedExpression) yyVals[-1+yyTop], GetLocation (yyVals[-3+yyTop]));
 	  }
   break;
 case 541:
-#line 3691 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3695 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	 	Error_TypeExpected (lexer.Location);
 	 	yyVal = null;
 	 }
   break;
 case 542:
-#line 3699 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3703 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = yyVals[0+yyTop];
 	  }
   break;
 case 543:
-#line 3706 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3710 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[-1+yyTop];
 		yyVal = lt;		
 	  }
   break;
 case 544:
-#line 3714 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3718 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { 
 		yyVal = new SizeOfExpression ((Expression) yyVals[-1+yyTop], GetLocation (yyVals[-3+yyTop]));
 	  }
   break;
 case 545:
-#line 3718 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3722 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -4787,13 +4791,13 @@ case 545:
 	  }
   break;
 case 546:
-#line 3727 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3731 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new CheckedExpression ((Expression) yyVals[-1+yyTop], GetLocation (yyVals[-3+yyTop]));
 	  }
   break;
 case 547:
-#line 3731 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3735 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -4801,13 +4805,13 @@ case 547:
 	  }
   break;
 case 548:
-#line 3740 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3744 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new UnCheckedExpression ((Expression) yyVals[-1+yyTop], GetLocation (yyVals[-3+yyTop]));
 	  }
   break;
 case 549:
-#line 3744 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3748 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -4815,20 +4819,20 @@ case 549:
 	  }
   break;
 case 550:
-#line 3753 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3757 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[-1+yyTop];
 		yyVal = new MemberAccess (new IndirectionExpression ((Expression) yyVals[-3+yyTop], GetLocation (yyVals[-2+yyTop])), lt.Value, (TypeArguments) yyVals[0+yyTop], lt.Location);
 	  }
   break;
 case 551:
-#line 3762 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3766 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*	start_anonymous (false, (ParametersCompiled) $2, false, GetLocation ($1));*/
 	  }
   break;
 case 552:
-#line 3766 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3770 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		/*$$ = end_anonymous ((ParametersBlock) $4);*/
 		/*if ((ParametersCompiled) $2 != ParametersCompiled.Undefined) {*/
@@ -4839,19 +4843,19 @@ case 552:
 	  }
   break;
 case 553:
-#line 3778 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3782 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*	$$ = ParametersCompiled.Undefined;*/
 	  }
   break;
 case 555:
-#line 3786 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3790 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  /*	valid_param_mod = ParameterModifierType.Ref | ParameterModifierType.Out;*/
 	  }
   break;
 case 556:
-#line 3790 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3794 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*	valid_param_mod = 0;*/
 	 /* 	$$ = $3;*/
@@ -4861,88 +4865,88 @@ case 556:
 	  }
   break;
 case 557:
-#line 3801 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3805 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new DefaultValueExpression ((Expression) yyVals[-1+yyTop], GetLocation (yyVals[-3+yyTop]));
 	  }
   break;
 case 559:
-#line 3809 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3813 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new UnaryExpression (VSC.TypeSystem.Resolver.UnaryOperatorType.LogicalNot, (Expression) yyVals[0+yyTop], GetLocation (yyVals[-1+yyTop]));
 	  }
   break;
 case 560:
-#line 3813 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3817 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new UnaryExpression (VSC.TypeSystem.Resolver.UnaryOperatorType.OnesComplement, (Expression) yyVals[0+yyTop], GetLocation (yyVals[-1+yyTop]));
 	  }
   break;
 case 561:
-#line 3817 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3821 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new CastExpression ((FullNamedExpression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop], GetLocation (yyVals[-3+yyTop]));
 	  }
   break;
 case 562:
-#line 3821 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3825 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new UnaryExpression (VSC.TypeSystem.Resolver.UnaryOperatorType.LogicalNot, null, GetLocation (yyVals[-1+yyTop]));
 	  }
   break;
 case 563:
-#line 3826 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3830 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new UnaryExpression (VSC.TypeSystem.Resolver.UnaryOperatorType.OnesComplement, null, GetLocation (yyVals[-1+yyTop]));
 	  }
   break;
 case 564:
-#line 3831 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3835 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new CastExpression ((FullNamedExpression) yyVals[-2+yyTop], null, GetLocation (yyVals[-3+yyTop]));
 	  }
   break;
 case 566:
-#line 3844 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3848 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { 
 	 	yyVal = new UnaryExpression (VSC.TypeSystem.Resolver.UnaryOperatorType.UnaryPlus, (Expression) yyVals[0+yyTop], GetLocation (yyVals[-1+yyTop]));
 	  }
   break;
 case 567:
-#line 3848 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3852 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { 
 		yyVal = new UnaryExpression (VSC.TypeSystem.Resolver.UnaryOperatorType.UnaryNegation, (Expression) yyVals[0+yyTop], GetLocation (yyVals[-1+yyTop]));
 	  }
   break;
 case 568:
-#line 3852 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3856 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new UnaryMutatedExpression (UnaryMutatedExpression.Mode.PreIncrement, (Expression) yyVals[0+yyTop], GetLocation (yyVals[-1+yyTop]));
 	  }
   break;
 case 569:
-#line 3856 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3860 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new UnaryMutatedExpression (UnaryMutatedExpression.Mode.PreDecrement, (Expression) yyVals[0+yyTop], GetLocation (yyVals[-1+yyTop]));
 	  }
   break;
 case 570:
-#line 3860 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3864 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new IndirectionExpression ((Expression) yyVals[0+yyTop], GetLocation (yyVals[-1+yyTop]));
 	  }
   break;
 case 571:
-#line 3864 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3868 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new UnaryExpression (VSC.TypeSystem.Resolver.UnaryOperatorType.AddressOf, (Expression) yyVals[0+yyTop], GetLocation (yyVals[-1+yyTop]));
 	  }
   break;
 case 572:
-#line 3868 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3872 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { 
 		Error_SyntaxError (yyToken);
 
@@ -4950,7 +4954,7 @@ case 572:
 	  }
   break;
 case 573:
-#line 3874 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3878 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { 
 		Error_SyntaxError (yyToken);
 
@@ -4958,7 +4962,7 @@ case 573:
 	  }
   break;
 case 574:
-#line 3880 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3884 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -4966,7 +4970,7 @@ case 574:
 	  }
   break;
 case 575:
-#line 3886 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3890 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -4974,7 +4978,7 @@ case 575:
 	  }
   break;
 case 576:
-#line 3892 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3896 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -4982,7 +4986,7 @@ case 576:
 	  }
   break;
 case 577:
-#line 3898 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3902 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -4990,32 +4994,32 @@ case 577:
 	  }
   break;
 case 579:
-#line 3908 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3912 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new BinaryExpression (BinaryOperatorType.Multiply, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 580:
-#line 3912 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3916 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new BinaryExpression (BinaryOperatorType.Division, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 581:
-#line 3916 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3920 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new BinaryExpression (BinaryOperatorType.Modulus, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 582:
-#line 3920 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3924 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new BinaryExpression (BinaryOperatorType.Multiply, (Expression) yyVals[-2+yyTop], null);
 	  }
   break;
 case 583:
-#line 3925 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3929 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -5023,7 +5027,7 @@ case 583:
 	  }
   break;
 case 584:
-#line 3931 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3935 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -5031,73 +5035,73 @@ case 584:
 	  }
   break;
 case 586:
-#line 3941 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3945 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new BinaryExpression (BinaryOperatorType.Addition, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 
 	  }
   break;
 case 587:
-#line 3946 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3950 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new BinaryExpression (BinaryOperatorType.Subtraction, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 588:
-#line 3950 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3954 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new BinaryExpression (BinaryOperatorType.Addition, (Expression) yyVals[-2+yyTop], null);
 	  }
   break;
 case 589:
-#line 3955 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3959 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new BinaryExpression (BinaryOperatorType.Subtraction, (Expression) yyVals[-2+yyTop], null);
 	  }
   break;
 case 590:
-#line 3960 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3964 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new AsExpression ((Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop], GetLocation (yyVals[-1+yyTop]));
 	  }
   break;
 case 591:
-#line 3964 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3968 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var is_expr = new IsExpression ((Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop], GetLocation (yyVals[-1+yyTop]));
 		yyVal = is_expr;
 	  }
   break;
 case 592:
-#line 3969 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3973 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new AsExpression ((Expression) yyVals[-2+yyTop], null, GetLocation (yyVals[-1+yyTop]));
 	  }
   break;
 case 593:
-#line 3974 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3978 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new IsExpression ((Expression) yyVals[-2+yyTop], null, GetLocation (yyVals[-1+yyTop]));
 	  }
   break;
 case 596:
-#line 3988 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3992 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new BinaryExpression (BinaryOperatorType.LeftShift, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 597:
-#line 3992 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 3996 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new BinaryExpression (BinaryOperatorType.RightShift, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 598:
-#line 3996 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4000 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -5105,38 +5109,38 @@ case 598:
 	  }
   break;
 case 599:
-#line 4002 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4006 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new BinaryExpression (BinaryOperatorType.RightShift, (Expression) yyVals[-2+yyTop], null);
 	  }
   break;
 case 601:
-#line 4011 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4015 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	yyVal = new BinaryExpression (BinaryOperatorType.LessThan, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 602:
-#line 4015 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4019 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new BinaryExpression (BinaryOperatorType.GreaterThan, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 603:
-#line 4019 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4023 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new BinaryExpression (BinaryOperatorType.LessThanOrEqual, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 604:
-#line 4023 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4027 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new BinaryExpression (BinaryOperatorType.GreaterThanOrEqual, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 605:
-#line 4027 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4031 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -5144,7 +5148,7 @@ case 605:
 	  }
   break;
 case 606:
-#line 4033 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4037 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -5152,7 +5156,7 @@ case 606:
 	  }
   break;
 case 607:
-#line 4039 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4043 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -5160,7 +5164,7 @@ case 607:
 	  }
   break;
 case 608:
-#line 4045 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4049 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	Error_SyntaxError (yyToken);
 
@@ -5168,26 +5172,26 @@ case 608:
 	  }
   break;
 case 610:
-#line 4055 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4059 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new BinaryExpression (BinaryOperatorType.Equality, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 611:
-#line 4059 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4063 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new BinaryExpression (BinaryOperatorType.Inequality, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 612:
-#line 4063 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4067 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new BinaryExpression (BinaryOperatorType.Equality, (Expression) yyVals[-2+yyTop], null);
 	  }
   break;
 case 613:
-#line 4068 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4072 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -5195,13 +5199,13 @@ case 613:
 	  }
   break;
 case 615:
-#line 4078 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4082 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new BinaryExpression (BinaryOperatorType.BitwiseAnd, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 616:
-#line 4082 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4086 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -5209,13 +5213,13 @@ case 616:
 	  }
   break;
 case 618:
-#line 4092 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4096 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new BinaryExpression (BinaryOperatorType.ExclusiveOr, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 619:
-#line 4096 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4100 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -5223,13 +5227,13 @@ case 619:
 	  }
   break;
 case 621:
-#line 4106 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4110 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new BinaryExpression (BinaryOperatorType.BitwiseOr, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 622:
-#line 4110 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4114 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -5237,13 +5241,13 @@ case 622:
 	  }
   break;
 case 624:
-#line 4120 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4124 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new BinaryExpression (BinaryOperatorType.LogicalAnd, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 625:
-#line 4124 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4128 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -5251,13 +5255,13 @@ case 625:
 	  }
   break;
 case 627:
-#line 4134 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4138 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new BinaryExpression (BinaryOperatorType.LogicalOr, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 628:
-#line 4138 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4142 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -5265,19 +5269,19 @@ case 628:
 	  }
   break;
 case 630:
-#line 4148 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4152 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {		
 		yyVal = new BinaryExpression (BinaryOperatorType.NullCoalescing, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 632:
-#line 4156 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4160 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new ConditionalExpression (new BooleanExpression ((Expression) yyVals[-4+yyTop]), (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop], GetLocation (yyVals[-3+yyTop]));
 	  }
   break;
 case 633:
-#line 4160 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4164 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -5285,7 +5289,7 @@ case 633:
 	  }
   break;
 case 634:
-#line 4166 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4170 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -5293,7 +5297,7 @@ case 634:
 	  }
   break;
 case 635:
-#line 4172 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4176 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (Token.CLOSE_BRACE);
 
@@ -5302,73 +5306,73 @@ case 635:
 	  }
   break;
 case 636:
-#line 4182 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4186 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new SimpleAssign ((Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 637:
-#line 4186 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4190 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new CompoundAssign (BinaryOperatorType.Multiply, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 638:
-#line 4190 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4194 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new CompoundAssign (BinaryOperatorType.Division, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 639:
-#line 4194 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4198 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new CompoundAssign (BinaryOperatorType.Modulus, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 640:
-#line 4198 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4202 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new CompoundAssign (BinaryOperatorType.Addition, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 641:
-#line 4202 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4206 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new CompoundAssign (BinaryOperatorType.Subtraction, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 642:
-#line 4206 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4210 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new CompoundAssign (BinaryOperatorType.LeftShift, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 643:
-#line 4210 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4214 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new CompoundAssign (BinaryOperatorType.RightShift, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 644:
-#line 4214 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4218 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new CompoundAssign (BinaryOperatorType.BitwiseAnd, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 645:
-#line 4218 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4222 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new CompoundAssign (BinaryOperatorType.BitwiseOr, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 646:
-#line 4222 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4226 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new CompoundAssign (BinaryOperatorType.ExclusiveOr, (Expression) yyVals[-2+yyTop], (Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 647:
-#line 4230 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4234 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/* var pars = new List<Parameter> (4);*/
 	/*	pars.Add ((Parameter) $1);*/
@@ -5377,7 +5381,7 @@ case 647:
 	  }
   break;
 case 648:
-#line 4237 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4241 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*	var pars = (List<Parameter>) $1;*/
 	/*	Parameter p = (Parameter)$3;*/
@@ -5392,7 +5396,7 @@ case 648:
 	  }
   break;
 case 649:
-#line 4253 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4257 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		/*var lt = (LocatedToken) $3;*/
 
@@ -5400,7 +5404,7 @@ case 649:
 	  }
   break;
 case 650:
-#line 4259 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4263 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*	var lt = (LocatedToken) $2;*/
 
@@ -5408,19 +5412,19 @@ case 650:
 	  }
   break;
 case 651:
-#line 4265 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4269 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*  	var lt = (LocatedToken) $1;*/
 	/*	$$ = new ImplicitLambdaParameter (lt.Value, lt.Location);*/
 	  }
   break;
 case 652:
-#line 4272 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4276 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { /*$$ = ParametersCompiled.EmptyReadOnlyParameters; */
 	}
   break;
 case 653:
-#line 4274 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4278 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { 
 	/*	var pars_list = (List<Parameter>) $1;*/
 	/*	$$ = new ParametersCompiled (pars_list.ToArray ());*/
@@ -5428,13 +5432,13 @@ case 653:
 	  }
   break;
 case 654:
-#line 4282 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4286 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*	start_block (Location.Null);*/
 	  }
   break;
 case 655:
-#line 4286 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4290 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*	Block b = end_block (Location.Null);*/
 	/*	b.IsCompilerGenerated = true;*/
@@ -5443,7 +5447,7 @@ case 655:
 	  }
   break;
 case 657:
-#line 4294 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4298 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	/* Handles only cases like foo = x.FirstOrDefault (l => );*/
 	  	/* where we must restore current_variable*/
@@ -5455,14 +5459,14 @@ case 657:
 	  }
   break;
 case 659:
-#line 4308 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4312 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = null;
 	  }
   break;
 case 660:
-#line 4316 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4320 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*	var lt = (LocatedToken) $1;	*/
 	/*	Parameter p = new ImplicitLambdaParameter (lt.Value, lt.Location);*/
@@ -5470,83 +5474,83 @@ case 660:
 	  }
   break;
 case 661:
-#line 4322 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4326 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		/*$$ = end_anonymous ((ParametersBlock) $4);*/
 		/*lbag.AddLocation ($$, GetLocation ($2));*/
 	  }
   break;
 case 662:
-#line 4327 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4331 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 /*	  	valid_param_mod = ParameterModifierType.Ref | ParameterModifierType.Out;*/
 	  }
   break;
 case 663:
-#line 4331 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4335 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*  	valid_param_mod = 0;*/
 	/*	start_anonymous (true, (ParametersCompiled) $3, false, GetLocation ($1));*/
 	  }
   break;
 case 664:
-#line 4336 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4340 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*	$$ = end_anonymous ((ParametersBlock) $7);*/
 	/*	lbag.AddLocation ($$, GetLocation ($1), GetLocation ($4), GetLocation ($5));*/
 	  }
   break;
 case 671:
-#line 4360 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4364 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new BooleanExpression ((Expression) yyVals[0+yyTop]);
 	  }
   break;
 case 672:
-#line 4367 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4371 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	yyVal = null;
 	  }
   break;
 case 674:
-#line 4375 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4379 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = yyVals[-1+yyTop];
 	  }
   break;
 case 675:
-#line 4382 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4386 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	yyVal = null;
 	  }
   break;
 case 676:
-#line 4386 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4390 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = null;
 	  }
   break;
 case 677:
-#line 4390 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4394 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = yyVals[0+yyTop];
 	  }
   break;
 case 678:
-#line 4394 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4398 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = yyVals[-1+yyTop];
 	  }
   break;
 case 679:
-#line 4398 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4402 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		++lexer.parsing_block;
 		current_type.PrimaryConstructorBaseArgumentsStart = GetLocation (yyVals[0+yyTop]);
 	  }
   break;
 case 680:
-#line 4403 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4407 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	current_type.PrimaryConstructorBaseArguments = (Arguments) yyVals[-1+yyTop];
 		--lexer.parsing_block;
@@ -5555,13 +5559,13 @@ case 680:
 	  }
   break;
 case 681:
-#line 4419 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4423 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 
 	  }
   break;
 case 682:
-#line 4423 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4427 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.ConstraintsParsing = true;
 
@@ -5571,7 +5575,7 @@ case 682:
 	  }
   break;
 case 683:
-#line 4432 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4436 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		valid_param_mod = 0;
 		lexer.ConstraintsParsing = false;
@@ -5591,7 +5595,7 @@ case 683:
 	  }
   break;
 case 684:
-#line 4450 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4454 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		--lexer.parsing_declaration;
 		if (doc_support)
@@ -5599,34 +5603,34 @@ case 684:
 	  }
   break;
 case 685:
-#line 4456 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4460 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	yyVal = pop_current_class ();
 	  }
   break;
 case 686:
-#line 4463 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4467 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = null; }
   break;
 case 687:
-#line 4465 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4469 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = yyVals[0+yyTop];  }
   break;
 case 688:
-#line 4470 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4474 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = ModifierNone;
 		lexer.parsing_modifiers = false;
 	  }
   break;
 case 689:
-#line 4475 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4479 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_modifiers = false;		
 	  }
   break;
 case 691:
-#line 4483 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4487 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { 
 		var m1 = (Modifiers) yyVals[-1+yyTop];
 		var m2 = (Modifiers) yyVals[0+yyTop];
@@ -5644,7 +5648,7 @@ case 691:
 	  }
   break;
 case 692:
-#line 4502 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4506 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = Modifiers.NEW;	
 		/*if (current_container is D)
@@ -5652,79 +5656,79 @@ case 692:
 	  }
   break;
 case 693:
-#line 4508 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4512 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {	yyVal = Modifiers.PUBLIC;  }
   break;
 case 694:
-#line 4510 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4514 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = Modifiers.PROTECTED;
 	
 	  }
   break;
 case 695:
-#line 4515 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4519 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = Modifiers.INTERNAL;
 
 	  }
   break;
 case 696:
-#line 4520 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4524 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = Modifiers.PRIVATE;
 	  }
   break;
 case 697:
-#line 4524 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4528 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = Modifiers.ABSTRACT;
 	  }
   break;
 case 698:
-#line 4528 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4532 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = Modifiers.SEALED;
 	  }
   break;
 case 699:
-#line 4532 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4536 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = Modifiers.STATIC;
 	  }
   break;
 case 700:
-#line 4536 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4540 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	yyVal = Modifiers.READONLY;
 	  }
   break;
 case 701:
-#line 4540 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4544 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = Modifiers.VIRTUAL;
 	  }
   break;
 case 702:
-#line 4544 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4548 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = Modifiers.OVERRIDE;
 	  }
   break;
 case 703:
-#line 4548 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4552 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = Modifiers.EXTERN;
 	  }
   break;
 case 706:
-#line 4560 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4564 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_type.SetBaseTypes ((List<FullNamedExpression>) yyVals[0+yyTop]);
 	 }
   break;
 case 707:
-#line 4564 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4568 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -5732,13 +5736,13 @@ case 707:
 	  }
   break;
 case 709:
-#line 4574 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4578 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = yyVals[0+yyTop];
 	  }
   break;
 case 710:
-#line 4581 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4585 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var constraints = new List<TypeParameterConstraints> (1);
 		constraints.Add ((TypeParameterConstraints) yyVals[0+yyTop]);
@@ -5746,7 +5750,7 @@ case 710:
 	  }
   break;
 case 711:
-#line 4587 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4591 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var constraints = (List<TypeParameterConstraints>) yyVals[-1+yyTop];
 		TypeParameterConstraints new_constraint = (TypeParameterConstraints)yyVals[0+yyTop];
@@ -5764,7 +5768,7 @@ case 711:
 	  }
   break;
 case 712:
-#line 4606 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4610 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[-2+yyTop];
 		yyVal = new TypeParameterConstraints (new SimpleMemberName (lt.Value, lt.Location), (List<FullNamedExpression>) yyVals[0+yyTop], GetLocation (yyVals[-3+yyTop]));
@@ -5772,7 +5776,7 @@ case 712:
 	  }
   break;
 case 713:
-#line 4612 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4616 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 	  
@@ -5781,7 +5785,7 @@ case 713:
 	  }
   break;
 case 714:
-#line 4622 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4626 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var constraints = new List<FullNamedExpression> (1);
 		constraints.Add ((FullNamedExpression) yyVals[0+yyTop]);
@@ -5789,7 +5793,7 @@ case 714:
 	  }
   break;
 case 715:
-#line 4628 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4632 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var constraints = (List<FullNamedExpression>) yyVals[-2+yyTop];
 	var prev = constraints [constraints.Count - 1] as SpecialContraintExpr;
@@ -5815,7 +5819,7 @@ case 715:
 	  }
   break;
 case 716:
-#line 4655 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4659 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (yyVals[0+yyTop] is ComposedType)
 			report.Error (121, GetLocation (yyVals[0+yyTop]), "Invalid constraint type `{0}'", ((ComposedType)yyVals[0+yyTop]).GetSignatureForError ());
@@ -5824,66 +5828,66 @@ case 716:
 	  }
   break;
 case 717:
-#line 4662 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4666 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new SpecialContraintExpr (SpecialConstraint.Constructor, GetLocation (yyVals[-2+yyTop]));
 	  }
   break;
 case 718:
-#line 4666 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4670 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new SpecialContraintExpr (SpecialConstraint.Class, GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 719:
-#line 4670 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4674 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new SpecialContraintExpr (SpecialConstraint.Struct, GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 720:
-#line 4690 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4694 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		++lexer.parsing_block;
 		start_block (GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 721:
-#line 4695 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4699 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = yyVals[0+yyTop];
 	  }
   break;
 case 722:
-#line 4702 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4706 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	 	--lexer.parsing_block;
 		yyVal = end_block (GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 723:
-#line 4707 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4711 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	 	--lexer.parsing_block;
 		yyVal = end_block (lexer.Location);
 	  }
   break;
 case 724:
-#line 4716 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4720 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		++lexer.parsing_block;
 		current_block.StartLocation = GetLocation (yyVals[0+yyTop]);
 	  }
   break;
 case 725:
-#line 4721 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4725 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		--lexer.parsing_block;
 	yyVal = end_block (GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 726:
-#line 4725 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4729 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		report.Error (122, GetLocation (yyVals[0+yyTop]), "Unexpected symbol '}', expected '{'");
 		lexer.putback ('}');
@@ -5891,33 +5895,33 @@ case 726:
 	  }
   break;
 case 727:
-#line 4734 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4738 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		++lexer.parsing_block;
 		current_block.StartLocation = GetLocation (yyVals[0+yyTop]);
 	  }
   break;
 case 728:
-#line 4739 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4743 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		--lexer.parsing_block;
 		yyVal = end_block (GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 733:
-#line 4757 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
-  {
-		current_block.AddStatement ((Statement) yyVals[0+yyTop]);
-	  }
-  break;
-case 734:
 #line 4761 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_block.AddStatement ((Statement) yyVals[0+yyTop]);
 	  }
   break;
+case 734:
+#line 4765 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+  {
+		current_block.AddStatement ((Statement) yyVals[0+yyTop]);
+	  }
+  break;
 case 736:
-#line 4767 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4771 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		var lt =(LocatedToken) yyVals[-1+yyTop];
@@ -5927,54 +5931,54 @@ case 736:
 	}
   break;
 case 737:
-#line 4776 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4780 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = null;
 	  }
   break;
 case 740:
-#line 4795 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
-  {
-		current_block.AddStatement ((Statement) yyVals[0+yyTop]);
-	  }
-  break;
-case 741:
 #line 4799 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_block.AddStatement ((Statement) yyVals[0+yyTop]);
 	  }
   break;
+case 741:
+#line 4803 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+  {
+		current_block.AddStatement ((Statement) yyVals[0+yyTop]);
+	  }
+  break;
 case 766:
-#line 4836 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4840 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		  report.Error (123, GetLocation (yyVals[0+yyTop]), "An embedded statement may not be a declaration or labeled statement");
 		  yyVal = null;
 	  }
   break;
 case 767:
-#line 4841 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4845 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		  report.Error (123, GetLocation (yyVals[0+yyTop]), "An embedded statement may not be a declaration or labeled statement");
 		  yyVal = null;
 	  }
   break;
 case 768:
-#line 4846 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4850 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new EmptyStatement (GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 769:
-#line 4854 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4858 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		/* Uses lexer.Location because semicolon location is not kept in quick mode*/
 		yyVal = new EmptyStatement (lexer.Location);
 	  }
   break;
 case 770:
-#line 4862 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4866 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[-1+yyTop];
 		LabeledStatement labeled = new LabeledStatement (lt.Value, current_block, lt.Location);
@@ -5983,7 +5987,7 @@ case 770:
 	  }
   break;
 case 773:
-#line 4874 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4878 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (yyVals[-1+yyTop] is VarTypeExpression)
 			yyVals[-1+yyTop] = new SimpleName ("var", ((VarTypeExpression) yyVals[-1+yyTop]).Location);
@@ -5992,7 +5996,7 @@ case 773:
 	  }
   break;
 case 774:
-#line 4890 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4894 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { 
 	
 		/* Ok, the above "primary_expression" is there to get rid of*/
@@ -6021,27 +6025,27 @@ case 774:
 	  }
   break;
 case 775:
-#line 4917 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4921 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var expr = (TypeNameExpression) yyVals[-1+yyTop];
 		yyVal = new ComposedType (expr, (ComposedTypeSpecifier) yyVals[0+yyTop]);
 	  }
   break;
 case 779:
-#line 4928 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4932 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	((ComposedTypeSpecifier) yyVals[-1+yyTop]).Next = (ComposedTypeSpecifier) yyVals[0+yyTop];
 	 	yyVal = yyVals[-1+yyTop];
 	  }
   break;
 case 780:
-#line 4936 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4940 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = ComposedTypeSpecifier.CreatePointer (GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 782:
-#line 4947 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4951 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[0+yyTop];
 		var li = new LocalVariable (current_block, lt.Value, lt.Location);
@@ -6050,14 +6054,14 @@ case 782:
 	  }
   break;
 case 783:
-#line 4954 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4958 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = current_variable;
 		current_variable = null;
 	  }
   break;
 case 784:
-#line 4959 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4963 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[0+yyTop];
 		var li = new LocalVariable (current_block, lt.Value, LocalVariable.Flags.Constant, lt.Location);
@@ -6066,14 +6070,14 @@ case 784:
 	  }
   break;
 case 785:
-#line 4966 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4970 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = current_variable;;
 		current_variable = null;
 	  }
   break;
 case 787:
-#line 4974 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4978 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		/* Redundant, but wont regress*/
 		report.Error (124, lexer.Location, "Unexpected symbol }");
@@ -6082,14 +6086,14 @@ case 787:
 	  }
   break;
 case 789:
-#line 4985 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4989 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_variable.Initializer = (Expression) yyVals[0+yyTop];
 		yyVal = current_variable;
 	  }
   break;
 case 790:
-#line 4990 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 4994 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	if (yyToken == Token.OPEN_BRACKET_EXPR) {
 			report.Error (125, lexer.Location,
@@ -6100,7 +6104,7 @@ case 790:
 	  }
   break;
 case 794:
-#line 5008 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5012 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		foreach (var d in current_variable.Declarators) {
 			if (d.Initializer == null)
@@ -6109,7 +6113,7 @@ case 794:
 	  }
   break;
 case 797:
-#line 5023 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5027 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[0+yyTop];	  
 		var li = new LocalVariable (current_variable.Variable, lt.Value, lt.Location);
@@ -6119,7 +6123,7 @@ case 797:
 	  }
   break;
 case 798:
-#line 5031 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5035 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[-2+yyTop];	  
 		var li = new LocalVariable (current_variable.Variable, lt.Value, lt.Location);
@@ -6130,19 +6134,19 @@ case 798:
 	  }
   break;
 case 799:
-#line 5043 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5047 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		report.Error (126, lexer.Location, "A const field requires a value to be provided");
 	  }
   break;
 case 800:
-#line 5047 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5051 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_variable.Initializer = (Expression) yyVals[0+yyTop];
 	  }
   break;
 case 805:
-#line 5064 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5068 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[-2+yyTop];	  
 		var li = new LocalVariable (current_block, lt.Value, LocalVariable.Flags.Constant, lt.Location);
@@ -6152,30 +6156,30 @@ case 805:
 	  }
   break;
 case 807:
-#line 5076 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5080 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new StackAlloc ((Expression) yyVals[-3+yyTop], (Expression) yyVals[-1+yyTop], GetLocation (yyVals[-4+yyTop]));
 	  }
   break;
 case 808:
-#line 5080 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5084 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		report.Error (127, GetLocation (yyVals[-1+yyTop]), "A stackalloc expression requires [] after type");
 		yyVal = new StackAlloc ((Expression) yyVals[0+yyTop], null, GetLocation (yyVals[-1+yyTop]));		
 	  }
   break;
 case 809:
-#line 5088 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5092 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = yyVals[-1+yyTop];
 	  }
   break;
 case 810:
-#line 5091 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5095 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = yyVals[-1+yyTop]; }
   break;
 case 811:
-#line 5093 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5097 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = yyVals[-1+yyTop];
 		report.Error (128, GetLocation (yyVals[0+yyTop]), "; expected");
@@ -6183,15 +6187,15 @@ case 811:
 	  }
   break;
 case 812:
-#line 5101 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5105 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = yyVals[-1+yyTop]; }
   break;
 case 813:
-#line 5102 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5106 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = yyVals[-1+yyTop]; }
   break;
 case 814:
-#line 5111 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5115 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 ExpressionStatement s = yyVals[0+yyTop] as ExpressionStatement;
 		if (s == null) {
@@ -6203,21 +6207,21 @@ ExpressionStatement s = yyVals[0+yyTop] as ExpressionStatement;
 	  }
   break;
 case 815:
-#line 5124 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5128 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Expression expr = (Expression) yyVals[0+yyTop];
 		yyVal = new StatementExpression (new OptionalAssign (expr, lexer.Location));
 	  }
   break;
 case 816:
-#line 5129 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5133 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new EmptyStatement (GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 819:
-#line 5143 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5147 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { 
   if (yyVals[0+yyTop] is EmptyStatement)
 			Warning_EmptyStatement (GetLocation (yyVals[0+yyTop]));
@@ -6226,7 +6230,7 @@ case 819:
 	  }
   break;
 case 820:
-#line 5151 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5155 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new If ((BooleanExpression) yyVals[-4+yyTop], (Statement) yyVals[-2+yyTop], (Statement) yyVals[0+yyTop], GetLocation (yyVals[-6+yyTop]));
 	
@@ -6238,7 +6242,7 @@ case 820:
 	  }
   break;
 case 821:
-#line 5161 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5165 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		
@@ -6246,20 +6250,20 @@ case 821:
 	  }
   break;
 case 822:
-#line 5170 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5174 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		start_block (GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 823:
-#line 5174 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5178 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new Switch ((Expression) yyVals[-5+yyTop], (ExplicitBlock) current_block.Explicit, GetLocation (yyVals[-7+yyTop]));	
 		end_block (GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 824:
-#line 5179 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5183 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 	  
@@ -6267,19 +6271,19 @@ case 824:
 	  }
   break;
 case 825:
-#line 5188 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5192 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		report.Warning (1522, 1, current_block.StartLocation, "Empty switch block"); 
 	  }
   break;
 case 829:
-#line 5198 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5202 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 	  }
   break;
 case 831:
-#line 5209 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5213 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	var label = (SwitchLabel) yyVals[0+yyTop];
 	  	label.SectionStart = true;
@@ -6287,32 +6291,32 @@ case 831:
 	  }
   break;
 case 832:
-#line 5215 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5219 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_block.AddStatement ((Statement) yyVals[0+yyTop]);
 	  }
   break;
 case 833:
-#line 5222 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5226 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	 	yyVal = new SwitchLabel ((Expression) yyVals[-1+yyTop], GetLocation (yyVals[-2+yyTop]));
 	 }
   break;
 case 834:
-#line 5226 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5230 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new SwitchLabel ((Expression) yyVals[-1+yyTop], GetLocation (yyVals[-2+yyTop]));
 	  }
   break;
 case 835:
-#line 5231 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5235 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new SwitchLabel (null, GetLocation (yyVals[0+yyTop]));
 	  }
   break;
 case 840:
-#line 5245 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5249 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (yyVals[0+yyTop] is EmptyStatement && lexer.peek_token () == Token.OPEN_BRACE)
 			Warning_EmptyStatement (GetLocation (yyVals[0+yyTop]));
@@ -6321,7 +6325,7 @@ case 840:
 	  }
   break;
 case 841:
-#line 5252 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5256 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		
@@ -6329,20 +6333,20 @@ case 841:
 	  }
   break;
 case 842:
-#line 5261 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5265 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new Do ((Statement) yyVals[-5+yyTop], (BooleanExpression) yyVals[-2+yyTop], GetLocation (yyVals[-6+yyTop]), GetLocation (yyVals[-4+yyTop]));
 	  }
   break;
 case 843:
-#line 5265 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5269 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new Do ((Statement) yyVals[-1+yyTop], null, GetLocation (yyVals[-2+yyTop]), Location.Null);
 	  }
   break;
 case 844:
-#line 5270 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5274 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 	  
@@ -6350,7 +6354,7 @@ case 844:
 	  }
   break;
 case 845:
-#line 5279 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5283 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		start_block (GetLocation (yyVals[0+yyTop]));
 		current_block.IsCompilerGenerated = true;
@@ -6360,13 +6364,13 @@ case 845:
 	  }
   break;
 case 846:
-#line 5287 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5291 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = yyVals[0+yyTop];
 	  }
   break;
 case 847:
-#line 5295 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5299 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		For f =  (For) yyVals[-2+yyTop];
 		f.Initializer = (Statement) yyVals[-1+yyTop];
@@ -6374,13 +6378,13 @@ case 847:
 	  }
   break;
 case 848:
-#line 5301 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5305 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = yyVals[0+yyTop];
 	  }
   break;
 case 849:
-#line 5304 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5308 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		report.Error (129, GetLocation (yyVals[0+yyTop]), "Unexpected symbol ')', expected ';'");
 		For f =  (For) yyVals[-2+yyTop];
@@ -6389,7 +6393,7 @@ case 849:
 	}
   break;
 case 850:
-#line 5314 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5318 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		For f =  (For) yyVals[-2+yyTop];
 		f.Condition = (BooleanExpression) yyVals[-1+yyTop];
@@ -6397,13 +6401,13 @@ case 850:
 	  }
   break;
 case 851:
-#line 5320 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5324 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = yyVals[0+yyTop];
 	  }
   break;
 case 852:
-#line 5324 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5328 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 report.Error (129, GetLocation (yyVals[0+yyTop]), "Unexpected symbol ')', expected ';'");
 		For f =  (For) yyVals[-2+yyTop];
@@ -6412,7 +6416,7 @@ report.Error (129, GetLocation (yyVals[0+yyTop]), "Unexpected symbol ')', expect
 	}
   break;
 case 853:
-#line 5335 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5339 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		For f =  (For) yyVals[-3+yyTop];
 		f.Iterator = (Statement) yyVals[-2+yyTop];
@@ -6426,18 +6430,18 @@ case 853:
 	  }
   break;
 case 854:
-#line 5347 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5351 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = end_block (current_block.StartLocation);
 	  }
   break;
 case 855:
-#line 5354 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5358 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = new EmptyStatement (lexer.Location); 	}
   break;
 case 857:
-#line 5360 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5364 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[0+yyTop];
 		var li = new LocalVariable (current_block, lt.Value, lt.Location);
@@ -6446,22 +6450,22 @@ case 857:
 	  }
   break;
 case 858:
-#line 5367 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5371 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = current_variable;
 		current_variable = null;
 	  }
   break;
 case 860:
-#line 5375 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5379 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = null;	 }
   break;
 case 862:
-#line 5380 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5384 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   { yyVal = new EmptyStatement (lexer.Location); 	}
   break;
 case 866:
-#line 5391 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5395 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	 	var sl = yyVals[-2+yyTop] as StatementList;
 	  	if (sl == null) {
@@ -6475,7 +6479,7 @@ case 866:
 	  }
   break;
 case 867:
-#line 5406 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5410 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		report.Error (130, GetLocation (yyVals[-3+yyTop]), "Type and identifier are both required in a foreach statement");
 
@@ -6490,7 +6494,7 @@ case 867:
 	  }
   break;
 case 868:
-#line 5419 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5423 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 	
@@ -6508,7 +6512,7 @@ case 868:
 	  }
   break;
 case 869:
-#line 5435 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5439 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		start_block (GetLocation (yyVals[-5+yyTop]));
 		current_block.IsCompilerGenerated = true;
@@ -6520,7 +6524,7 @@ case 869:
 	  }
   break;
 case 870:
-#line 5445 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5449 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (yyVals[0+yyTop] is EmptyStatement && lexer.peek_token () == Token.OPEN_BRACE)
 			Warning_EmptyStatement (GetLocation (yyVals[0+yyTop]));
@@ -6532,7 +6536,7 @@ case 870:
 	  }
   break;
 case 871:
-#line 5455 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5459 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		start_block (GetLocation (yyVals[-3+yyTop]));
 		current_block.IsCompilerGenerated = true;
@@ -6546,7 +6550,7 @@ case 871:
 	  }
   break;
 case 872:
-#line 5467 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5471 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Foreach f = new Foreach ((Expression) yyVals[-1+yyTop], null, null, null, null, GetLocation (yyVals[-3+yyTop]));
 		current_block.AddStatement (f);
@@ -6556,26 +6560,26 @@ case 872:
 	  }
   break;
 case 879:
-#line 5487 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5491 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new Break (GetLocation (yyVals[-1+yyTop]));
 	  }
   break;
 case 880:
-#line 5494 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5498 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new Continue (GetLocation (yyVals[-1+yyTop]));
 	  }
   break;
 case 881:
-#line 5498 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5502 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new Continue (GetLocation (yyVals[-1+yyTop]));
 	  }
   break;
 case 882:
-#line 5506 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5510 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[-1+yyTop];
 		yyVal = new Goto (lt.Value, GetLocation (yyVals[-2+yyTop]));
@@ -6583,62 +6587,62 @@ case 882:
 	  }
   break;
 case 883:
-#line 5512 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5516 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new GotoCase ((Expression) yyVals[-1+yyTop], GetLocation (yyVals[-3+yyTop]));
 	
 	  }
   break;
 case 884:
-#line 5517 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5521 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new GotoDefault (GetLocation (yyVals[-2+yyTop]));
 
 	  }
   break;
 case 885:
-#line 5525 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5529 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new Return ((Expression) yyVals[-1+yyTop], GetLocation (yyVals[-2+yyTop]));
 	  }
   break;
 case 886:
-#line 5529 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5533 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new Return ((Expression) yyVals[-1+yyTop], GetLocation (yyVals[-2+yyTop]));
 	  }
   break;
 case 887:
-#line 5534 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5538 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new Return (null, GetLocation (yyVals[-1+yyTop]));
 	  }
   break;
 case 888:
-#line 5542 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5546 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new Throw ((Expression) yyVals[-1+yyTop], GetLocation (yyVals[-2+yyTop]));
 	
 	  }
   break;
 case 889:
-#line 5547 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5551 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new Throw ((Expression) yyVals[-1+yyTop], GetLocation (yyVals[-2+yyTop]));
 	  }
   break;
 case 890:
-#line 5552 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5556 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new Throw (null, GetLocation (yyVals[-1+yyTop]));
 	  }
   break;
 case 891:
-#line 5560 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5564 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[-3+yyTop];
 		string s = lt.Value;
@@ -6654,7 +6658,7 @@ case 891:
 	  }
   break;
 case 892:
-#line 5574 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5578 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -6672,7 +6676,7 @@ case 892:
 	  }
   break;
 case 893:
-#line 5590 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5594 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[-2+yyTop];
 		string s = lt.Value;
@@ -6684,34 +6688,34 @@ case 893:
 	  }
   break;
 case 896:
-#line 5608 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5612 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new TryCatch ((Block) yyVals[-1+yyTop], (List<Except>) yyVals[0+yyTop], GetLocation (yyVals[-2+yyTop]), false);
 	  }
   break;
 case 897:
-#line 5612 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5616 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new TryFinally ((Statement) yyVals[-2+yyTop], (ExplicitBlock) yyVals[0+yyTop], GetLocation (yyVals[-3+yyTop]));
 	
 	  }
   break;
 case 898:
-#line 5617 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5621 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new TryFinally (new TryCatch ((Block) yyVals[-3+yyTop], (List<Except>) yyVals[-2+yyTop], GetLocation (yyVals[-4+yyTop]), true), (ExplicitBlock) yyVals[0+yyTop], GetLocation (yyVals[-4+yyTop]));
 	
 	  }
   break;
 case 899:
-#line 5622 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5626 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (1524, yyToken);
 		yyVal = new TryCatch ((Block) yyVals[-1+yyTop], null, GetLocation (yyVals[-2+yyTop]), false);
 	  }
   break;
 case 900:
-#line 5630 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5634 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var l = new List<Except> (2);
 
@@ -6720,7 +6724,7 @@ case 900:
 	  }
   break;
 case 901:
-#line 5637 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5641 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var l = (List<Except>) yyVals[-1+yyTop];
 		
@@ -6735,7 +6739,7 @@ case 901:
 	  }
   break;
 case 904:
-#line 5658 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5662 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	
 	  	var c = new Except ((ExplicitBlock) yyVals[0+yyTop], GetLocation (yyVals[-2+yyTop]));
@@ -6744,7 +6748,7 @@ case 904:
 	  }
   break;
 case 905:
-#line 5665 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5669 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		start_block (GetLocation (yyVals[-3+yyTop]));
 		var c = new Except ((ExplicitBlock) current_block, GetLocation (yyVals[-4+yyTop]));
@@ -6761,14 +6765,14 @@ case 905:
 	  }
   break;
 case 906:
-#line 5680 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5684 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	((Except) yyVals[-1+yyTop]).Filter = (ExceptFilterExpression) yyVals[0+yyTop];
 		yyVal = yyVals[-1+yyTop];
 	  }
   break;
 case 907:
-#line 5685 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5689 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	if (yyToken == Token.CLOSE_PARENS) {
 			report.Error (133, lexer.Location,
@@ -6781,13 +6785,13 @@ case 907:
 	  }
   break;
 case 908:
-#line 5699 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5703 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = yyVals[-1+yyTop];
 	  }
   break;
 case 909:
-#line 5703 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5707 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		end_block (Location.Null);
 		Error_SyntaxError (yyToken);
@@ -6795,19 +6799,19 @@ case 909:
 	  }
   break;
 case 910:
-#line 5711 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
-  {
-		lexer.parsing_catch_when = false;
-	  }
-  break;
-case 911:
 #line 5715 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.parsing_catch_when = false;
 	  }
   break;
-case 912:
+case 911:
 #line 5719 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+  {
+		lexer.parsing_catch_when = false;
+	  }
+  break;
+case 912:
+#line 5723 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 
 
@@ -6816,19 +6820,19 @@ case 912:
 	  }
   break;
 case 913:
-#line 5729 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5733 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		  yyVal = new Checked ((Block) yyVals[0+yyTop], GetLocation (yyVals[-1+yyTop]));
 	  }
   break;
 case 914:
-#line 5736 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5740 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new Unchecked ((Block) yyVals[0+yyTop], GetLocation (yyVals[-1+yyTop]));
 	  }
   break;
 case 915:
-#line 5743 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5747 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (yyVals[0+yyTop] is EmptyStatement && lexer.peek_token () == Token.OPEN_BRACE)
 			Warning_EmptyStatement (GetLocation (yyVals[0+yyTop]));
@@ -6837,7 +6841,7 @@ case 915:
 	  }
   break;
 case 916:
-#line 5750 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5754 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 
@@ -6845,7 +6849,7 @@ case 916:
 	  }
   break;
 case 917:
-#line 5761 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5765 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	    start_block (GetLocation (yyVals[-2+yyTop]));
 	    
@@ -6857,14 +6861,14 @@ case 917:
 	  }
   break;
 case 918:
-#line 5771 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5775 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = current_variable;	  
 		current_variable = null;
 	  }
   break;
 case 919:
-#line 5776 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5780 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (yyVals[0+yyTop] is EmptyStatement && lexer.peek_token () == Token.OPEN_BRACE)
 			Warning_EmptyStatement (GetLocation (yyVals[0+yyTop]));
@@ -6875,7 +6879,7 @@ case 919:
 	  }
   break;
 case 920:
-#line 5785 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5789 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (yyVals[0+yyTop] is EmptyStatement && lexer.peek_token () == Token.OPEN_BRACE)
 			Warning_EmptyStatement (GetLocation (yyVals[0+yyTop]));
@@ -6884,7 +6888,7 @@ case 920:
 	  }
   break;
 case 921:
-#line 5792 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5796 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		
@@ -6892,27 +6896,27 @@ case 921:
 	  }
   break;
 case 923:
-#line 5802 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5806 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		/* It has to be here for the parent to safely restore artificial block*/
 	  	Error_SyntaxError (yyToken);
 	  }
   break;
 case 924:
-#line 5810 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5814 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_MissingInitializer (lexer.Location);
 	  }
   break;
 case 925:
-#line 5814 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5818 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_variable.Initializer = (Expression) yyVals[0+yyTop];
 		yyVal = current_variable;
 	  }
   break;
 case 926:
-#line 5826 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5830 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		lexer.query_parsing = false;
 			
@@ -6926,7 +6930,7 @@ case 926:
 	  }
   break;
 case 927:
-#line 5838 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5842 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		AQueryClause from = yyVals[-1+yyTop] as AQueryClause;
 			
@@ -6938,7 +6942,7 @@ case 927:
 	  }
   break;
 case 928:
-#line 5849 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5853 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	        lexer.query_parsing = false;
 		yyVal = yyVals[-1+yyTop];
@@ -6948,7 +6952,7 @@ case 928:
 	  }
   break;
 case 929:
-#line 5856 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5860 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	        yyVal = yyVals[-1+yyTop];
 		current_block.SetEndLocation (lexer.Location);
@@ -6956,7 +6960,7 @@ case 929:
 	  }
   break;
 case 930:
-#line 5865 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5869 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_block = new QueryBlock (current_block, lexer.Location);
 	  
@@ -6967,7 +6971,7 @@ case 930:
 	  }
   break;
 case 931:
-#line 5874 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5878 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_block = new QueryBlock (current_block, lexer.Location);
 	  
@@ -6980,7 +6984,7 @@ case 931:
 	  }
   break;
 case 932:
-#line 5888 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5892 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_block = new QueryBlock (current_block, lexer.Location);
 	  
@@ -6991,7 +6995,7 @@ case 932:
 	  }
   break;
 case 933:
-#line 5897 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5901 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_block = new QueryBlock (current_block, lexer.Location);
 	  
@@ -7004,13 +7008,13 @@ case 933:
 	  }
   break;
 case 934:
-#line 5911 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5915 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_block = new QueryBlock (current_block, lexer.Location);
 	  }
   break;
 case 935:
-#line 5915 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5919 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[-3+yyTop];
 		var sn = new RangeVariable (lt.Value, lt.Location);
@@ -7022,13 +7026,13 @@ case 935:
 	  }
   break;
 case 936:
-#line 5925 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5929 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_block = new QueryBlock (current_block, lexer.Location);
 	  }
   break;
 case 937:
-#line 5929 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5933 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[-3+yyTop];
 		var sn = new RangeVariable (lt.Value, lt.Location);
@@ -7046,7 +7050,7 @@ case 937:
 	  }
   break;
 case 938:
-#line 5948 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5952 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	AQueryClause head = (AQueryClause)yyVals[-1+yyTop];
 		
@@ -7063,7 +7067,7 @@ case 938:
 	  }
   break;
 case 939:
-#line 5963 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5967 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	AQueryClause head = (AQueryClause)yyVals[0+yyTop];
 
@@ -7077,27 +7081,27 @@ case 939:
 	  }
   break;
 case 941:
-#line 5976 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5980 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		report.Error (134, GetLocation (yyVals[0+yyTop]), "Unexpected symbol `{0}'. A query body must end with select or group clause", GetSymbolName (yyToken));
 		yyVal = yyVals[-1+yyTop];
 	  }
   break;
 case 942:
-#line 5981 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5985 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = null;
 	  }
   break;
 case 943:
-#line 5989 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5993 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	current_block = new QueryBlock (current_block, lexer.Location);
 	  }
   break;
 case 944:
-#line 5993 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 5997 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new Select ((QueryBlock)current_block, (Expression)yyVals[0+yyTop], GetLocation (yyVals[-2+yyTop]));
 
@@ -7106,7 +7110,7 @@ case 944:
 	  }
   break;
 case 945:
-#line 6000 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6004 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	if (linq_clause_blocks == null)
 	  		linq_clause_blocks = new Stack<QueryBlock> ();
@@ -7116,7 +7120,7 @@ case 945:
 	  }
   break;
 case 946:
-#line 6008 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6012 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_block.SetEndLocation (lexer.Location);
 		current_block = current_block.Parent;
@@ -7125,7 +7129,7 @@ case 946:
 	  }
   break;
 case 947:
-#line 6015 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6019 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var obj = (object[]) yyVals[0+yyTop];
 
@@ -7137,33 +7141,33 @@ case 947:
 	  }
   break;
 case 948:
-#line 6028 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6032 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	yyVal = new object[] { yyVals[0+yyTop], GetLocation (yyVals[-1+yyTop]) };
 	  }
   break;
 case 949:
-#line 6032 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6036 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		Error_SyntaxError (yyToken);
 		yyVal = new object[2] { null, Location.Null };
 	  }
   break;
 case 951:
-#line 6041 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6045 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		((AQueryClause)yyVals[-1+yyTop]).Tail.Next = (AQueryClause)yyVals[0+yyTop];
 		yyVal = yyVals[-1+yyTop];
 	  }
   break;
 case 957:
-#line 6057 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6061 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	current_block = new QueryBlock (current_block, lexer.Location);
 	  }
   break;
 case 958:
-#line 6061 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6065 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var lt = (LocatedToken) yyVals[-3+yyTop];
 		var sn = new RangeVariable (lt.Value, lt.Location);
@@ -7176,13 +7180,13 @@ case 958:
 	  }
   break;
 case 959:
-#line 6075 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6079 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	  	current_block = new QueryBlock (current_block, lexer.Location);
 	  }
   break;
 case 960:
-#line 6079 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6083 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new Where ((QueryBlock)current_block, (Expression)yyVals[0+yyTop], GetLocation (yyVals[-2+yyTop]));
 
@@ -7191,7 +7195,7 @@ case 960:
 	  }
   break;
 case 961:
-#line 6089 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6093 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (linq_clause_blocks == null)
 			linq_clause_blocks = new Stack<QueryBlock> ();
@@ -7201,7 +7205,7 @@ case 961:
 	  }
   break;
 case 962:
-#line 6097 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6101 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_block.SetEndLocation (lexer.Location);
 		current_block = current_block.Parent;
@@ -7211,7 +7215,7 @@ case 962:
 	  }
   break;
 case 963:
-#line 6105 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6109 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_block.AddStatement (new ContextualReturn ((Expression) yyVals[-1+yyTop]));
 		current_block.SetEndLocation (lexer.Location);
@@ -7221,7 +7225,7 @@ case 963:
 	  }
   break;
 case 964:
-#line 6113 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6117 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_block.AddStatement (new ContextualReturn ((Expression) yyVals[-1+yyTop]));
 		current_block.SetEndLocation (lexer.Location);
@@ -7261,7 +7265,7 @@ case 964:
 	  }
   break;
 case 965:
-#line 6151 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6155 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		if (linq_clause_blocks == null)
 			linq_clause_blocks = new Stack<QueryBlock> ();
@@ -7271,7 +7275,7 @@ case 965:
 	  }
   break;
 case 966:
-#line 6159 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6163 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_block.SetEndLocation (lexer.Location);
 		current_block = current_block.Parent;
@@ -7281,7 +7285,7 @@ case 966:
 	  }
   break;
 case 967:
-#line 6167 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6171 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_block.AddStatement (new ContextualReturn ((Expression) yyVals[-1+yyTop]));
 		current_block.SetEndLocation (lexer.Location);
@@ -7291,7 +7295,7 @@ case 967:
 	  }
   break;
 case 968:
-#line 6175 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6179 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_block.AddStatement (new ContextualReturn ((Expression) yyVals[-1+yyTop]));
 		current_block.SetEndLocation (lexer.Location);
@@ -7333,20 +7337,20 @@ case 968:
 	  }
   break;
 case 970:
-#line 6219 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6223 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		opt_intoStack.Push (GetLocation (yyVals[-1+yyTop]));
 		yyVal = yyVals[0+yyTop];
 	  }
   break;
 case 971:
-#line 6227 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6231 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_block = new QueryBlock (current_block, lexer.Location);
 	  }
   break;
 case 972:
-#line 6231 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6235 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_block.SetEndLocation (lexer.Location);
 		current_block = current_block.Parent;
@@ -7355,7 +7359,7 @@ case 972:
 	  }
   break;
 case 974:
-#line 6242 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6246 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_block.SetEndLocation (lexer.Location);
 		current_block = current_block.Parent;
@@ -7364,14 +7368,14 @@ case 974:
 	  }
   break;
 case 975:
-#line 6249 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6253 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		((AQueryClause)yyVals[-3+yyTop]).Next = (AQueryClause)yyVals[0+yyTop];
 		yyVal = yyVals[-3+yyTop];
 	  }
   break;
 case 977:
-#line 6258 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6262 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		current_block.SetEndLocation (lexer.Location);
 		current_block = current_block.Parent;
@@ -7380,54 +7384,54 @@ case 977:
 	 }
   break;
 case 978:
-#line 6265 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6269 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		((AQueryClause)yyVals[-3+yyTop]).Tail.Next = (AQueryClause)yyVals[0+yyTop];
 		yyVal = yyVals[-3+yyTop];
 	 }
   break;
 case 979:
-#line 6273 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6277 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new OrderByAscending ((QueryBlock) current_block, (Expression)yyVals[0+yyTop]);	
 	  }
   break;
 case 980:
-#line 6277 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6281 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new OrderByAscending ((QueryBlock) current_block, (Expression)yyVals[-1+yyTop]);	
 	
 	  }
   break;
 case 981:
-#line 6282 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6286 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new OrderByDescending ((QueryBlock) current_block, (Expression)yyVals[-1+yyTop]);	
 
 	  }
   break;
 case 982:
-#line 6290 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6294 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new ThenByAscending ((QueryBlock) current_block, (Expression)yyVals[0+yyTop]);	
 	  }
   break;
 case 983:
-#line 6294 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6298 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new ThenByAscending ((QueryBlock) current_block, (Expression)yyVals[-1+yyTop]);	
 	
 	  }
   break;
 case 984:
-#line 6299 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6303 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		yyVal = new ThenByDescending ((QueryBlock) current_block, (Expression)yyVals[-1+yyTop]);	
 		
 	  }
   break;
 case 986:
-#line 6309 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6313 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		/* query continuation block is not linked with query block but with block*/
 		/* before. This means each query can use same range variable names for*/
@@ -7445,7 +7449,7 @@ case 986:
 	  }
   break;
 case 987:
-#line 6325 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6329 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		var current_block = linq_clause_blocks.Pop ();	  
 		var lt = (LocatedToken) yyVals[-2+yyTop];
@@ -7456,19 +7460,19 @@ case 987:
 	  }
   break;
 case 988:
-#line 6340 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6344 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*	module.DocumentationBuilder.ParsedName = (MemberName) $2;*/
 	  }
   break;
 case 989:
-#line 6347 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6351 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*	module.DocumentationBuilder.ParsedParameters = (List<DocumentationParameter>)$2;*/
 	  }
   break;
 case 990:
-#line 6351 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6355 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*	module.DocumentationBuilder.ParsedBuiltinType = (TypeExpression)$1;
 		module.DocumentationBuilder.ParsedParameters = (List<DocumentationParameter>)$2;
@@ -7476,7 +7480,7 @@ case 990:
 	  }
   break;
 case 991:
-#line 6357 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6361 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*	module.DocumentationBuilder.ParsedBuiltinType = new TypeExpression (compiler.BuiltinTypes.Void, GetLocation ($1));
 		module.DocumentationBuilder.ParsedParameters = (List<DocumentationParameter>)$2;
@@ -7484,7 +7488,7 @@ case 991:
 	  }
   break;
 case 992:
-#line 6363 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6367 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*	module.DocumentationBuilder.ParsedBuiltinType = (TypeExpression)$1;
 		module.DocumentationBuilder.ParsedParameters = (List<DocumentationParameter>)$4;
@@ -7493,26 +7497,26 @@ case 992:
 	  }
   break;
 case 993:
-#line 6370 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6374 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*	$$ = new MemberName ((MemberName) $1, MemberCache.IndexerNameAlias, Location.Null);*/
 	  }
   break;
 case 994:
-#line 6374 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6378 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*	valid_param_mod = ParameterModifierType.Ref | ParameterModifierType.Out;*/
 	  }
   break;
 case 995:
-#line 6378 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6382 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		/*module.DocumentationBuilder.ParsedParameters = (List<DocumentationParameter>)$6;*/
 		/*$$ = new MemberName ((MemberName) $1, MemberCache.IndexerNameAlias, Location.Null);*/
 	  }
   break;
 case 996:
-#line 6383 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6387 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		/*var p = (List<DocumentationParameter>)$4 ?? new List<DocumentationParameter> (1);
 		p.Add (new DocumentationParameter ((FullNamedExpression) $3));
@@ -7522,7 +7526,7 @@ case 996:
 	  }
   break;
 case 997:
-#line 6391 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6395 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*	var p = (List<DocumentationParameter>)$4 ?? new List<DocumentationParameter> (1);
 		p.Add (new DocumentationParameter ((FullNamedExpression) $3));
@@ -7532,7 +7536,7 @@ case 997:
 	  }
   break;
 case 998:
-#line 6399 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6403 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 		/*var p = (List<DocumentationParameter>)$3;
 		module.DocumentationBuilder.ParsedParameters = p;
@@ -7541,31 +7545,31 @@ case 998:
 	  }
   break;
 case 1000:
-#line 6410 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6414 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*	$$ = new MemberName (((MemberName) $1), (MemberName) $3);*/
 	  }
   break;
 case 1002:
-#line 6418 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6422 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*	valid_param_mod = ParameterModifierType.Ref | ParameterModifierType.Out;*/
 	  }
   break;
 case 1003:
-#line 6422 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6426 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 /*		$$ = $3;*/
 	  }
   break;
 case 1004:
-#line 6429 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6433 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*	$$ = new List<DocumentationParameter> (0);*/
 	  }
   break;
 case 1006:
-#line 6437 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6441 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*	var parameters = new List<DocumentationParameter> ();
 		parameters.Add ((DocumentationParameter) $1);
@@ -7573,7 +7577,7 @@ case 1006:
 	  }
   break;
 case 1007:
-#line 6443 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6447 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*	var parameters = $1 as List<DocumentationParameter>;
 		parameters.Add ((DocumentationParameter) $3);
@@ -7581,7 +7585,7 @@ case 1007:
 	  }
   break;
 case 1008:
-#line 6452 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6456 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
   {
 	/*	if ($1 != null)
 			$$ = new DocumentationParameter ((Parameter.Modifier) $1, (FullNamedExpression) $2);
@@ -11566,7 +11570,7 @@ case 1008:
    -1,   -1,   -1,   -1,   -1,  362,
   };
 
-#line 6461 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
+#line 6465 "E:\Projects\VSharp\VSC\\VSharpParser.jay"
 
 // <summary>
 //  A class used to hold info about an operator declarator

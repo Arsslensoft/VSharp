@@ -45,27 +45,29 @@ namespace VSC.AST
        
         public override Expression DoResolve(ResolveContext rc)
         {
-        
+            if (Result != null && !Result.IsError)
+                return this;
+
+
             if (name == null)
                 rc.Report.Error(6, loc, "This name `{0}' does not exist in the current context", name);
           
             if (typeArgumentsrefs == null)
                 throw new ArgumentNullException("typeArgumentsrefs");
 
-            var typeArgs = typeArgumentsrefs.Resolve(rc.CurrentTypeResolveContext);
-            Result = rc.LookupSimpleNameOrTypeName(name, typeArgs, lookupMode);
+
+
+
+            Result = Resolve(rc);
 
             if (Result.IsError)
             {
               if(Result is AmbiguousTypeResolveResult)
                   rc.Report.Error(7, loc, "The name `{0}' is ambigious", name);
-                else if(Result is ErrorResolveResult)
-                    rc.Report.Error(6, loc, "The name `{0}' does not exist in the current context", Name);
-              else rc.Report.Error(6, loc, "The name `{0}' does not exist in the current context", name);
             }
-            else if(Result is LocalResolveResult && typeArgs.Count > 0)
+            else if (Result is LocalResolveResult && typeArgumentsrefs.Count > 0)
                 rc.Report.Error(8, loc, "The name `{0}' does not need type arguments because it's a local name", name);
-           
+
         
             
 
@@ -96,8 +98,15 @@ namespace VSC.AST
             return new SimpleName(name + suffix, this.targs,Location, lookupMode);
         }
 
-        public override ResolveResult Resolve(ResolveContext resolver)
+        public override ResolveResult Resolve(ResolveContext rc)
         {
+            if (Result != null && !Result.IsError) return Result;
+            var typeArgs = typeArgumentsrefs.Resolve(rc.CurrentTypeResolveContext);
+            Result = LookForAttribute ? rc.LookupSimpleNameOrTypeName(name + "Attribute", typeArgs, lookupMode) : rc.LookupSimpleNameOrTypeName(name, typeArgs, lookupMode);
+            if ((Result == null || Result.IsError) && LookForAttribute)
+                Result = rc.LookupSimpleNameOrTypeName(name, typeArgs, lookupMode);
+
+            LookForAttribute = false;
             return Result;
         }
 

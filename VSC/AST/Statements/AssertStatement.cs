@@ -25,11 +25,11 @@ public class AssertStatement : Statement
             }
         }
 
-        public override bool Resolve(BlockContext ec)
+        public override bool ResolveScope(BlockContext ec)
         {
 
-            expr = expr.Resolve(ec);
-            msg = msg.Resolve(ec);
+            expr = expr.ResolveScope(ec);
+            msg = msg.ResolveScope(ec);
             if (expr == null || msg== null)
                 return false;
 
@@ -44,7 +44,7 @@ public class AssertStatement : Statement
             expr.EmitBranchable(ec, false_target, true);
 
             msg.Emit(ec);
-           MethodSpec m = ec.Module.PredefinedMembers.AssertionExceptionCtor.Resolve(loc);
+           MethodSpec m = ec.Module.PredefinedMembers.AssertionExceptionCtor.ResolveScope(loc);
             if (m != null)
                 ec.Emit(OpCodes.Newobj, m);
             ec.Emit(OpCodes.Throw);

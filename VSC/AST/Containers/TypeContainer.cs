@@ -12,6 +12,8 @@ namespace VSC.AST
     [Serializable]
     public class TypeContainer : UnresolvedTypeDefinitionSpec, IAstNode, IResolve
     {
+
+        public IAstNode ParentNode { get; set; }
         public VSharpAttributes UnattachedAttributes;
         string comment = "";
         public string DocComment
@@ -41,7 +43,7 @@ namespace VSC.AST
                 int idx = 0;
                 this.typeParameters = new List<IUnresolvedTypeParameter>();
                     foreach (var tp in mn.TypeParameters.names)
-                        this.typeParameters.Add(new UnresolvedTypeParameterSpec(SymbolKind.TypeDefinition, idx++, tp.Name));
+                        this.typeParameters.Add(new UnresolvedTypeParameterSpec(SymbolKind.TypeDefinition, idx++,tp.Location, tp.Name));
                 
             }
         }
@@ -74,7 +76,18 @@ namespace VSC.AST
         }
         public virtual void SetBaseTypes(List<FullNamedExpression> baseTypes)
         {
-            BaseTypes.AddRange(baseTypes.Cast<ITypeReference>());
+            foreach (FullNamedExpression texpr in baseTypes)
+            {
+                if (texpr is TypeNameExpression)
+                {
+                    var te = texpr as TypeNameExpression;
+                    te.lookupMode = NameLookupMode.BaseTypeReference;
+                    BaseTypes.Add(te);
+                }
+                else BaseTypes.Add(texpr as ITypeReference);
+            }
+            
+
         }
         public virtual void SetConstraints(List<TypeParameterConstraints> constraints_list)
         {
@@ -124,8 +137,14 @@ namespace VSC.AST
                         (tc as TypeNameExpression).lookupMode = NameLookupMode.BaseTypeReference;
                         tp.Constraints.Add(tc as ITypeReference);
                     }
+                    else if (tc is TypeExpr)
+                        tp.Constraints.Add(tc as ITypeReference);
+                    
+
                 }
             }
+
+            typeParameters = tparams.names.Cast<IUnresolvedTypeParameter>().ToList();
         }
         public void AddAttributes(VSharpAttributes attr)
         {
@@ -159,16 +178,23 @@ namespace VSC.AST
             get { return loc; }
         }
 
+        public PackageContainer ParentPackageContainer = null;
         public TypeContainer(TypeContainer parent, MemberName name, Location l, CompilationSourceFile file)
             : base(parent, name.Name)
         {
             HasExtensionMethods = false;
             SetTypeParameters(name);
-            if(parent.Name != "default")
+            if (parent.Name != "default")
                 parent.NestedTypes.Add(this);
-            else file.TopLevelTypeDefinitions.Add(this);
-         
-            UnresolvedFile = file;
+            else
+            {
+                parent.ParentPackageContainer.TypeContainers.Add(this);
+                file.TopLevelTypeDefinitions.Add(this);
+            }
+
+
+            ParentPackageContainer = parent.ParentPackageContainer;
+        UnresolvedFile = file;
             this.usingScope = parent.usingScope;
             this.AddDefaultConstructorIfRequired = true;
             GlobalTypeDefinition = false; 
@@ -185,7 +211,8 @@ namespace VSC.AST
             this.AddDefaultConstructorIfRequired = true;
             GlobalTypeDefinition = false;
             loc = l;
-           // Parent = parent.DefaultType;
+           parent.TypeContainers.Add(this);
+            ParentPackageContainer = parent;
             usingScope = parent;
             member_name = name;
         }
@@ -198,7 +225,7 @@ namespace VSC.AST
         public bool GlobalTypeDefinition { get; set; }
         public override ITypeResolveContext CreateResolveContext(ITypeResolveContext parentContext)
         {
-            return new VSharpTypeResolveContext(parentContext.CurrentAssembly, usingScope.Resolve(parentContext.Compilation), parentContext.CurrentTypeDefinition);
+            return new VSharpTypeResolveContext(parentContext.CurrentAssembly, usingScope.ResolveScope(parentContext.Compilation), parentContext.CurrentTypeDefinition);
         }
         public virtual bool Resolve(ResolveContext rc)
         {
@@ -206,8 +233,8 @@ namespace VSC.AST
                 c.Resolve(rc);
 
 
-            ////foreach (var m in TypeMembers)
-            ////    m.Resolve(rc);
+            foreach (var m in TypeMembers)
+                m.Resolve(rc);
             return true;
         }
         public object DoResolve(ResolveContext rc)

@@ -403,7 +403,9 @@ import_directive
 import_package
 	: IMPORT package_or_type_expr SEMICOLON
 	  {
-		Import uc = new ImportPackage ((TypeNameExpression) $2, GetLocation ($1));
+	  TypeNameExpression texpr = (TypeNameExpression) $2;
+	    texpr.lookupMode = NameLookupMode.TypeInUsingDeclaration;
+		Import uc = new ImportPackage (texpr, GetLocation ($1));
 		current_package.AddImport (uc);
 	  }
 	| IMPORT IDENTIFIER ASSIGN package_or_type_expr SEMICOLON
@@ -413,8 +415,9 @@ import_package
 			report.Warning (440, 2, lt.Location,
 		 "An alias named `global' will not be used when resolving `global::'. The global package will be used instead");
 	}
-
-		var un = new ImportPackageAlias (new AliasIdentifier (lt.Value, lt.Location), (TypeNameExpression) $4, GetLocation ($1));
+	  TypeNameExpression texpr = (TypeNameExpression) $4;
+	  texpr.lookupMode = NameLookupMode.TypeInUsingDeclaration;
+		var un = new ImportPackageAlias (new AliasIdentifier (lt.Value, lt.Location), texpr, GetLocation ($1));
 		current_package.AddImport (un);		
 	  }
 	| IMPORT error
@@ -462,7 +465,7 @@ package_declaration
 		var ns = PackageContainer.CreateContainers (current_package,name,  GetLocation ($2),file);
 		current_package = ns;
 		current_container = ns.DefaultType;
-		file.TopLevelTypeDefinitions.Add(current_container);
+		
 	  }
 	  OPEN_BRACE
 	  {
@@ -790,7 +793,7 @@ named_attribute_argument
 	  {
 	  	--lexer.parsing_block;
 		var lt = (LocatedToken) $1;
-		$$ = new NamedArgument (lt.Value, lt.Location, (Expression) $3);	  
+		$$ = new NamedArgument (lt.Value, lt.Location, (Expression) $4);	  
 	  }
 	;
 	
@@ -2833,7 +2836,8 @@ type_parameter
 	  {
 		var lt = (LocatedToken)$1;
 
-		$$ = new UnresolvedTypeParameterSpec (SymbolKind.TypeDefinition,0,lt.Value);
+		$$ = new UnresolvedTypeParameterSpec (SymbolKind.TypeDefinition,0,lt.Location,lt.Value);
+		
   	  }
   	| error
   	  {
@@ -2842,7 +2846,7 @@ type_parameter
 		else
 			Error_SyntaxError (yyToken);
 			
-  	  	$$ = new UnresolvedTypeParameterSpec (SymbolKind.TypeDefinition, 0);
+  	  	$$ = new UnresolvedTypeParameterSpec (SymbolKind.TypeDefinition, 0,Location.Null);
   	  }
  	;
 
@@ -3195,7 +3199,7 @@ opt_object_or_collection_initializer
 	: /* empty */		{ 	$$ = null; 	}
 	| object_or_collection_initializer
 	;
-	// TODO: Implement
+
 object_or_collection_initializer
 	: OPEN_BRACE opt_member_initializer_list close_brace_or_complete_completion
 	  {

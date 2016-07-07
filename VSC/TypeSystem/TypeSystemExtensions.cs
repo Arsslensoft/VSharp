@@ -434,7 +434,7 @@ namespace VSC.TypeSystem
 		}
 		#endregion
 		
-		#region Resolve on collections
+		#region ResolveScope on collections
 		public static IList<IAttribute> CreateResolvedAttributes(this IList<IUnresolvedAttribute> attributes, ITypeResolveContext context)
 		{
 			if (attributes == null)
@@ -475,7 +475,7 @@ namespace VSC.TypeSystem
 				return new ProjectedList<ITypeResolveContext, ITypeReference, IType>(context, typeReferences, (c, t) => t.Resolve(c));
 		}
 		
-		// There is intentionally no Resolve() overload for IList<IMemberReference>: the resulting IList<Member> would
+		// There is intentionally no ResolveScope() overload for IList<IMemberReference>: the resulting IList<Member> would
 		// contains nulls when there are resolve errors.
 		
 		public static IList<ResolveResult> Resolve(this IList<IConstantValue> constantValues, ITypeResolveContext context)
@@ -571,7 +571,7 @@ namespace VSC.TypeSystem
 		}
 		#endregion
 
-		#region ITypeReference.Resolve(ICompilation)
+		#region ITypeReference.ResolveScope(ICompilation)
 
 		/// <summary>
 		/// Resolves a type reference in the compilation's main type resolve context.

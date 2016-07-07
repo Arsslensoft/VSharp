@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using VSC.Base;
+using VSC.Context;
 using VSC.TypeSystem.Implementation;
 
 namespace VSC.TypeSystem.Resolver
@@ -16,7 +17,7 @@ namespace VSC.TypeSystem.Resolver
 	/// <remarks>
 	/// This class is thread-safe.
 	/// </remarks>
-	public class ResolveContext : ICodeContext
+	public partial class ResolveContext : ICodeContext
 	{
         public static readonly string[][] names;
          static ResolveContext()
@@ -85,13 +86,14 @@ namespace VSC.TypeSystem.Resolver
 			this.compilation = context.Compilation;
 			this.conversions = VSharpConversions.Get(compilation);
 			this.context = context;
-            this.Report = report;
+            this.Report = report ?? CompilerContext.report;
 			if (context.CurrentTypeDefinition != null)
 				currentTypeDefinitionCache = new TypeDefinitionCache(context.CurrentTypeDefinition);
 		}
 		
 		private ResolveContext(ICompilation compilation, VSharpConversions conversions, VSharpTypeResolveContext context, bool checkForOverflow, bool isWithinLambdaExpression, TypeDefinitionCache currentTypeDefinitionCache, ImmutableStack<IVariable> localVariableStack, ObjectInitializerContext objectInitializerStack)
-		{
+        {
+            this.Report = CompilerContext.report;
 			this.compilation = compilation;
 			this.conversions = conversions;
 			this.context = context;
@@ -124,6 +126,7 @@ namespace VSC.TypeSystem.Resolver
 		
 		ResolveContext WithContext(VSharpTypeResolveContext newContext)
 		{
+            
 			return new ResolveContext(compilation, conversions, newContext, checkForOverflow, isWithinLambdaExpression, currentTypeDefinitionCache, localVariableStack, objectInitializerStack);
 		}
 		
@@ -2243,7 +2246,7 @@ namespace VSC.TypeSystem.Resolver
 				OverloadResolution or = CreateOverloadResolution(arguments, argumentNames);
 				or.AddCandidate(invokeMethod);
 				return new VSharpInvocationResolveResult(
-					target, invokeMethod, //invokeMethod.ReturnType.Resolve(context),
+					target, invokeMethod, //invokeMethod.ReturnType.ResolveScope(context),
 					or.GetArgumentsWithConversionsAndNames(), or.BestCandidateErrors,
 					isExpandedForm: or.BestCandidateIsExpandedForm,
 					isDelegateInvocation: true,
@@ -2521,7 +2524,7 @@ namespace VSC.TypeSystem.Resolver
 		}
 		#endregion
 		
-		#region Resolve This/Base Reference
+		#region ResolveScope This/Base Reference
 		/// <summary>
 		/// Resolves 'this'.
 		/// </summary>

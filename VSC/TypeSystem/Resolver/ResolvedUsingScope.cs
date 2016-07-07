@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using VSC.Base;
+using VSC.Context;
 using VSC.TypeSystem.Implementation;
 
 namespace VSC.TypeSystem.Resolver
@@ -74,7 +75,7 @@ namespace VSC.TypeSystem.Resolver
 					return result;
 				} else {
 					result = new List<INamespace>();
-					ResolveContext resolver = new ResolveContext(parentContext.WithUsingScope(this));
+                    ResolveContext resolver = new ResolveContext(parentContext.WithUsingScope(this), CompilerContext.report);
 					foreach (var u in usingScope.Usings) {
 						INamespace ns = u.ResolveNamespace(resolver);
 						if (ns != null && !result.Contains(ns))
@@ -93,7 +94,7 @@ namespace VSC.TypeSystem.Resolver
 				if (result != null) {
 					return result;
 				} else {
-					ResolveContext resolver = new ResolveContext(parentContext.WithUsingScope(this));
+                    ResolveContext resolver = new ResolveContext(parentContext.WithUsingScope(this), CompilerContext.report);
 					result = new KeyValuePair<string, ResolveResult>[usingScope.UsingAliases.Count];
 					for (int i = 0; i < result.Count; i++) {
 						var rr = usingScope.UsingAliases[i].Value.Resolve(resolver);

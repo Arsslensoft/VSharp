@@ -73,6 +73,32 @@ namespace VSC.TypeSystem.Resolver
 		
 		internal class OperatorMethod : IParameterizedMember
 		{
+            public bool IsAccessibleAs(IType b)
+            {throw new NotSupportedException();
+            }
+            //
+            // Used for visiblity checks to tests whether this definition shares
+            // base type baseType, it does member-definition search
+            //
+            public bool IsBaseTypeDefinition(IType baseType)
+            {
+                var type = this as IType;
+                if (baseType == null || type == null)
+                    return false;
+
+                foreach (var t in type.DirectBaseTypes.Cast<ResolvedEntitySpec>())
+                    if (t.IsBaseTypeDefinition(baseType))
+                        return true;
+
+
+
+
+                return type == baseType;
+            }
+            public bool IsInternalAccessible(IAssembly asm, IAssembly current)
+            {
+                return asm != null && current != null && asm.InternalsVisibleTo(current);
+            }
 			readonly ICompilation compilation;
 			readonly IList<IParameter> parameters = new List<IParameter>();
 			
@@ -190,9 +216,7 @@ namespace VSC.TypeSystem.Resolver
 				get { return false; }
 			}
 			
-			bool IHasAccessibility.IsProtectedAndInternal {
-				get { return false; }
-			}
+		
 			
 			bool IMember.IsExplicitInterfaceImplementation {
 				get { return false; }

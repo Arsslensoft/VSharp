@@ -25,7 +25,7 @@ namespace VSC.AST
             get { return type; }
             set { type = value; }
         }
-
+        public IAstNode ParentNode { get; set; }
 
         public Location Location
         {
@@ -54,7 +54,10 @@ namespace VSC.AST
             return this;
         }
 
-
+        public virtual ResolveResult GetResolveResult(ResolveContext rc)
+        {
+            return Result;
+        }
         public bool EmitToStack(EmitContext ec)
         {
             throw new NotImplementedException();

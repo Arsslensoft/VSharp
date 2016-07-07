@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-
+using System.Linq;
+using VSC.AST;
 using VSC.Base;
+using VSC.TypeSystem.Resolver;
 
 namespace VSC.TypeSystem.Implementation
 {
@@ -10,13 +12,13 @@ namespace VSC.TypeSystem.Implementation
 	/// Default implementation of <see cref="IUnresolvedTypeParameter"/>.
 	/// </summary>
 	[Serializable]
-	public class UnresolvedTypeParameterSpec  : IUnresolvedTypeParameter, IFreezable
+	public class UnresolvedTypeParameterSpec  : IUnresolvedTypeParameter, IFreezable, IResolve
 	{
 		readonly int index;
 		IList<ITypeReference> constraints;
 		string name;
 		DomRegion region;
-		
+	    public Location Location;
 		SymbolKind ownerType;
 		BitVector16 flags;
 		const ushort FlagFrozen                       = 0x0001;
@@ -37,8 +39,9 @@ namespace VSC.TypeSystem.Implementation
 			constraints = FreezableHelper.FreezeList(constraints);
 		}
 
-        public UnresolvedTypeParameterSpec(SymbolKind ownerType, int index, string name = null)
-		{
+        public UnresolvedTypeParameterSpec(SymbolKind ownerType, int index, Location loc,string name = null)
+        {
+            Location = loc;
 			this.ownerType = ownerType;
 			this.index = index;
 			this.name = name ?? ((ownerType == SymbolKind.Method ? "!!" : "!") + index.ToString(CultureInfo.InvariantCulture));
@@ -154,5 +157,134 @@ namespace VSC.TypeSystem.Implementation
 				this.HasValueTypeConstraint, this.HasReferenceTypeConstraint, this.HasDefaultConstructorConstraint, this.Constraints.Resolve(context)
 			);
 		}
-	}
+
+
+
+
+
+	    void CheckConversion(ResolveContext rc, IType tp)
+	    {
+	     
+       
+
+	    }
+	    public ITypeParameter ResolvedTypeParameter; 
+	    void CheckCircular(TypeParameterSpec p, TypeParameterSpec baseType, ResolveContext rc, bool ignore_first = false, TypeParameterSpec parent = null)
+	    {
+	        if (p == baseType && !ignore_first)
+	        {
+                rc.Report.Error(454, Location,
+                  "Circular constraint dependency involving `{0}' and `{1}'",
+                  p.Name, parent.Name);
+                return;
+	        }
+
+
+
+	        foreach (var t in baseType.DirectBaseTypes.Where(x => x is TypeParameterSpec))
+	            CheckCircular(p, t as TypeParameterSpec, rc, false, baseType);
+	      
+	    }
+        public bool Resolve(Resolver.ResolveContext rc)
+        {
+            
+            ResolvedTypeParameter = CreateResolvedTypeParameter(rc.CurrentTypeResolveContext);  
+           
+            // check for conflicting constraints (struct & class)
+            if(ResolvedTypeParameter.HasReferenceTypeConstraint && ResolvedTypeParameter.HasValueTypeConstraint )
+                rc.Report.Error(455, Location,
+        "Type parameter `{0}' inherits conflicting constraints `{1}' and `{2}'",
+        name, "struct","class");
+
+            // check class_type
+            if (ResolvedTypeParameter.EffectiveBaseClass.IsReferenceType.HasValue && !ResolvedTypeParameter.EffectiveBaseClass.IsReferenceType.Value)
+            {
+                rc.Report.Error(450, Location,
+                     "`{0}': Only class or interface could be specified as a constraint",
+                     ResolvedTypeParameter.EffectiveBaseClass.ToString());
+            }
+      
+                            
+            // check direct base types
+            List<string> checked_types = new List<string>();
+            foreach (var type in ResolvedTypeParameter.DirectBaseTypes)
+            {
+                // check for duplicate constraints
+                if (checked_types.Contains(type.FullName))
+                {
+                    rc.Report.Error(405, Location,
+                            "Duplicate constraint `{0}' for type parameter `{1}'", type.ToString(), name);
+                    continue;
+
+                }
+                checked_types.Add(type.FullName);
+                // check accessibility of type & constraint
+                if (!ResolvedTypeParameter.Owner.IsAccessibleAs(type))
+                    rc.Report.Error(703, Location,
+                             "Inconsistent accessibility: constraint type `{0}' is less accessible than `{1}'",
+                             type.ToString(), ResolvedTypeParameter.Owner.ToString());
+
+
+                if (type is TypeParameterSpec)
+                {
+                    TypeParameterSpec t = (type as TypeParameterSpec);
+                    if (t.HasValueTypeConstraint)
+                        rc.Report.Error(456, Location,
+                            "Type parameter `{0}' has the `struct' constraint, so it cannot be used as a constraint for `{1}'",
+                            t.Name, name);
+
+                    // check for circular
+                    CheckCircular(t, t, rc, true);
+
+
+                    //
+                    // Checks whether there are no conflicts between type parameter constraints
+                    //
+                    // class Foo<T, U>
+                    //      where T : A
+                    //      where U : B, T
+                    //
+                    // A and B are not convertible and only 1 class constraint is allowed
+                    //TODO: Add Conversion check
+
+
+                    // check for class type and (class or struct constraint)
+                    if ((t.HasValueTypeConstraint && ResolvedTypeParameter.HasReferenceTypeConstraint) ||
+                        (t.HasReferenceTypeConstraint && ResolvedTypeParameter.HasValueTypeConstraint))
+                    {
+                        rc.Report.Error(450, Location,
+                            "`{0}' and `{1}' : cannot specify both `class' and `struct' constraint",
+                            t.Name, Name);
+                    }
+
+                }
+                else
+                {
+
+                    // check static or sealed
+                    if ((type as ResolvedTypeDefinitionSpec).IsSealed)
+                    {
+                        rc.Report.Error(701, Location,
+                            "`{0}' is not a valid constraint. A constraint must be an interface, a non-sealed nor static class or a type parameter",
+                            type.ToString());
+                    }
+                }
+            }
+            
+            // TODO: Add base types checks (Object, Delegate)
+
+            // constructor constraint
+            if (ResolvedTypeParameter.HasDefaultConstructorConstraint && !ResolvedTypeParameter.EffectiveBaseClass.GetConstructors(x => x.Parameters.Count == 0).Any())
+                rc.Report.Error(310, Location,
+                        "The type `{0}' must have a public parameterless constructor in order to use it as parameter `{1}' in the generic type or method `{2}'",
+                       ResolvedTypeParameter.EffectiveBaseClass.ToString(), name, ResolvedTypeParameter.Owner.ToString());
+
+	        
+            return true;
+        }
+    }
+
+
+
+    
 }

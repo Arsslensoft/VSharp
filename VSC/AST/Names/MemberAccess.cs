@@ -56,20 +56,12 @@ namespace VSC.AST
 
         public override Expression DoResolve(ResolveContext rc)
         {
-            TypeNameExpression target = expr.DoResolve(rc) as TypeNameExpression;
-            
-            ResolveResult targetRR = target.Resolve(rc);
-            if (targetRR.IsError)
-            {
-                Result = targetRR;
+            if (Result != null && !Result.IsError)
                 return this;
-            }
-         
-            IList<IType> typeArgs = typeArgumentsrefs.Resolve(rc.CurrentTypeResolveContext);
-            Result = rc.ResolveMemberAccess(targetRR, name, typeArgs, lookupMode);
-         
-            if (Result.IsError)
-                rc.Report.Error(148, loc, "Type `{0}' does not contain a definition for `{1}' and no extension method `{1}' of type `{0}' could be found.",target.GetSignatureForError(),  GetSignatureForError());           
+
+            Result = Resolve(rc);
+            //if (Result.IsError)
+            //    rc.Report.Error(148, loc, "Type `{0}' does not contain a definition for `{1}' and no extension method `{1}' of type `{0}' could be found.", expr.GetSignatureForError(), GetSignatureForError());           
            
             return this;
         }
@@ -106,9 +98,30 @@ namespace VSC.AST
             return new MemberAccess(expr, name + suffix, targs, Location, lookupMode);
         }
 		
-        public override ResolveResult Resolve(ResolveContext resolver)
+        public override ResolveResult Resolve(ResolveContext rc)
         {
-           return Result;
+           
+            if (Result == null || Result.IsError)
+            {
+
+                TypeNameExpression target = expr.DoResolve(rc) as TypeNameExpression;               
+                ResolveResult targetRR = target.Resolve(rc);
+                if (targetRR.IsError)
+                    return targetRR;
+
+
+                IList<IType> typeArgs = typeArgumentsrefs.Resolve(rc.CurrentTypeResolveContext);
+                Result = LookForAttribute
+                    ? rc.ResolveMemberAccess(targetRR, name + "Attribute", typeArgs, lookupMode)
+                    : rc.ResolveMemberAccess(targetRR, name, typeArgs, lookupMode);
+
+                if ((Result == null || Result.IsError) && LookForAttribute)
+                    Result = rc.ResolveMemberAccess(targetRR, name, typeArgs, lookupMode);
+
+            }
+
+            LookForAttribute = false;
+            return Result;
         }
 		
         public override IType ResolveType(ResolveContext resolver)

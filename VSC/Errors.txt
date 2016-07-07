@@ -148,3 +148,4 @@
 148 = Type `{0}' does not contain a definition for `{1}' and no extension method `{1}' of type `{0}' could be found.
 149 = An `import' directive can only be applied to namespaces but `{0}' denotes a type.
 150 = The imported package or type '{0}' does not exist in the current context
+151 = The attribute type `{0}' does not exist in the current context

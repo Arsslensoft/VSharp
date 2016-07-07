@@ -12,12 +12,13 @@ namespace VSC.AST
         public PropertyMethod(PropertyOrIndexer method, Modifiers modifiers, MemberName name,ParametersCompiled parameters,VSharpAttributes attrs)
             : base(method.Parent, method.ReturnType, modifiers,AllowedModifiers, name,parameters, attrs )
         {
+            SymbolKind = SymbolKind.Accessor;
        
         }
         public PropertyMethod(PropertyOrIndexer method, ITypeReference returnType,Modifiers modifiers, MemberName name,ParametersCompiled parameters, VSharpAttributes attrs)
             : base(method.Parent, returnType, modifiers, AllowedModifiers, name, parameters, attrs)
         {
-
+            SymbolKind = SymbolKind.Accessor;
         }
     }
 }

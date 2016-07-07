@@ -267,7 +267,7 @@ namespace VSC.AST
 
         static bool IsOptionalAttribute(IType attributeType)
         {
-            return attributeType.Name == "OptionalAttribute" && attributeType.Namespace == "System.Runtime.InteropServices";
+            return attributeType.Name == "OptionalAttribute" && attributeType.Namespace == "Std.Runtime";
         }
 
         public IParameter CreateResolvedParameter(ITypeResolveContext context)

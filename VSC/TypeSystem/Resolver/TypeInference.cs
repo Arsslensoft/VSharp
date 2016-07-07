@@ -349,7 +349,7 @@ namespace VSC.TypeSystem.Resolver
 		{
             ParameterizedTypeSpec pt = t as ParameterizedTypeSpec;
 			if (pt != null && pt.TypeParameterCount == 1 && pt.Name == "Expression"
-			    && pt.Namespace == "System.Linq.Expressions")
+                && pt.Namespace == "Std.Linq.Expressions")
 			{
 				t = pt.GetTypeArgument(0);
 			}

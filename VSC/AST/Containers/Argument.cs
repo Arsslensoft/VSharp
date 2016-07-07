@@ -2,8 +2,11 @@ using VSC.TypeSystem;
 
 namespace VSC.AST
 {
-    public class Argument
+    public class Argument : IAstNode
     {
+
+        public IAstNode ParentNode { get; set; }
+    
         public enum AType : byte
         {
             None = 0,

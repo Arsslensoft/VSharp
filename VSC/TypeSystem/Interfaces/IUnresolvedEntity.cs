@@ -12,6 +12,7 @@ namespace VSC.TypeSystem
         /// </summary>
         Modifiers ModFlags { get; }
 
+
         /// <summary>
         /// Gets the entity type.
         /// </summary>

@@ -6,7 +6,7 @@ using VSC.Base;
 namespace VSC.TypeSystem.Resolver
 {
 	/// <summary>
-	/// Resolve result representing an array creation.
+	/// ResolveScope result representing an array creation.
 	/// </summary>
 	public class ArrayCreateResolveResult : ResolveResult
 	{

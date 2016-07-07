@@ -38,7 +38,7 @@ public class GroupAssign : Statement
 
             return true;
         }
-        public override bool Resolve(BlockContext ec)
+        public override bool ResolveScope(BlockContext ec)
         {
             List<Expression> right = new List<Expression>();
             List<Expression> left = new List<Expression>();
@@ -61,10 +61,10 @@ public class GroupAssign : Statement
            
 
             foreach (Expression expr in Left)
-                left.Addition(expr.Resolve(ec));
+                left.Addition(expr.ResolveScope(ec));
 
             foreach (Expression expr in Right)
-                right.Addition(expr.Resolve(ec));
+                right.Addition(expr.ResolveScope(ec));
 
 
             for (int i = 0; i < right.Count; i++)
@@ -82,7 +82,7 @@ public class GroupAssign : Statement
                 }
           
               
-               Expression tmp = new SimpleAssign(left[i], right[i]).Resolve(ec);
+               Expression tmp = new SimpleAssign(left[i], right[i]).ResolveScope(ec);
                 if(tmp == null)
                     ec.Report.Error(9999, loc, string.Format("Incompatible types (try to cast) {0} = {1} ", left[i].Type, right[i].Type) + i.ToString());
            /*     if (right[i].Type != left[i].Type && (tmp = ResolveConversions(left[i], right[i], ec)) == null)

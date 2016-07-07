@@ -21,18 +21,21 @@ namespace VSC.AST
                     foreach (var tp in mn.TypeParameters.names)
                     {
 
-                        var tpar = new MethodTypeParameterWithInheritedConstraints(idx++, tp.Name);
+                        var tpar = new MethodTypeParameterWithInheritedConstraints(idx++, tp.Name,tp.Location);
                         tpar.ApplyInterningProvider(CompilerContext.InternProvider);
                         this.typeParameters.Add(tp);
                     }
                 }
                 else
                 {
+                    
                     foreach (var tp in mn.TypeParameters.names)
-                        this.typeParameters.Add(new UnresolvedTypeParameterSpec(SymbolKind.Method, idx++, tp.Name));
+                        this.typeParameters.Add(new UnresolvedTypeParameterSpec(SymbolKind.Method, idx++, tp.Location,tp.Name));
                 }
             }
         }
+
+        
         public MethodDeclaration(TypeContainer parent, FullNamedExpression returnType, Modifiers mod,
             MemberName name, ParametersCompiled parameters, VSharpAttributes attrs)
             :base(parent,returnType, mod,parent is InterfaceDeclaration ? AllowedModifiersInterface :
@@ -42,5 +45,16 @@ namespace VSC.AST
             SetTypeParameters(name);
         }
 
+    }
+
+
+  internal  interface X
+    {
+        
+    }
+  public class H{}
+   public class I : H, X
+    {
+        
     }
 }

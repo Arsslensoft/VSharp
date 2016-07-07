@@ -29,7 +29,7 @@ namespace VSC.TypeSystem.Resolver
 		}
 		#endregion
 		
-		readonly ITypeDefinition currentTypeDefinition;
+	internal ITypeDefinition currentTypeDefinition;
 		readonly IAssembly currentAssembly;
 		readonly bool isInEnumMemberInitializer;
 		
@@ -102,13 +102,42 @@ namespace VSC.TypeSystem.Resolver
 					return IsInternalAccessible(entity.ParentAssembly);
 				case Accessibility.ProtectedOrInternal:
 					return IsInternalAccessible(entity.ParentAssembly) || IsProtectedAccessible(allowProtectedAccess, entity);
-				case Accessibility.ProtectedAndInternal:
-					return IsInternalAccessible(entity.ParentAssembly) && IsProtectedAccessible(allowProtectedAccess, entity);
+			
 				default:
 					throw new Exception("Invalid value for Accessibility");
 			}
 		}
-		
+        public bool IsAccessible(IEntity owner,IEntity entity, bool allowProtectedAccess)
+        {
+            if (entity == null)
+                throw new ArgumentNullException("entity");
+            // V# 4.0 spec, §3.5.2 Accessiblity domains
+            switch (entity.Accessibility)
+            {
+                case Accessibility.None:
+                    return false;
+                case Accessibility.Private:
+                    // check for members of outer classes (private members of outer classes can be accessed)
+                    for (var t = owner; t != null; t = owner.DeclaringTypeDefinition)
+                    {
+                        if (t.Equals(entity.DeclaringTypeDefinition))
+                            return true;
+                    }
+                    return false;
+                case Accessibility.Public:
+                    return true;
+                case Accessibility.Protected:
+                    return IsProtectedAccessible(allowProtectedAccess, entity);
+                case Accessibility.Internal:
+                    return IsInternalAccessible(entity.ParentAssembly);
+                case Accessibility.ProtectedOrInternal:
+                    return IsInternalAccessible(entity.ParentAssembly) || IsProtectedAccessible(allowProtectedAccess, entity);
+
+                default:
+                    throw new Exception("Invalid value for Accessibility");
+            }
+        }
+  
 		bool IsInternalAccessible(IAssembly assembly)
 		{
 			return assembly != null && currentAssembly != null && assembly.InternalsVisibleTo(currentAssembly);

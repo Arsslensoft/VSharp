@@ -17,6 +17,7 @@ namespace VSC.AST
         {
             OperatorType = type;
             this.block = block;
+            SymbolKind = SymbolKind.Operator;
         }
     }
 }

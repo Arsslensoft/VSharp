@@ -56,31 +56,29 @@ namespace VSC.AST
 
         public override Expression DoResolve(ResolveContext rc)
         {
-            AliasNamespace target = new AliasNamespace(alias, Location);
-            ResolveResult targetRR = target.Resolve(rc);
-            if (targetRR.IsError)
-            {
-                Result = targetRR;
-              
+            if (Result != null && !Result.IsError)
                 return this;
-            }
-            IList<IType> typeArgs = typeArgumentsrefs.Resolve(rc.CurrentTypeResolveContext);
-            Result =  rc.ResolveMemberAccess(targetRR, name, typeArgs, lookupMode);
-            if (Result.IsError)
-                rc.Report.Error(148, loc, "Type `{0}' does not contain a definition for `{1}' and no extension method `{1}' of type `{0}' could be found.", target.GetSignatureForError(), GetSignatureForError());           
-           
+
+            Result = Resolve(rc);
+         
             return this;
         }
 
         #region ITypeReference
         public override ResolveResult Resolve(ResolveContext resolver)
         {
-            AliasNamespace target = new AliasNamespace(alias, Location);
-            ResolveResult targetRR = target.Resolve(resolver);
-            if (targetRR.IsError)
-                return targetRR;
-            IList<IType> typeArgs = typeArgumentsrefs.Resolve(resolver.CurrentTypeResolveContext);
-            return resolver.ResolveMemberAccess(targetRR, name, typeArgs, lookupMode);
+            if (Result == null || Result.IsError)
+            {
+                AliasNamespace target = new AliasNamespace(alias, Location);
+                ResolveResult targetRR = target.Resolve(resolver);
+                if (targetRR.IsError)
+                    return targetRR;
+                IList<IType> typeArgs = typeArgumentsrefs.Resolve(resolver.CurrentTypeResolveContext);
+                Result = LookForAttribute ? resolver.ResolveMemberAccess(targetRR, name + "Attribute", typeArgs, lookupMode) : resolver.ResolveMemberAccess(targetRR, name, typeArgs, lookupMode);
+                if ((Result == null || Result.IsError) && LookForAttribute)
+                    Result = resolver.ResolveMemberAccess(targetRR, name, typeArgs, lookupMode);
+            }
+            return Result;
         }
         public override string ToString()
         {

@@ -492,6 +492,7 @@
     <Compile Include="TypeSystem\Resolver\ForEachResolveResult.cs" />
     <Compile Include="TypeSystem\Resolver\InitializedObjectResolveResult.cs" />
     <Compile Include="TypeSystem\Resolver\InvocationResolveResult.cs" />
+    <Compile Include="TypeSystem\Resolver\IResolveVisitorNavigator.cs" />
     <Compile Include="TypeSystem\Resolver\LambdaResolveResult.cs" />
     <Compile Include="TypeSystem\Resolver\LocalResolveResult.cs" />
     <Compile Include="TypeSystem\Resolver\MemberLookup.cs" />
@@ -501,10 +502,12 @@
     <Compile Include="TypeSystem\Resolver\NamedArgumentResolveResult.cs" />
     <Compile Include="TypeSystem\Resolver\NameLookupMode.cs" />
     <Compile Include="TypeSystem\Resolver\NamespaceResolveResult.cs" />
+    <Compile Include="TypeSystem\Resolver\NodeListResolveVisitorNavigator.cs" />
     <Compile Include="TypeSystem\Resolver\OperatorResolveResult.cs" />
     <Compile Include="TypeSystem\Resolver\OperatorType.cs" />
     <Compile Include="TypeSystem\Resolver\OverloadResolution.cs" />
     <Compile Include="TypeSystem\Resolver\OverloadResolutionErrors.cs" />
+    <Compile Include="TypeSystem\Resolver\ResolveContext.partial.cs" />
     <Compile Include="TypeSystem\Resolver\ResolvedUsingScope.cs" />
     <Compile Include="TypeSystem\Resolver\ResolverExtensions.cs" />
     <Compile Include="TypeSystem\Resolver\SizeOfResolveResult.cs" />

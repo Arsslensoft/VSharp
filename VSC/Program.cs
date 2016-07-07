@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using VSC.AST;
 using VSC.Base;
 using VSC.TypeSystem;
+using VSC.TypeSystem.Implementation;
 using VSC.TypeSystem.Resolver;
 
 namespace VSC
@@ -29,9 +30,12 @@ namespace VSC
             vp.parse();
 
 
-            // Resolve
-            VSharpProjectContent pc = new VSharpProjectContent();
-            ICompilation c = pc.AddOrUpdateFiles(csf).CreateCompilation();
+            // ResolveScope
+            IProjectContent pc = new VSharpProjectContent();
+            pc = pc.AddOrUpdateFiles(csf);
+            pc = pc.AddAssemblyReferences(MinimalCorlib.Instance);
+            var c = pc.CreateCompilation();
+            
             ResolveContext rc = new ResolveContext(c,csf.Compiler.Report);
             csf.Resolve(rc);
             st.Stop();

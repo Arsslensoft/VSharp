@@ -58,7 +58,7 @@ namespace VSC.TypeSystem
 		
 		public Location Begin {
 			get {
-				return new Location (beginLine, beginColumn);
+				return new Location ( beginLine, beginColumn);
 			}
 		}
 		
@@ -94,7 +94,7 @@ namespace VSC.TypeSystem
 			this.endColumn = -1;
 		}
 		
-		public DomRegion (Location begin, Location end) : this (null, begin, end)
+		public DomRegion (Location begin, Location end) : this (begin.SourceFile.FullPathName, begin, end)
 		{
 		}
 		

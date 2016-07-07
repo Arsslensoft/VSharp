@@ -15,13 +15,13 @@ namespace VSC.AST
 
         public virtual ResolveResult Resolve(ResolveContext resolver)
         {
-            return null;
+            return new ConstantResolveResult(type.Resolve(resolver.CurrentTypeResolveContext), GetValue());
         }
 
 
         public ResolveResult Resolve(ITypeResolveContext context)
         {
-            var csContext = (VSharpTypeResolveContext)context;
+            var csContext = context as ResolveContext;
             if (context.CurrentAssembly != context.Compilation.MainAssembly)
             {
                 // The constant needs to be resolved in a different compilation.
@@ -31,14 +31,14 @@ namespace VSC.AST
                     ICompilation nestedCompilation = context.Compilation.SolutionSnapshot.GetCompilation(pc);
                     if (nestedCompilation != null)
                     {
-                        var nestedContext = MapToNestedCompilation(csContext, nestedCompilation);
-                        ResolveResult rr = Resolve(new ResolveContext(nestedContext));
+                        var nestedContext = MapToNestedCompilation(csContext.CurrentTypeResolveContext, nestedCompilation);
+                        ResolveResult rr = Resolve(new ResolveContext(nestedContext, CompilerContext.report));
                         return MapToNewContext(rr, context);
                     }
                 }
             }
-            // Resolve in current context.
-            return Resolve(new ResolveContext(csContext));
+            // ResolveScope in current context.
+            return Resolve(new ResolveContext(csContext.CurrentTypeResolveContext, CompilerContext.report));
         }
 
         VSharpTypeResolveContext MapToNestedCompilation(VSharpTypeResolveContext context, ICompilation nestedCompilation)
@@ -46,7 +46,7 @@ namespace VSC.AST
             var nestedContext = new VSharpTypeResolveContext(nestedCompilation.MainAssembly);
             if (context.CurrentUsingScope != null)
             {
-                nestedContext = nestedContext.WithUsingScope(context.CurrentUsingScope.UnresolvedUsingScope.Resolve(nestedCompilation));
+                nestedContext = nestedContext.WithUsingScope(context.CurrentUsingScope.UnresolvedUsingScope.ResolveScope(nestedCompilation));
             }
             if (context.CurrentTypeDefinition != null)
             {

@@ -91,17 +91,9 @@ namespace VSC.TypeSystem
         IReadOnlyCollectionOfT,
         /// <summary><c>System.Collections.Generic.IReadOnlyList{T}</c></summary>
         IReadOnlyListOfT,
-        /// <summary><c>System.Threading.Tasks.Task</c></summary>
-        Task,
-        /// <summary><c>System.Threading.Tasks.Task{T}</c></summary>
-        TaskOfT,
         /// <summary><c>System.Nullable{T}</c></summary>
         NullableOfT,
         /// <summary><c>System.IDisposable</c></summary>
         IDisposable,
-        /// <summary><c>System.Runtime.CompilerServices.INotifyCompletion</c></summary>
-        INotifyCompletion,
-        /// <summary><c>System.Runtime.CompilerServices.ICriticalNotifyCompletion</c></summary>
-        ICriticalNotifyCompletion,
     }
 }

@@ -22,7 +22,7 @@ namespace VSC.TypeSystem.Implementation
 		
 		public ResolveResult Resolve(ITypeResolveContext context)
 		{
-			//return new ConstantResolveResult(type.Resolve(context), value); //TODO:Fix this
+			//return new ConstantResolveResult(type.ResolveScope(context), value); //TODO:Fix this
             return null;
 		}
 		

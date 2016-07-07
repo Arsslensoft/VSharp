@@ -34,10 +34,6 @@ namespace VSC.TypeSystem
 		/// </summary>
 		/// <remarks>This corresponds to V# 'protected internal'.</remarks>
 		ProtectedOrInternal,
-		/// <summary>
-		/// The entity is accessible in derived classes within the same project content.
-		/// </summary>
-		/// <remarks>V# does not support this accessibility.</remarks>
-		ProtectedAndInternal,
+
 	}
 }

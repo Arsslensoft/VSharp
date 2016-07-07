@@ -1,4 +1,5 @@
 using VSC.Base;
+using VSC.Context;
 using VSC.TypeSystem;
 using VSC.TypeSystem.Resolver;
 
@@ -6,7 +7,7 @@ namespace VSC.AST
 {
     public abstract class TypeNameExpression : FullNamedExpression , ITypeReference
     {
-    
+        public bool LookForAttribute = false;
         protected  string name;
         protected TypeArguments targs;
         public NameLookupMode lookupMode;
@@ -57,7 +58,7 @@ namespace VSC.AST
             {
                 ctx = new VSharpTypeResolveContext(context.CurrentAssembly ?? context.Compilation.MainAssembly, null, context.CurrentTypeDefinition, context.CurrentMember);
             }
-            return ResolveType(new ResolveContext(ctx));
+            return ResolveType(new ResolveContext(ctx, CompilerContext.report));
 
             // A potential issue might be this scenario:
 

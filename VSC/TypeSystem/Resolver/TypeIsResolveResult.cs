@@ -5,7 +5,7 @@ using VSC.Base;
 namespace VSC.TypeSystem.Resolver
 {
 	/// <summary>
-	/// Resolve result for a V# 'is' expression.
+	/// ResolveScope result for a V# 'is' expression.
 	/// "Input is TargetType".
 	/// </summary>
 	public class TypeIsResolveResult : ResolveResult

@@ -63,7 +63,7 @@ namespace VSC.TypeSystem.Resolver
                 foreach (var unresolvedFile in projectContent.Files.OfType<CompilationSourceFile>())
                 {
 					var attributes = assemblyAttributes ? unresolvedFile.AssemblyAttributes : unresolvedFile.ModuleAttributes;
-					var context = new VSharpTypeResolveContext(this, unresolvedFile.RootUsingScope.Resolve(compilation));
+					var context = new VSharpTypeResolveContext(this, unresolvedFile.RootUsingScope.ResolveScope(compilation));
 					foreach (var unresolvedAttr in attributes) {
 						result.Add(unresolvedAttr.CreateResolvedAttribute(context));
 					}
@@ -149,7 +149,7 @@ namespace VSC.TypeSystem.Resolver
 					internalsVisibleTo = (
 						from attr in this.AssemblyAttributes
 						where attr.AttributeType.Name == "InternalsVisibleToAttribute"
-						&& attr.AttributeType.Namespace == "System.Runtime.CompilerServices"
+                        && attr.AttributeType.Namespace == "Std.Runtime.CompilerServices"
 						&& attr.PositionalArguments.Count == 1
 						select GetShortName(attr.PositionalArguments.Single().ConstantValue as string)
 					).ToArray();

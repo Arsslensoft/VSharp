@@ -11,11 +11,13 @@ using VSC.TypeSystem.Resolver;
 namespace VSC.AST
 {
 
-    public class VSharpAttribute : IUnresolvedAttribute
+    public class VSharpAttribute : IUnresolvedAttribute, IResolve
     {
         public readonly string ExplicitTarget;
         public AttributeTargets Target;
         readonly TypeNameExpression attributeType;
+
+        public IAttribute ResolvedAttribute;
 
         Arguments pos_args, named_args;
         readonly Location loc;
@@ -25,13 +27,12 @@ namespace VSC.AST
             if (args != null)
             {
                 pos_args = args[0];
-                this.positionalArguments = pos_args.ToPositionalArgs();
-                if (args[1] != null)
-                {
-                    this.namedCtorArguments = named_args.ToNamedCtorArgs();
-                    this.namedArguments = named_args.ToNamedArgs();
-                }
+                 pos_args.FilterArgs(out namedCtorArguments, out positionalArguments);
                 named_args = args[1];
+                if (args[1] != null)
+                    this.namedArguments = named_args.ToNamedArgs();
+                
+             
             }
             this.loc = loc;
             ExplicitTarget = target;
@@ -85,18 +86,18 @@ namespace VSC.AST
         IList<KeyValuePair<string, IConstantValue>> namedArguments;
         public IAttribute CreateResolvedAttribute(ITypeResolveContext context)
         {
-            return new VSharpResolvedAttribute((VSharpTypeResolveContext)context, this);
+            return new VSharpResolvedAttribute(context as ResolveContext, this);
         }
 
-        sealed class VSharpResolvedAttribute : IAttribute
+       public sealed class VSharpResolvedAttribute : IAttribute
         {
-            readonly VSharpTypeResolveContext context;
+            readonly ResolveContext context;
             readonly VSharpAttribute unresolved;
             readonly IType attributeType;
 
             IList<KeyValuePair<IMember, ResolveResult>> namedArguments;
 
-            public VSharpResolvedAttribute(VSharpTypeResolveContext context, VSharpAttribute unresolved)
+            public VSharpResolvedAttribute(ResolveContext context, VSharpAttribute unresolved)
             {
                 this.context = context;
                 this.unresolved = unresolved;
@@ -115,9 +116,9 @@ namespace VSC.AST
                 get { return attributeType; }
             }
 
-            ResolveResult ctorInvocation;
+          public  ResolveResult ctorInvocation;
 
-            InvocationResolveResult GetCtorInvocation()
+          public  InvocationResolveResult GetCtorInvocation()
             {
                 ResolveResult rr = LazyInit.VolatileRead(ref this.ctorInvocation);
                 if (rr != null)
@@ -126,7 +127,7 @@ namespace VSC.AST
                 }
                 else
                 {
-                    ResolveContext resolver = new ResolveContext(context);
+              
                     int totalArgumentCount = unresolved.positionalArguments.Count + unresolved.namedCtorArguments.Count;
                     ResolveResult[] arguments = new ResolveResult[totalArgumentCount];
                     string[] argumentNames = new string[totalArgumentCount];
@@ -143,7 +144,7 @@ namespace VSC.AST
                         arguments[i] = pair.Value.Resolve(context);
                         i++;
                     }
-                    rr = resolver.ResolveObjectCreation(attributeType, arguments, argumentNames);
+                    rr = context.ResolveObjectCreation(attributeType, arguments, argumentNames);
                     return LazyInit.GetOrSet(ref this.ctorInvocation, rr) as InvocationResolveResult;
                 }
             }
@@ -212,5 +213,49 @@ namespace VSC.AST
 
         #endregion
 
+
+
+
+        public bool Resolve(ResolveContext rc)
+        {
+            AttributeType.LookForAttribute = true;
+            ResolvedAttribute = CreateResolvedAttribute(rc);
+            if (ResolvedAttribute.AttributeType is UnknownTypeSpec)
+                rc.Report.Error(151, Location, "The attribute type `{0}' does not exist in the current context",
+                    AttributeType.GetSignatureForError());
+            else
+            {
+                if (ResolvedAttribute.AttributeType is ResolvedTypeDefinitionSpec)
+                {
+                    var t = ResolvedAttribute.AttributeType as ResolvedTypeDefinitionSpec;
+                    if(t.IsAbstract)
+                        rc.Report.Error(152, Location, "Cannot apply attribute class `{0}' because it is abstract", ResolvedAttribute.AttributeType.ToString());
+           
+                    if(t.IsStatic)
+                        rc.Report.Error(153, Location, "Cannot apply attribute class `{0}' because it is static", ResolvedAttribute.AttributeType.ToString());
+
+
+                }
+                bool is_attrib = false;
+                foreach(IType b in ResolvedAttribute.AttributeType.DirectBaseTypes)
+                    if (b.FullName == "Std.Attribute")
+                    {
+                        is_attrib = true;
+                        break;  
+                    }
+
+                if(!is_attrib)
+                    rc.Report.Error(153, Location, "`{0}': is not an attribute class", ResolvedAttribute.AttributeType.ToString());
+
+                // ctor checking
+                var ctor = (ResolvedAttribute as VSharpResolvedAttribute).GetCtorInvocation();
+                if(ctor != null && ctor.IsError)
+                    rc.Report.Error(154, Location, "A constructor has been found for `{0}' but an error has occured", ResolvedAttribute.AttributeType.ToString());
+                else if(ctor == null)
+                    rc.Report.Error(154, Location, "No suitable constructor has been found for `{0}'", ResolvedAttribute.AttributeType.ToString());
+            }
+            return true;
+            
+        }
     }
 }

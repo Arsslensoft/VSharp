@@ -1016,30 +1016,14 @@ namespace VSC.TypeSystem.Resolver
 				
 				IType inferredRet = lambda.GetInferredReturnType(parameterTypes);
 				int r = BetterConversion(inferredRet, ret1, ret2);
-				if (r == 0 && lambda.IsAsync) {
-					ret1 = UnpackTask(ret1);
-					ret2 = UnpackTask(ret2);
-					inferredRet = UnpackTask(inferredRet);
-					if (ret1 != null && ret2 != null && inferredRet != null)
-						r = BetterConversion(inferredRet, ret1, ret2);
-				}
+				
 				return r;
 			} else {
 				return BetterConversion(resolveResult.Type, t1, t2);
 			}
 		}
 		
-		/// <summary>
-		/// Unpacks the generic Task[T]. Returns null if the input is not Task[T].
-		/// </summary>
-		static IType UnpackTask(IType type)
-		{
-            ParameterizedTypeSpec pt = type as ParameterizedTypeSpec;
-			if (pt != null && pt.TypeParameterCount == 1 && pt.Name == "Task" && pt.Namespace == "System.Threading.Tasks") {
-				return pt.GetTypeArgument(0);
-			}
-			return null;
-		}
+		
 		
 		/// <summary>
 		/// Gets the better conversion (V# 4.0 spec, §7.5.3.4)

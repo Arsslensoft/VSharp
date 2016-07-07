@@ -116,7 +116,7 @@ namespace VSC
 		string FormatLocation (string fileName)
 		{
 
-            return fileName + "(" + Line.ToString() + "," + Column.ToString();
+            return fileName + "(" + Line.ToString() + "," + Column.ToString() +")";
 				
 
 		}

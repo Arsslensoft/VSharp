@@ -30,7 +30,7 @@ namespace VSC.TypeSystem.Implementation
 		/// <summary>
 		/// Creates a new GetClassTypeReference that searches a top-level type in all assemblies.
 		/// </summary>
-		/// <param name="namespaceName">The namespace name containing the type, e.g. "System.Collections.Generic".</param>
+        /// <param name="namespaceName">The namespace name containing the type, e.g. "Std.Collections.Generic".</param>
 		/// <param name="name">The name of the type, e.g. "List".</param>
 		/// <param name="typeParameterCount">The number of type parameters, (e.g. 1 for List&lt;T&gt;).</param>
 		public GetClassTypeReference(string namespaceName, string name, int typeParameterCount = 0)
@@ -43,7 +43,7 @@ namespace VSC.TypeSystem.Implementation
 		/// </summary>
 		/// <param name="assembly">A reference to the assembly containing this type.
 		/// If this parameter is null, the GetClassTypeReference will search in all assemblies belonging to the ICompilation.</param>
-		/// <param name="namespaceName">The namespace name containing the type, e.g. "System.Collections.Generic".</param>
+        /// <param name="namespaceName">The namespace name containing the type, e.g. "Std.Collections.Generic".</param>
 		/// <param name="name">The name of the type, e.g. "List".</param>
 		/// <param name="typeParameterCount">The number of type parameters, (e.g. 1 for List&lt;T&gt;).</param>
 		public GetClassTypeReference(IAssemblyReference assembly, string namespaceName, string name, int typeParameterCount = 0)

@@ -151,12 +151,12 @@ namespace VSC.TypeSystem.Resolver
 		/// <summary>
 		/// Resolves the namespace represented by this using scope.
 		/// </summary>
-		public ResolvedUsingScope Resolve(ICompilation compilation)
+		public ResolvedUsingScope ResolveScope(ICompilation compilation)
 		{
 			CacheManager cache = compilation.CacheManager;
 			ResolvedUsingScope resolved = cache.GetShared(this) as ResolvedUsingScope;
 			if (resolved == null) {
-				var csContext = new VSharpTypeResolveContext(compilation.MainAssembly, parent != null ? parent.Resolve(compilation) : null);
+				var csContext = new VSharpTypeResolveContext(compilation.MainAssembly, parent != null ? parent.ResolveScope(compilation) : null);
 				resolved = (ResolvedUsingScope)cache.GetOrAddShared(this, new ResolvedUsingScope(csContext, this));
 			}
 			return resolved;

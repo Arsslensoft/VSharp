@@ -63,28 +63,29 @@ namespace VSC.AST
 
             return il;
         }
-        public IList<KeyValuePair<string, IConstantValue>> ToNamedCtorArgs()
+        public void FilterArgs(out IList<KeyValuePair<string, IConstantValue>> il, out IList<IConstantValue> POS)
         {
-            List<KeyValuePair<string, IConstantValue>> il = new List<KeyValuePair<string, IConstantValue>>();
-            foreach (NamedArgument arg in args)
-                if (arg.CtorArgument &&arg.Expr is IConstantValue)
-                    il.Add(new KeyValuePair<string, IConstantValue>(arg.Name, arg.Expr as IConstantValue));
-                else if(arg.CtorArgument)
-                    CompilerContext.report.Error(1, arg.loc, "Attribute named argument expression must be a constant");
-
-            return il;
-        }
-        public IList<IConstantValue> ToPositionalArgs()
-        {
-            List<IConstantValue> il = new List<IConstantValue>();
+            il = new List<KeyValuePair<string, IConstantValue>>();
+            POS = new List<IConstantValue>();
             foreach (var arg in args)
-                if (arg.Expr is IConstantValue)
-                    il.Add(arg.Expr as IConstantValue);
-                else
-                    CompilerContext.report.Error(1, arg.loc, "Attribute argument expression must be a constant");
+                if (arg is NamedArgument)
+                    il.Add(new KeyValuePair<string, IConstantValue>((arg as NamedArgument).Name, arg.Expr as IConstantValue));
+                else POS.Add(arg.Expr as IConstantValue);
 
-            return il;
+
         }
+        public void FilterArgs(out List<KeyValuePair<string, Expression>> il, out List<Expression> POS)
+        {
+            il = new List<KeyValuePair<string, Expression>>();
+            POS = new List<Expression>();
+            foreach (var arg in args)
+                if (arg is NamedArgument)
+                    il.Add(new KeyValuePair<string, Expression>((arg as NamedArgument).Name, arg.Expr));
+                else POS.Add(arg.Expr);
+
+
+        }
+   
         //
         // At least one argument is named argument
         //

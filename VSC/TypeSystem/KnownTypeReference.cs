@@ -8,56 +8,53 @@ namespace VSC.TypeSystem
 	[Serializable]
 	public sealed class KnownTypeReference : ITypeReference
 	{
-		internal const int KnownTypeCodeCount = (int)KnownTypeCode.ICriticalNotifyCompletion + 1;
+        internal const int KnownTypeCodeCount = (int)KnownTypeCode.IDisposable + 1;
 		
 		static readonly KnownTypeReference[] knownTypeReferences = new KnownTypeReference[KnownTypeCodeCount] {
 			null, // None
-			new KnownTypeReference(KnownTypeCode.Object,   "System", "Object", baseType: KnownTypeCode.None),
-			new KnownTypeReference(KnownTypeCode.DBNull,   "System", "DBNull"),
-			new KnownTypeReference(KnownTypeCode.Boolean,  "System", "Boolean",  baseType: KnownTypeCode.ValueType),
-			new KnownTypeReference(KnownTypeCode.Char,     "System", "Char",     baseType: KnownTypeCode.ValueType),
-			new KnownTypeReference(KnownTypeCode.SByte,    "System", "SByte",    baseType: KnownTypeCode.ValueType),
-			new KnownTypeReference(KnownTypeCode.Byte,     "System", "Byte",     baseType: KnownTypeCode.ValueType),
-			new KnownTypeReference(KnownTypeCode.Int16,    "System", "Int16",    baseType: KnownTypeCode.ValueType),
-			new KnownTypeReference(KnownTypeCode.UInt16,   "System", "UInt16",   baseType: KnownTypeCode.ValueType),
-			new KnownTypeReference(KnownTypeCode.Int32,    "System", "Int32",    baseType: KnownTypeCode.ValueType),
-			new KnownTypeReference(KnownTypeCode.UInt32,   "System", "UInt32",   baseType: KnownTypeCode.ValueType),
-			new KnownTypeReference(KnownTypeCode.Int64,    "System", "Int64",    baseType: KnownTypeCode.ValueType),
-			new KnownTypeReference(KnownTypeCode.UInt64,   "System", "UInt64",   baseType: KnownTypeCode.ValueType),
-			new KnownTypeReference(KnownTypeCode.Single,   "System", "Single",   baseType: KnownTypeCode.ValueType),
-			new KnownTypeReference(KnownTypeCode.Double,   "System", "Double",   baseType: KnownTypeCode.ValueType),
-			new KnownTypeReference(KnownTypeCode.Decimal,  "System", "Decimal",  baseType: KnownTypeCode.ValueType),
-			new KnownTypeReference(KnownTypeCode.DateTime, "System", "DateTime", baseType: KnownTypeCode.ValueType),
+			new KnownTypeReference(KnownTypeCode.Object,   "Std", "Object", baseType: KnownTypeCode.None),
+			new KnownTypeReference(KnownTypeCode.DBNull,   "Std", "DBNull"),
+			new KnownTypeReference(KnownTypeCode.Boolean,  "Std", "Boolean",  baseType: KnownTypeCode.ValueType),
+			new KnownTypeReference(KnownTypeCode.Char,     "Std", "Char",     baseType: KnownTypeCode.ValueType),
+			new KnownTypeReference(KnownTypeCode.SByte,    "Std", "SByte",    baseType: KnownTypeCode.ValueType),
+			new KnownTypeReference(KnownTypeCode.Byte,     "Std", "Byte",     baseType: KnownTypeCode.ValueType),
+			new KnownTypeReference(KnownTypeCode.Int16,    "Std", "Int16",    baseType: KnownTypeCode.ValueType),
+			new KnownTypeReference(KnownTypeCode.UInt16,   "Std", "UInt16",   baseType: KnownTypeCode.ValueType),
+			new KnownTypeReference(KnownTypeCode.Int32,    "Std", "Int32",    baseType: KnownTypeCode.ValueType),
+			new KnownTypeReference(KnownTypeCode.UInt32,   "Std", "UInt32",   baseType: KnownTypeCode.ValueType),
+			new KnownTypeReference(KnownTypeCode.Int64,    "Std", "Int64",    baseType: KnownTypeCode.ValueType),
+			new KnownTypeReference(KnownTypeCode.UInt64,   "Std", "UInt64",   baseType: KnownTypeCode.ValueType),
+			new KnownTypeReference(KnownTypeCode.Single,   "Std", "Single",   baseType: KnownTypeCode.ValueType),
+			new KnownTypeReference(KnownTypeCode.Double,   "Std", "Double",   baseType: KnownTypeCode.ValueType),
+			new KnownTypeReference(KnownTypeCode.Decimal,  "Std", "Decimal",  baseType: KnownTypeCode.ValueType),
+			new KnownTypeReference(KnownTypeCode.DateTime, "Std", "DateTime", baseType: KnownTypeCode.ValueType),
 			null,
-			new KnownTypeReference(KnownTypeCode.String,    "System", "String"),
-			new KnownTypeReference(KnownTypeCode.Void,      "System", "Void"),
-			new KnownTypeReference(KnownTypeCode.Type,      "System", "Type"),
-			new KnownTypeReference(KnownTypeCode.Array,     "System", "Array"),
-			new KnownTypeReference(KnownTypeCode.Attribute, "System", "Attribute"),
-			new KnownTypeReference(KnownTypeCode.ValueType, "System", "ValueType"),
-			new KnownTypeReference(KnownTypeCode.Enum,      "System", "Enum", baseType: KnownTypeCode.ValueType),
-			new KnownTypeReference(KnownTypeCode.Delegate,  "System", "Delegate"),
-			new KnownTypeReference(KnownTypeCode.MulticastDelegate, "System", "MulticastDelegate", baseType: KnownTypeCode.Delegate),
-			new KnownTypeReference(KnownTypeCode.Exception, "System", "Exception"),
-			new KnownTypeReference(KnownTypeCode.IntPtr,    "System", "IntPtr", baseType: KnownTypeCode.ValueType),
-			new KnownTypeReference(KnownTypeCode.UIntPtr,   "System", "UIntPtr", baseType: KnownTypeCode.ValueType),
-			new KnownTypeReference(KnownTypeCode.IEnumerable,    "System.Collections", "IEnumerable"),
-			new KnownTypeReference(KnownTypeCode.IEnumerator,    "System.Collections", "IEnumerator"),
-			new KnownTypeReference(KnownTypeCode.IEnumerableOfT, "System.Collections.Generic", "IEnumerable", 1),
-			new KnownTypeReference(KnownTypeCode.IEnumeratorOfT, "System.Collections.Generic", "IEnumerator", 1),
-			new KnownTypeReference(KnownTypeCode.ICollection,    "System.Collections", "ICollection"),
-			new KnownTypeReference(KnownTypeCode.ICollectionOfT, "System.Collections.Generic", "ICollection", 1),
-			new KnownTypeReference(KnownTypeCode.IList,          "System.Collections", "IList"),
-			new KnownTypeReference(KnownTypeCode.IListOfT,       "System.Collections.Generic", "IList", 1),
+			new KnownTypeReference(KnownTypeCode.String,    "Std", "String"),
+			new KnownTypeReference(KnownTypeCode.Void,      "Std", "Void"),
+			new KnownTypeReference(KnownTypeCode.Type,      "Std", "Type"),
+			new KnownTypeReference(KnownTypeCode.Array,     "Std", "Array"),
+			new KnownTypeReference(KnownTypeCode.Attribute, "Std", "Attribute"),
+			new KnownTypeReference(KnownTypeCode.ValueType, "Std", "ValueType"),
+			new KnownTypeReference(KnownTypeCode.Enum,      "Std", "Enum", baseType: KnownTypeCode.ValueType),
+			new KnownTypeReference(KnownTypeCode.Delegate,  "Std", "Delegate"),
+			new KnownTypeReference(KnownTypeCode.MulticastDelegate, "Std", "MulticastDelegate", baseType: KnownTypeCode.Delegate),
+			new KnownTypeReference(KnownTypeCode.Exception, "Std", "Exception"),
+			new KnownTypeReference(KnownTypeCode.IntPtr,    "Std", "IntPtr", baseType: KnownTypeCode.ValueType),
+			new KnownTypeReference(KnownTypeCode.UIntPtr,   "Std", "UIntPtr", baseType: KnownTypeCode.ValueType),
+			new KnownTypeReference(KnownTypeCode.IEnumerable,    "Std.Collections", "IEnumerable"),
+			new KnownTypeReference(KnownTypeCode.IEnumerator,    "Std.Collections", "IEnumerator"),
+			new KnownTypeReference(KnownTypeCode.IEnumerableOfT, "Std.Collections.Generic", "IEnumerable", 1),
+			new KnownTypeReference(KnownTypeCode.IEnumeratorOfT, "Std.Collections.Generic", "IEnumerator", 1),
+			new KnownTypeReference(KnownTypeCode.ICollection,    "Std.Collections", "ICollection"),
+			new KnownTypeReference(KnownTypeCode.ICollectionOfT, "Std.Collections.Generic", "ICollection", 1),
+			new KnownTypeReference(KnownTypeCode.IList,          "Std.Collections", "IList"),
+			new KnownTypeReference(KnownTypeCode.IListOfT,       "Std.Collections.Generic", "IList", 1),
 
-			new KnownTypeReference(KnownTypeCode.IReadOnlyCollectionOfT, "System.Collections.Generic", "IReadOnlyCollection", 1),
-			new KnownTypeReference(KnownTypeCode.IReadOnlyListOfT, "System.Collections.Generic", "IReadOnlyList", 1),
-			new KnownTypeReference(KnownTypeCode.Task,        "System.Threading.Tasks", "Task"),
-			new KnownTypeReference(KnownTypeCode.TaskOfT,     "System.Threading.Tasks", "Task", 1, baseType: KnownTypeCode.Task),
-			new KnownTypeReference(KnownTypeCode.NullableOfT, "System", "Nullable", 1, baseType: KnownTypeCode.ValueType),
-			new KnownTypeReference(KnownTypeCode.IDisposable, "System", "IDisposable"),
-			new KnownTypeReference(KnownTypeCode.INotifyCompletion, "System.Runtime.CompilerServices", "INotifyCompletion"),
-			new KnownTypeReference(KnownTypeCode.ICriticalNotifyCompletion, "System.Runtime.CompilerServices", "ICriticalNotifyCompletion"),
+			new KnownTypeReference(KnownTypeCode.IReadOnlyCollectionOfT, "Std.Collections.Generic", "IReadOnlyCollection", 1),
+			new KnownTypeReference(KnownTypeCode.IReadOnlyListOfT, "Std.Collections.Generic", "IReadOnlyList", 1),
+			new KnownTypeReference(KnownTypeCode.NullableOfT, "Std", "Nullable", 1, baseType: KnownTypeCode.ValueType),
+			new KnownTypeReference(KnownTypeCode.IDisposable, "Std", "IDisposable"),
+		
 		};
 		
 		/// <summary>
@@ -259,15 +256,6 @@ namespace VSC.TypeSystem
 		/// </summary>
 		public static readonly KnownTypeReference IReadOnlyListOfT = Get(KnownTypeCode.IReadOnlyListOfT);
 		
-		/// <summary>
-		/// Gets a type reference pointing to the <c>System.Threading.Tasks.Task</c> type.
-		/// </summary>
-		public static readonly KnownTypeReference Task = Get(KnownTypeCode.Task);
-		
-		/// <summary>
-		/// Gets a type reference pointing to the <c>System.Threading.Tasks.Task{T}</c> type.
-		/// </summary>
-		public static readonly KnownTypeReference TaskOfT = Get(KnownTypeCode.TaskOfT);
 		
 		/// <summary>
 		/// Gets a type reference pointing to the <c>System.Nullable{T}</c> type.
@@ -279,15 +267,7 @@ namespace VSC.TypeSystem
 		/// </summary>
 		public static readonly KnownTypeReference IDisposable = Get(KnownTypeCode.IDisposable);
 
-		/// <summary>
-		/// Gets a type reference pointing to the <c>System.Runtime.CompilerServices.INotifyCompletion</c> type.
-		/// </summary>
-		public static readonly KnownTypeReference INotifyCompletion = Get(KnownTypeCode.INotifyCompletion);
 
-		/// <summary>
-		/// Gets a type reference pointing to the <c>System.Runtime.CompilerServices.ICriticalNotifyCompletion</c> type.
-		/// </summary>
-		public static readonly KnownTypeReference ICriticalNotifyCompletion = Get(KnownTypeCode.ICriticalNotifyCompletion);
 
 		readonly KnownTypeCode knownTypeCode;
 		readonly string namespaceName;

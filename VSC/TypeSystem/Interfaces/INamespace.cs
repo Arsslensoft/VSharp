@@ -19,7 +19,7 @@ namespace VSC.TypeSystem
 		string ExternAlias { get; }
 		
 		/// <summary>
-		/// Gets the full name of this namespace. (e.g. "System.Collections")
+        /// Gets the full name of this namespace. (e.g. "Std.Collections")
 		/// </summary>
 		string FullName { get; }
 		

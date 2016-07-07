@@ -47,12 +47,6 @@ namespace VSC.TypeSystem
         /// </value>
         bool IsProtectedOrInternal { get; }
 		
-        /// <summary>
-        /// Gets a value indicating whether this instance is protected and internal.
-        /// </summary>
-        /// <value>
-        /// <c>true</c> if this instance is protected and internal; otherwise, <c>false</c>.
-        /// </value>
-        bool IsProtectedAndInternal { get; }
+    
     }
 }

@@ -20,7 +20,7 @@ namespace VSC.AST
     public abstract class MemberContainer : UnresolvedEntitySpec, IUnresolvedMember, IAstNode, IResolve
     {
 
-
+        public IAstNode ParentNode { get; set; }
         //
         // Common modifiers allowed in a class declaration
         //
@@ -322,9 +322,9 @@ namespace VSC.AST
             throw new NotImplementedException();
         }
 
-        public bool Resolve(ResolveContext rc)
+        public virtual bool Resolve(ResolveContext rc)
         {
-            throw new NotImplementedException();
+            return true;
         }
 
         #region unresolved
@@ -453,7 +453,7 @@ namespace VSC.AST
             get { return this.DeclaringTypeDefinition; }
         }
 
-        #region Resolve
+        #region ResolveScope
         public abstract IMember CreateResolved(ITypeResolveContext context);
 
         public virtual IMember Resolve(ITypeResolveContext context)

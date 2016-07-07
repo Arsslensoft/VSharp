@@ -12,7 +12,7 @@ namespace VSC.AST
 {
     public class CompilationSourceFile : FreezableSpec,IUnresolvedFile, IAstNode, IResolve
     {
-
+        public IAstNode ParentNode { get; set; }
         readonly UsingScope rootUsingScope;
         IList<IUnresolvedTypeDefinition> topLevelTypeDefinitions = new List<IUnresolvedTypeDefinition>();
         IList<IUnresolvedAttribute> assemblyAttributes = new List<IUnresolvedAttribute>();
@@ -35,12 +35,10 @@ namespace VSC.AST
             rootUsingScope = RootPackage;
         }
 
-        public IList<TypeContainer> Containers
+        readonly List<PackageContainer> _packages = new List<PackageContainer>();
+        public IList<PackageContainer> Containers
         {
-            get
-            {
-                return this.TopLevelTypeDefinitions.Cast<TypeContainer>().ToList();
-            }
+            get { return _packages; }
         }
         public IDictionary<string, bool> Conditionals
         {
@@ -60,8 +58,10 @@ namespace VSC.AST
         public void AddAttributes(VSharpAttributes attr)
         {
            if(attr  != null)
-            foreach(var att in attr.Attrs)
-                moduleAttributes.Add(att);
+               foreach (var att in attr.Attrs)
+                   moduleAttributes.Add(att);
+                  
+               
 
 
         }
@@ -131,12 +131,39 @@ namespace VSC.AST
             throw new NotImplementedException();
         }
 
+        public void ResolveWithCurrentContext(ResolveContext rc)
+        {
+            foreach (var attr in moduleAttributes)
+            {
+                VSharpAttribute a = (VSharpAttribute)attr;
+                a.Resolve(rc);
+                resolvedAttributes.Add(a.ResolvedAttribute);
+
+            }
+
+
+           
+            RootPackage.Resolve(rc);
+            
+        }
+        List<IAttribute> resolvedAttributes = new List<IAttribute>();
         public bool Resolve(ResolveContext rc)
         {
-            foreach (var c in Containers)
-                c.Resolve(rc);
 
-            RootPackage.Resolve(rc);
+            ResolveContext previousResolver = rc;
+            try
+            {
+                
+                    rc = rc.WithCurrentUsingScope(RootPackage.ResolveScope(rc.Compilation));
+
+            ResolveWithCurrentContext(rc);
+              
+            }
+            finally
+            {
+                rc = previousResolver;
+            }
+        
             return true;
         }
 
@@ -251,7 +278,7 @@ namespace VSC.AST
         public VSharpTypeResolveContext GetTypeResolveContext(ICompilation compilation, Location loc)
         {
             var rctx = new VSharpTypeResolveContext(compilation.MainAssembly);
-            rctx = rctx.WithUsingScope(GetUsingScope(loc).Resolve(compilation));
+            rctx = rctx.WithUsingScope(GetUsingScope(loc).ResolveScope(compilation));
             var curDef = GetInnermostTypeDefinition(loc);
             if (curDef != null)
             {
@@ -270,7 +297,7 @@ namespace VSC.AST
 
         public ResolveContext GetResolver(ICompilation compilation, Location loc)
         {
-            return new ResolveContext(GetTypeResolveContext(compilation, loc));
+            return new ResolveContext(GetTypeResolveContext(compilation, loc), CompilerContext.report);
         }
 
         public string GetDocumentation(IUnresolvedEntity entity)

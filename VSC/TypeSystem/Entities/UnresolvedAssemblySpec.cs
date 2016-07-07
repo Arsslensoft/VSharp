@@ -158,7 +158,7 @@ namespace VSC.TypeSystem.Implementation
 			
 			public ResolveResult Resolve(ITypeResolveContext context)
 			{
-                //return new TypeOfResolveResult(context.Compilation.FindType(KnownTypeCode.Type), typeRef.Resolve(context)); //TODO:Fix this
+                //return new TypeOfResolveResult(context.Compilation.FindType(KnownTypeCode.Type), typeRef.ResolveScope(context)); //TODO:Fix this
                 return null;
 			}
 		}
@@ -338,7 +338,7 @@ namespace VSC.TypeSystem.Implementation
 						internalsVisibleTo = (
 							from attr in this.AssemblyAttributes
 							where attr.AttributeType.Name == "InternalsVisibleToAttribute"
-							&& attr.AttributeType.Namespace == "System.Runtime.CompilerServices"
+							&& attr.AttributeType.Namespace == "Std.Runtime"
 							&& attr.PositionalArguments.Count == 1
 							select GetShortName(attr.PositionalArguments.Single().ConstantValue as string)
 						).ToArray();
@@ -384,7 +384,9 @@ namespace VSC.TypeSystem.Implementation
 				if (unresolved.DeclaringTypeDefinition != null) {
 					ITypeDefinition declaringType = GetTypeDefinition(unresolved.DeclaringTypeDefinition);
 					return new ResolvedTypeDefinitionSpec(context.WithCurrentTypeDefinition(declaringType), unresolved);
-				} else if (unresolved.Name == "Void" && unresolved.Namespace == "System" && unresolved.TypeParameters.Count == 0) {
+                }
+                else if (unresolved.Name == "Void" && unresolved.Namespace == "Std" && unresolved.TypeParameters.Count == 0)
+                {
 					return new VoidTypeDefinition(context, unresolved);
 				} else {
 					return new ResolvedTypeDefinitionSpec(context, unresolved);

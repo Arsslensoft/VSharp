@@ -1,4 +1,5 @@
 using VSC.TypeSystem;
+using VSC.TypeSystem.Resolver;
 
 namespace VSC.AST
 {
@@ -20,6 +21,11 @@ namespace VSC.AST
             : base(parent, mod, AllowedModifiers, name, attrs, l, TypeKind.Class,file)
         {
 
+        }
+
+        public override bool Resolve(ResolveContext rc)
+        {
+            return base.Resolve(rc);
         }
     }
 }

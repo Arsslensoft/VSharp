@@ -3,7 +3,7 @@ using System;
 namespace VSC.TypeSystem.Implementation
 {
 	/// <summary>
-	/// Resolve context represents the minimal mscorlib required for evaluating constants.
+	/// ResolveScope context represents the minimal mscorlib required for evaluating constants.
 	/// This contains all known types (<see cref="KnownTypeCode"/>) and no other types.
 	/// </summary>
 	public sealed class MinimalCorlib : UnresolvedAssemblySpec
@@ -27,7 +27,7 @@ namespace VSC.TypeSystem.Implementation
 				if (typeRef != null) {
 					types[i] = new UnresolvedTypeDefinitionSpec(typeRef.Namespace, typeRef.Name);
 					for (int j = 0; j < typeRef.TypeParameterCount; j++) {
-						types[i].TypeParameters.Add(new UnresolvedTypeParameterSpec(SymbolKind.TypeDefinition, j));
+						types[i].TypeParameters.Add(new UnresolvedTypeParameterSpec(SymbolKind.TypeDefinition, j, VSC.Location.Null));
 					}
 					AddTypeDefinition(types[i]);
 				}
