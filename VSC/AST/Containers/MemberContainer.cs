@@ -322,11 +322,15 @@ namespace VSC.AST
             throw new NotImplementedException();
         }
 
-        public virtual bool Resolve(ResolveContext rc)
+        bool IResolve.Resolve(ResolveContext rc)
+        {
+            return ResolveMember(rc);
+        }
+
+        public virtual bool ResolveMember(ResolveContext rc)
         {
             return true;
         }
-
         #region unresolved
        protected ITypeReference returnType = SpecialTypeSpec.UnknownType;
         IList<IMemberReference> interfaceImplementations;

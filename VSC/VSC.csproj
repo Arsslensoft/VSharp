@@ -326,6 +326,7 @@
     <Compile Include="Base\InternalErrorException.cs" />
     <Compile Include="Base\KeyComparer.cs" />
     <Compile Include="Base\LazyInit.cs" />
+    <Compile Include="Base\ListReportPrinter.cs" />
     <Compile Include="Base\MultiDictionary.cs" />
     <Compile Include="Base\NullReportPrinter.cs" />
     <Compile Include="Base\ParserSession.cs" />
@@ -492,7 +493,6 @@
     <Compile Include="TypeSystem\Resolver\ForEachResolveResult.cs" />
     <Compile Include="TypeSystem\Resolver\InitializedObjectResolveResult.cs" />
     <Compile Include="TypeSystem\Resolver\InvocationResolveResult.cs" />
-    <Compile Include="TypeSystem\Resolver\IResolveVisitorNavigator.cs" />
     <Compile Include="TypeSystem\Resolver\LambdaResolveResult.cs" />
     <Compile Include="TypeSystem\Resolver\LocalResolveResult.cs" />
     <Compile Include="TypeSystem\Resolver\MemberLookup.cs" />
@@ -502,7 +502,6 @@
     <Compile Include="TypeSystem\Resolver\NamedArgumentResolveResult.cs" />
     <Compile Include="TypeSystem\Resolver\NameLookupMode.cs" />
     <Compile Include="TypeSystem\Resolver\NamespaceResolveResult.cs" />
-    <Compile Include="TypeSystem\Resolver\NodeListResolveVisitorNavigator.cs" />
     <Compile Include="TypeSystem\Resolver\OperatorResolveResult.cs" />
     <Compile Include="TypeSystem\Resolver\OperatorType.cs" />
     <Compile Include="TypeSystem\Resolver\OverloadResolution.cs" />

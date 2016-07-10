@@ -82,6 +82,6 @@ namespace VSC.TypeSystem
 
         bool IsBaseTypeDefinition(IType baseType);
         bool IsAccessibleAs(IType b);
-        bool IsInternalAccessible(IAssembly asm, IAssembly current);
+        bool IsInternalAccessible(IAssembly asm);
 	}
 }

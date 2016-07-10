@@ -1,3 +1,6 @@
+using VSC.TypeSystem;
+using VSC.TypeSystem.Resolver;
+
 namespace VSC.AST
 {
     /// <summary>
@@ -26,5 +29,16 @@ namespace VSC.AST
 
         #endregion
 
+        public override IConstantValue BuilConstantValue(ResolveContext rc, bool isAttributeConstant)
+        {
+            if (isAttributeConstant)
+            {
+                return new TypeOfConstantExpression(QueriedType as ITypeReference);
+            }
+            else
+            {
+                return null;
+            }
+        }
     }
 }

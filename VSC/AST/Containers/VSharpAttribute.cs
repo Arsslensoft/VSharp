@@ -229,10 +229,10 @@ namespace VSC.AST
                 {
                     var t = ResolvedAttribute.AttributeType as ResolvedTypeDefinitionSpec;
                     if(t.IsAbstract)
-                        rc.Report.Error(152, Location, "Cannot apply attribute class `{0}' because it is abstract", ResolvedAttribute.AttributeType.ToString());
+                        rc.Report.Error(168, Location, "Cannot apply attribute class `{0}' because it is abstract", ResolvedAttribute.AttributeType.ToString());
            
                     if(t.IsStatic)
-                        rc.Report.Error(153, Location, "Cannot apply attribute class `{0}' because it is static", ResolvedAttribute.AttributeType.ToString());
+                        rc.Report.Error(169, Location, "Cannot apply attribute class `{0}' because it is static", ResolvedAttribute.AttributeType.ToString());
 
 
                 }
@@ -245,14 +245,14 @@ namespace VSC.AST
                     }
 
                 if(!is_attrib)
-                    rc.Report.Error(153, Location, "`{0}': is not an attribute class", ResolvedAttribute.AttributeType.ToString());
+                    rc.Report.Error(170, Location, "<`{0}': is not an attribute class", ResolvedAttribute.AttributeType.ToString());
 
                 // ctor checking
                 var ctor = (ResolvedAttribute as VSharpResolvedAttribute).GetCtorInvocation();
                 if(ctor != null && ctor.IsError)
-                    rc.Report.Error(154, Location, "A constructor has been found for `{0}' but an error has occured", ResolvedAttribute.AttributeType.ToString());
+                    rc.Report.Error(171, Location, "A constructor has been found for `{0}' but an error has occured", ResolvedAttribute.AttributeType.ToString());
                 else if(ctor == null)
-                    rc.Report.Error(154, Location, "No suitable constructor has been found for `{0}'", ResolvedAttribute.AttributeType.ToString());
+                    rc.Report.Error(172, Location, "No suitable constructor has been found for `{0}'", ResolvedAttribute.AttributeType.ToString());
             }
             return true;
             

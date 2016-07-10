@@ -18,7 +18,7 @@ namespace VSC.TypeSystem
 	/// the type arguments.
 	/// </remarks>
 	[Serializable]
-	public sealed class ParameterizedTypeSpec : IType, ICompilationProvider
+    public sealed class ParameterizedTypeSpec : IType, IEntity, ICompilationProvider
 	{
 		readonly ITypeDefinition genericType;
 		readonly IType[] typeArguments;
@@ -320,5 +320,113 @@ namespace VSC.TypeSystem
 			else
 				return new ParameterizedTypeSpec(def, ta ?? typeArguments);
 		}
-	}
+
+#region IEntity
+        public DomRegion Region
+        {
+            get { return genericType.Region; }
+        }
+
+        public DomRegion BodyRegion
+        {
+            get { return genericType.BodyRegion; }
+        }
+
+        public ITypeDefinition DeclaringTypeDefinition
+        {
+            get { return genericType.DeclaringTypeDefinition; }
+        }
+
+        public IAssembly ParentAssembly
+        {
+            get { return genericType.ParentAssembly; }
+        }
+
+        public IList<IAttribute> Attributes
+        {
+            get { return genericType.Attributes; }
+        }
+
+        public bool IsStatic
+        {
+            get { return genericType.IsStatic; }
+        }
+
+        public bool IsAbstract
+        {
+            get { return genericType.IsAbstract; }
+        }
+
+        public bool IsSealed
+        {
+            get { return genericType.IsSealed; }
+        }
+
+        public bool IsShadowing
+        {
+            get { return genericType.IsShadowing; }
+        }
+
+        public bool IsSynthetic
+        {
+            get { return genericType.IsSynthetic; }
+        }
+
+        public bool IsBaseTypeDefinition(IType baseType)
+        {
+           return genericType.IsBaseTypeDefinition(baseType);
+        }
+
+        public bool IsAccessibleAs(IType b)
+        {
+            return genericType.IsAccessibleAs(b);
+        }
+
+        public bool IsInternalAccessible(IAssembly asm)
+        {
+            return genericType.IsInternalAccessible(asm);
+        }
+
+        public SymbolKind SymbolKind
+        {
+            get { return genericType.SymbolKind; }
+        }
+
+        public ISymbolReference ToReference()
+        {
+            return genericType.ToReference();
+        }
+
+        public Accessibility Accessibility
+        {
+            get { return genericType.Accessibility; }
+        }
+
+        public bool IsPrivate
+        {
+            get { return genericType.IsPrivate; }
+        }
+
+        public bool IsPublic
+        {
+            get { return genericType.IsPublic; }
+        }
+
+        public bool IsProtected
+        {
+            get { return genericType.IsProtected; }
+        }
+
+        public bool IsInternal
+        {
+            get { return genericType.IsInternal; }
+        }
+
+        public bool IsProtectedOrInternal
+        {
+            get { return genericType.IsProtectedOrInternal; }
+        }
+
+#endregion
+    }
 }

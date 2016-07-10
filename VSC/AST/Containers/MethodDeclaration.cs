@@ -28,7 +28,7 @@ namespace VSC.AST
                 }
                 else
                 {
-                    
+                    this.typeParameters = new List<IUnresolvedTypeParameter>();
                     foreach (var tp in mn.TypeParameters.names)
                         this.typeParameters.Add(new UnresolvedTypeParameterSpec(SymbolKind.Method, idx++, tp.Location,tp.Name));
                 }

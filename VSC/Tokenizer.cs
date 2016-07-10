@@ -431,7 +431,7 @@ namespace VSC
 
             tab_size = context.Settings.TabSize;
             if (tab_size == 0)
-                tab_size = 8;
+                tab_size = 4;
         }
 
         public void PushPosition()

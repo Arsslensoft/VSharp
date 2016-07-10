@@ -7,6 +7,7 @@ using VSC.Base;
 using VSC.Context;
 using VSC.TypeSystem;
 using VSC.TypeSystem.Implementation;
+using VSC.TypeSystem.Resolver;
 
 namespace VSC.AST
 {
@@ -16,7 +17,7 @@ namespace VSC.AST
     [Serializable]
     public sealed class Parameter : IUnresolvedParameter, IFreezable, ISupportsInterning
     {
-
+        public Expression DefaultExpression;
         public Parameter Clone()
         {
             Parameter p = (Parameter)MemberwiseClone();
@@ -138,6 +139,7 @@ namespace VSC.AST
             }
         }
 
+     
         public IConstantValue DefaultValue
         {
             get { return defaultValue; }
@@ -269,10 +271,15 @@ namespace VSC.AST
         {
             return attributeType.Name == "OptionalAttribute" && attributeType.Namespace == "Std.Runtime";
         }
-
+       
         public IParameter CreateResolvedParameter(ITypeResolveContext context)
         {
             Freeze();
+
+            if (DefaultExpression != null)
+                defaultValue = DefaultExpression.ConvertConstantValue(type);
+
+
             if (defaultValue != null)
             {
                 return new ResolvedParameterWithDefaultValue(defaultValue, context)

@@ -82,22 +82,11 @@ namespace VSC.TypeSystem.Resolver
             //
             public bool IsBaseTypeDefinition(IType baseType)
             {
-                var type = this as IType;
-                if (baseType == null || type == null)
-                    return false;
-
-                foreach (var t in type.DirectBaseTypes.Cast<ResolvedEntitySpec>())
-                    if (t.IsBaseTypeDefinition(baseType))
-                        return true;
-
-
-
-
-                return type == baseType;
+                throw new NotSupportedException();
             }
-            public bool IsInternalAccessible(IAssembly asm, IAssembly current)
+            public bool IsInternalAccessible(IAssembly asm)
             {
-                return asm != null && current != null && asm.InternalsVisibleTo(current);
+                throw new NotSupportedException();
             }
 			readonly ICompilation compilation;
 			readonly IList<IParameter> parameters = new List<IParameter>();

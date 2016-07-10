@@ -38,7 +38,7 @@ namespace VSC
 		PropertyOrIndexer current_property;
 		EventDeclaration current_event;
 		EventFieldDeclaration current_event_field;
-	
+		EnumMemberDeclaration prevField;
 
 		/// <summary>
 		///   Current block is used to add statements as we find
@@ -974,7 +974,7 @@ constant_declaration
 		Lexer.doc_state = XmlCommentState.Allowed;
 		}
 		
-		current_field.ConstantValue = (IConstantValue) $7;
+		current_field.Initializer = (Expression) $7;
 		current_field = null;
 	  }
 	| opt_attributes 
@@ -1002,7 +1002,7 @@ constant_declarator
 	  {
 	  var lt = (LocatedToken) $2;
 	  	var cfd = new ConstantDeclaration (current_field as ConstantDeclaration, new MemberName (lt.Value, lt.Location));
-		cfd.ConstantValue = (IConstantValue) $3;
+		cfd.Initializer = (Expression) $3;
 		current_type.AddMember (cfd);
 		current_field.Declarators.Add(cfd);
 	  }
@@ -1075,7 +1075,7 @@ opt_field_initializer
 	  variable_initializer
 	  {
 	  	--lexer.parsing_block;
-		current_field.ConstantValue = (IConstantValue) $3;
+		current_field.Initializer = (Expression) $3;
 		end_block (lexer.Location);
 		current_local_parameters = null;
 	  }
@@ -1108,7 +1108,7 @@ field_declarator
 		--lexer.parsing_block;
 		 var lt = (LocatedToken) $2;
 	  	var fd = new FieldDeclaration (current_field, new MemberName (lt.Value, lt.Location));
-		fd.ConstantValue = (IConstantValue) $4;
+		fd.Initializer = (Expression) $4;
 		current_type.AddMember (fd);
 		current_field.Declarators.Add(fd);
 	  }
@@ -1453,7 +1453,7 @@ fixed_parameter
 		$$ = new Parameter ((FullNamedExpression) $3, lt.Value, mod, (VSharpAttributes) $1, lt.Location);
 	
 	if ($7 != null)
-		((Parameter) $$).DefaultValue = (IConstantValue) $7;
+		((Parameter) $$).DefaultExpression = (Expression) $7;
 	  }
 	;
 
@@ -2505,7 +2505,7 @@ enum_declaration
 		if (name.IsGeneric) {
 			report.Error (102, name.Location, "Enums cannot have type parameters");
 		}
-		
+
 		push_current_container (new EnumDeclaration (current_container, (FullNamedExpression) $5, (Modifiers) $2, name, (VSharpAttributes) $1,file));
 	
 	  }
@@ -2528,7 +2528,7 @@ enum_declaration
 
 	//		if (doc_support)
 	//				em.DocComment = ev.DocComment;
-
+	prevField = null;
 		$$ = pop_current_class ();
 	  }
 	;
@@ -2571,7 +2571,13 @@ enum_member_declaration
 			em.DocComment = Lexer.consume_doc_comment ();
 			Lexer.doc_state = XmlCommentState.Allowed;
 		}
-
+	
+	if (prevField == null || prevField.ConstantValue == null) {
+					em.ConstantValue = new IntConstant(0,GetLocation($2));
+				} else {
+					em.ConstantValue =( prevField.ConstantValue as IntegralConstant).Increment() ;
+				}
+prevField = em;
 		$$ = em;
 	  }
 	| opt_attributes IDENTIFIER
@@ -2588,12 +2594,12 @@ enum_member_declaration
 		
 		var lt = (LocatedToken) $2;
 	  	var em = new EnumMemberDeclaration ((EnumDeclaration) current_type, new MemberName (lt.Value, lt.Location), (VSharpAttributes) $1);
-	  	em.ConstantValue = (IConstantValue) $5;
+	  	em.Initializer =(Expression)$5;
 	  	((EnumDeclaration) current_type).AddMember (em);
 		
 		if (doc_support)
 			em.DocComment = ConsumeStoredComment ();
-
+			prevField = em;
 		$$ = em;
 	  }
 	| opt_attributes IDENTIFIER error
@@ -6520,7 +6526,8 @@ void Error_MissingInitializer (Location loc)
 	report.Error (141, loc, "You must provide an initializer in a fixed or using statement declaration");
 }
 
-
+	
+		
 void push_current_container (TypeDeclaration tce)
 {	
 	++lexer.parsing_declaration;

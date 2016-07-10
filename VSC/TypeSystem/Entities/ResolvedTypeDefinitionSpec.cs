@@ -44,55 +44,56 @@ namespace VSC.TypeSystem.Implementation
                 var pAccess = (b as IEntity).Accessibility;
                 if (pAccess == Accessibility.Public || pAccess == Accessibility.None)
                     continue;
+                IType mc = this;
                 bool same_access_restrictions = false;
-                for (IType mc = this as IType; !same_access_restrictions && mc != null && mc.DirectBaseTypes.FirstOrDefault() != null; mc = mc.DirectBaseTypes.FirstOrDefault())
+                do
                 {
                     var al = (mc as IEntity).Accessibility;
                     switch (pAccess)
                     {
-                        case Accessibility.Internal:
-                            if (al == Accessibility.Private || al == Accessibility.Internal)
-                                same_access_restrictions = IsInternalAccessible((b as IEntity).ParentAssembly, (mc as IEntity).ParentAssembly);
+                        case TypeSystem.Accessibility.Internal:
+                            if (al == TypeSystem.Accessibility.Private || al == TypeSystem.Accessibility.Internal)
+                                same_access_restrictions = (b as IEntity).IsInternalAccessible((mc as IEntity).ParentAssembly);
+
                             break;
 
-                        case Accessibility.Protected:
-                            if (al == Accessibility.Protected)
+                        case TypeSystem.Accessibility.Protected:
+                            if (al == TypeSystem.Accessibility.Protected)
                             {
-                                same_access_restrictions =
-                                    (mc.DirectBaseTypes.FirstOrDefault() as IEntity).IsBaseTypeDefinition(p_parent);
+                                same_access_restrictions = (mc.DeclaringType as IEntity).IsBaseTypeDefinition(p_parent);
                                 break;
                             }
 
-                            if (al == Accessibility.Private)
+                            if (al == TypeSystem.Accessibility.Private)
                             {
                                 //
                                 // When type is private and any of its parents derives from
                                 // protected type then the type is accessible
                                 //
-                                while (mc.DirectBaseTypes.FirstOrDefault() != null)
+                                while (mc.DeclaringType != null)
                                 {
-                                    if ((mc.DirectBaseTypes.FirstOrDefault() as IEntity).IsBaseTypeDefinition(p_parent))
+                                    if ((mc.DeclaringType as IEntity).IsBaseTypeDefinition(p_parent))
                                     {
                                         same_access_restrictions = true;
                                         break;
                                     }
 
-                                    mc = mc.DirectBaseTypes.FirstOrDefault();
+                                    mc = mc.DeclaringType;
                                 }
                             }
 
                             break;
 
-                        case Accessibility.ProtectedOrInternal:
-                            if (al == Accessibility.Internal)
-                                same_access_restrictions = IsInternalAccessible((b as IEntity).ParentAssembly, (mc as IEntity).ParentAssembly);
-                            else if (al == Accessibility.ProtectedOrInternal)
-                                same_access_restrictions = (mc.DirectBaseTypes.FirstOrDefault() as IEntity).IsBaseTypeDefinition(p_parent) && IsInternalAccessible((b as IEntity).ParentAssembly, (mc as IEntity).ParentAssembly);
-                            else if (al == Accessibility.Protected)
+                        case TypeSystem.Accessibility.ProtectedOrInternal:
+                            if (al == TypeSystem.Accessibility.Internal)
+                                same_access_restrictions = (b as IEntity).IsInternalAccessible((mc as IEntity).ParentAssembly);
+                            else if (al == TypeSystem.Accessibility.ProtectedOrInternal)
+                                same_access_restrictions = (mc.DeclaringType as IEntity).IsBaseTypeDefinition(p_parent) && (b as IEntity).IsInternalAccessible((mc as IEntity).ParentAssembly);
+                            else if (al == TypeSystem.Accessibility.Protected)
                                 goto case TypeSystem.Accessibility.Protected;
-                            else if (al == Accessibility.Private)
+                            else if (al == TypeSystem.Accessibility.Private)
                             {
-                                if (IsInternalAccessible((b as IEntity).ParentAssembly, (mc as IEntity).ParentAssembly))
+                                if ((b as IEntity).IsInternalAccessible((mc as IEntity).ParentAssembly))
                                 {
                                     same_access_restrictions = true;
                                 }
@@ -104,17 +105,18 @@ namespace VSC.TypeSystem.Implementation
 
                             break;
 
-                        case Accessibility.Private:
+                        case TypeSystem.Accessibility.Private:
                             //
                             // Both are private and share same parent
                             //
-                            if (al == Accessibility.Private)
+                            if (al == TypeSystem.Accessibility.Private)
                             {
-                                var decl = mc.DirectBaseTypes.FirstOrDefault();
+                                var decl = mc.DeclaringType;
                                 do
                                 {
                                     same_access_restrictions = decl == p_parent;
-                                } while (!same_access_restrictions && decl.DeclaringType == null && (decl = decl.DirectBaseTypes.FirstOrDefault()) != null);
+                                    
+                                } while (!same_access_restrictions && decl.DeclaringType != null && (decl = decl.DeclaringType) != null);
                             }
 
                             break;
@@ -122,13 +124,13 @@ namespace VSC.TypeSystem.Implementation
                         default:
                             throw new InternalErrorException(al.ToString());
                     }
-                }
+                    mc = mc.DeclaringType;
+                } while (!same_access_restrictions && mc != null && mc.DeclaringType != null);
+              
 
                 if (!same_access_restrictions)
                     return false;
-
             }
-
             return true;
         }
         //
@@ -150,15 +152,15 @@ namespace VSC.TypeSystem.Implementation
 
             return type == baseType;
         }
-        public bool IsInternalAccessible(IAssembly asm, IAssembly current)
+        public bool IsInternalAccessible(IAssembly asm)
         {
-            return asm != null && current != null && asm.InternalsVisibleTo(current);
+            return asm != null && ParentAssembly != null && asm.InternalsVisibleTo(ParentAssembly);
         }
 		readonly ITypeResolveContext parentContext;
 		readonly IUnresolvedTypeDefinition[] parts;
    
 		Accessibility accessibility = Accessibility.Internal;
-		bool isAbstract, isSealed, isShadowing;
+		bool isAbstract, isSealed, isShadowing, isStatic;
 		bool isSynthetic = true; // true if all parts are synthetic
 		
 		public ResolvedTypeDefinitionSpec(ITypeResolveContext parentContext, params IUnresolvedTypeDefinition[] parts)
@@ -175,6 +177,7 @@ namespace VSC.TypeSystem.Implementation
 				isSealed    |= part.IsSealed;
 				isShadowing |= part.IsShadowing;
 				isSynthetic &= part.IsSynthetic; // true if all parts are synthetic
+			    isStatic |= part.IsStatic;
 				
 				// internal is the default, so use another part's accessibility until we find a non-internal accessibility
 				if (accessibility == Accessibility.Internal)
@@ -611,19 +614,19 @@ namespace VSC.TypeSystem.Implementation
 		{
 			List<IType> result = new List<IType>();
 			bool hasNonInterface = false;
-			if (this.Kind != TypeKind.Enum) {
+//if (this.Kind != TypeKind.Enum) {
 				foreach (var part in parts) {
 					var context = part.CreateResolveContext(parentContext).WithCurrentTypeDefinition(this);
 					foreach (var baseTypeRef in part.BaseTypes) {
 						IType baseType = baseTypeRef.Resolve(context);
-						if (!(baseType.Kind == TypeKind.Unknown || result.Contains(baseType))) {
+						if (baseType.Kind != TypeKind.Unknown) {
 							result.Add(baseType);
 							if (baseType.Kind != TypeKind.Interface)
 								hasNonInterface = true;
 						}
 					}
 				}
-			}
+			
             if (!hasNonInterface && !(this.Name == "Object" && this.Namespace == "Std" && this.TypeParameterCount == 0))
             {
 				KnownTypeCode primitiveBaseType;
@@ -696,7 +699,7 @@ namespace VSC.TypeSystem.Implementation
 		}
 		
 		#region Modifiers
-		public bool IsStatic    { get { return isAbstract && isSealed; } }
+        public bool IsStatic { get { return isStatic; } }
 		public bool IsAbstract  { get { return isAbstract; } }
 		public bool IsSealed    { get { return isSealed; } }
 		public bool IsShadowing { get { return isShadowing; } }

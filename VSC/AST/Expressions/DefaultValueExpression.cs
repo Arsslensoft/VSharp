@@ -1,3 +1,6 @@
+using VSC.TypeSystem;
+using VSC.TypeSystem.Resolver;
+
 namespace VSC.AST
 {
     public class DefaultValueExpression : Expression
@@ -18,5 +21,9 @@ namespace VSC.AST
             }
         }
 
+        public override IConstantValue BuilConstantValue(ResolveContext rc, bool isAttributeConstant)
+        {
+            return new ConstantDefaultValue(Expr as ITypeReference);
+        }
     }
 }

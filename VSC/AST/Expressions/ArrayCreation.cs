@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using VSC.TypeSystem;
+using VSC.TypeSystem.Resolver;
 
 namespace VSC.AST
 {
@@ -88,5 +90,43 @@ namespace VSC.AST
             }
         }
 
+
+        public override IConstantValue BuilConstantValue(ResolveContext rc, bool isAttributeConstant)
+        {
+            var initializer = Initializers;
+            // Attributes only allow one-dimensional arrays
+            if (isAttributeConstant && initializer != null && dimensions < 2)
+            {
+                ITypeReference type;
+                if (TypeExpression == null)
+                    type = null;
+                else
+                {
+                    type = TypeExpression as ITypeReference;
+                    ComposedTypeSpecifier sp = rank;
+                    while (sp != null)
+                    {
+                        type =new ArrayTypeReference(type, sp.Dimension);
+                        sp = sp.Next;
+                    }
+           
+                   
+                }
+                Constant[] elements = new Constant[initializer.Elements.Count];
+                int pos = 0;
+                foreach (Expression expr in initializer.Elements)
+                {
+                    Constant c = expr.BuilConstantValue(rc, isAttributeConstant) as Constant;
+                    if (c == null)
+                        return null;
+                    elements[pos++] = c;
+                }
+                return new ConstantArrayCreation(type, elements);
+            }
+            else
+            {
+                return null;
+            }
+        }
     }
 }

@@ -17,7 +17,7 @@ namespace VSC.TypeSystem.Implementation
 		IUnresolvedTypeDefinition declaringTypeDefinition;
 
       protected  Modifiers mod_flags = Modifiers.NONE;
-		string name = string.Empty;
+		protected string name = string.Empty;
 		protected IList<IUnresolvedAttribute> attributes;
 		internal RareFields rareFields;
 		

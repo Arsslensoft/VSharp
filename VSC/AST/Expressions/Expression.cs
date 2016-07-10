@@ -72,5 +72,28 @@ namespace VSC.AST
         {
             throw new NotImplementedException();
         }
+
+        public  IConstantValue ConvertConstantValue(ITypeReference targetType)
+        {
+            return ConvertConstantValue(targetType, this, CompilerContext.InternProvider);
+        }
+
+        protected IConstantValue ConvertConstantValue(
+             ITypeReference targetType, Expression expression,
+             InterningProvider interningProvider)
+        {
+
+            Constant c = expression as Constant;
+            if (c == null)
+                return new ErrorConstantValue(targetType);
+
+            // cast to the desired type
+            return interningProvider.Intern(new ConstantCast(targetType, c, true));
+        }
+         public virtual IConstantValue BuilConstantValue(ResolveContext rc, bool isAttributeConstant)
+         {
+             return this as IConstantValue;
+             
+         }
     }
 }

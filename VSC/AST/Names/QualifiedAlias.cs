@@ -78,6 +78,10 @@ namespace VSC.AST
                 if ((Result == null || Result.IsError) && LookForAttribute)
                     Result = resolver.ResolveMemberAccess(targetRR, name, typeArgs, lookupMode);
             }
+
+            if (Result.IsError)
+                resolver.Report.Error(148, loc, "Type `{0}' does not contain a definition for `{1}' and no extension method `{1}' of type `{0}' could be found.", expr.GetSignatureForError(), GetSignatureForError());           
+           
             return Result;
         }
         public override string ToString()

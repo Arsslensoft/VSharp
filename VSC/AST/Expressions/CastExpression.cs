@@ -1,3 +1,6 @@
+using VSC.TypeSystem;
+using VSC.TypeSystem.Resolver;
+
 namespace VSC.AST
 {
     public class CastExpression : ShimExpression
@@ -14,6 +17,15 @@ namespace VSC.AST
         public Expression TargetType
         {
             get { return target_type; }
+        }
+
+        public override IConstantValue BuilConstantValue(ResolveContext rc, bool isAttributeConstant)
+        {
+            Constant v = Expr.BuilConstantValue(rc, isAttributeConstant) as Constant;
+            if (v == null)
+                return null;
+            var typeReference = TargetType as ITypeReference;
+            return new ConstantCast(typeReference, v, false);
         }
     }
 }

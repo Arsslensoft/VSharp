@@ -1,3 +1,6 @@
+using VSC.TypeSystem;
+using VSC.TypeSystem.Resolver;
+
 namespace VSC.AST
 {
     public class UnaryExpression : Expression
@@ -10,6 +13,23 @@ namespace VSC.AST
             Oper = op;
             Expr = expr;
             this.loc = loc;
+        }
+
+        public override IConstantValue BuilConstantValue(ResolveContext rc, bool isAttributeConstant)
+        {
+            Constant v = Expr.BuilConstantValue(rc, isAttributeConstant) as Constant;
+            if (v == null)
+                return null;
+            switch (Oper)
+            {
+                case UnaryOperatorType.LogicalNot:
+                case UnaryOperatorType.OnesComplement:
+                case UnaryOperatorType.UnaryNegation:
+                case UnaryOperatorType.UnaryPlus:
+                    return new ConstantUnaryOperator(Oper, v);
+                default:
+                    return null;
+            }
         }
     }
 }

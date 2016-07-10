@@ -9,7 +9,7 @@ namespace VSC.AST
 {
     public interface IAstNode
     {
-        IAstNode ParentNode { get; set; }
+     
     //   void AcceptVisitor(IVisitor visitor);
     }
 }

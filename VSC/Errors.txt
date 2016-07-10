@@ -149,3 +149,48 @@
 149 = An `import' directive can only be applied to namespaces but `{0}' denotes a type.
 150 = The imported package or type '{0}' does not exist in the current context
 151 = The attribute type `{0}' does not exist in the current context
+152 = `{0}': an abstract class cannot be sealed or static
+153 = `{0}': a class cannot be both static and sealed
+154 = `{0}': Static classes cannot have primary constructor
+155 = A generic type cannot derive from `{0}' because it is an attribute class
+156 = Primary constructor of type `{0}' has parameter of same name as containing type
+157 = Primary constructor of type `{0}' has parameter of same name as type parameter `{1}'
+158 = Duplicate base class `{0}' for type definition `{1}'
+159 = `{0}': Classes cannot have multiple base classes (`{1}' and `{2}')
+160 = `{0}': Base class must be specified as first, `{1}' is not a the first base class
+161 = Type `{0}' is not an interface
+162 = Inconsistent accessibility: base interface `{0}' is less accessible than interface `{1}'
+163 = `{0}' is a sealed or a static class.
+164 = Type `{0}' is not sbyte,byte,short,ushort,int,uint,long,ulong
+165 =  Circular base class dependency involving `{0}' and `{1}'
+166 = Inherited interface `{0}' causes a cycle in the interface hierarchy of `{1}'",
+167 = The attribute type `{0}' does not exist in the current context
+168 = Cannot apply attribute class `{0}' because it is abstract
+169 = Cannot apply attribute class `{0}' because it is static
+170 = `{0}': is not an attribute class
+171 = A constructor has been found for `{0}' but an error has occured
+172 = No suitable constructor has been found for `{0}'
+173 = 
+174 = 
+175 = 
+176 = 
+177 = 
+178 = 
+179 = 
+180
+181
+182 =
+
+183
+W184
+W185
+W186
+187
+188
+189
+190
+191
+192
+193
+194
+195

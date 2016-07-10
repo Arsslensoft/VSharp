@@ -4,6 +4,7 @@ namespace VSC.AST
     {
         void Visit(CompilationSourceFile node);
         void Visit(TypeContainer node);
+        void Visit(MemberContainer node);
         void Visit(PackageContainer node);
         void Visit(ImportPackage node);
         void Visit(ImportPackageAlias node);

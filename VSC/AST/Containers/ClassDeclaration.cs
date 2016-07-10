@@ -23,9 +23,33 @@ namespace VSC.AST
 
         }
 
-        public override bool Resolve(ResolveContext rc)
+        public override void ResolveWithCurrentContext(ResolveContext rc)
         {
-            return base.Resolve(rc);
+            base.ResolveWithCurrentContext(rc);
+
+            // modifiers check
+            if (ResolvedTypeDefinition.IsSealed && ResolvedTypeDefinition.IsAbstract)
+                rc.Report.Error(152, Location, "`{0}': an abstract class cannot be sealed or static", GetSignatureForError());
+
+            if ((mod_flags & Modifiers.STATIC) == Modifiers.STATIC && (mod_flags & Modifiers.SEALED) == Modifiers.SEALED)
+                rc.Report.Error(153, Location, "`{0}': a class cannot be both static and sealed", GetSignatureForError());
+
+            
+            // classes cannot derive from a special type
+            if (ResolvedBaseType.IsKnownType(KnownTypeCode.Delegate) || ResolvedBaseType.IsKnownType(KnownTypeCode.MulticastDelegate) || ResolvedBaseType.IsKnownType(KnownTypeCode.Enum) || ResolvedBaseType.IsKnownType(KnownTypeCode.ValueType))
+                rc.Report.Error(195, Location, "`{0}' cannot derive from special class `{1}'",
+                    GetSignatureForError(), ResolvedBaseType.ToString());
+
+
+            // members check
+            if (IsStatic)
+            {
+                if (PrimaryConstructorParameters != null)
+                {
+                    rc.Report.Error(154, Location, "`{0}': Static classes cannot have primary constructor", GetSignatureForError());
+                    PrimaryConstructorParameters = null;
+                }
+            }
         }
     }
 }

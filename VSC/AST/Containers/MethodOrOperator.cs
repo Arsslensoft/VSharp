@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using VSC.TypeSystem;
 using VSC.TypeSystem.Implementation;
+using VSC.TypeSystem.Resolver;
 
 namespace VSC.AST
 {
@@ -13,7 +14,7 @@ namespace VSC.AST
     [Serializable]
     public class MethodOrOperator : MemberContainer, IUnresolvedMethod
     {
-
+        public ResolvedMethodSpec ResolvedMethod;
         protected ParametersCompiled aparameters;
         protected ToplevelBlock block;
         public ToplevelBlock Block
@@ -114,6 +115,54 @@ namespace VSC.AST
             base.FreezeInternal();
         }
 
+        public virtual void ResolveWithCurrentContext(ResolveContext rc)
+        {
+            
+        }
+        public override bool ResolveMember(ResolveContext rc)
+        {
+            ResolveContext oldResolver = rc;
+            try
+            {
+                IMember member = null;
+
+                if (member == null)
+                {
+                    // Re-discover the method:
+                    SymbolKind symbolKind = SymbolKind;
+                    var parameterTypes = parameters.Select(p => p.Type).ToList();
+                    if (symbolKind == SymbolKind.Constructor)
+                    {
+                        string name = IsStatic ? ".cctor" : ".ctor";
+                        member = Resolve(
+                            rc.CurrentTypeResolveContext, symbolKind, name,
+                            parameterTypeReferences: parameterTypes);
+                    }
+                    else if (symbolKind == SymbolKind.Destructor)
+                        member = Resolve(rc.CurrentTypeResolveContext, symbolKind, "Finalize");
+                    else
+                    {
+                        string[] typeParameterNames = typeParameters.Select(tp => tp.Name).ToArray();
+                        ITypeReference explicitInterfaceType = member_name.ExplicitInterface as ITypeReference;
+                        member = Resolve(
+                            rc.CurrentTypeResolveContext, symbolKind, Name,
+                            explicitInterfaceType, typeParameterNames, parameterTypes);
+                    }
+                }
+                rc = rc.WithCurrentMember(member);
+                ResolvedMethod = member as ResolvedMethodSpec;
+                
+                ResolveWithCurrentContext(rc);
+
+              
+            }
+            finally
+            {
+                rc = oldResolver;
+            }
+            return true;
+        }
+
         public override object Clone()
         {
             var copy = (MethodOrOperator)base.Clone();
@@ -149,6 +198,8 @@ namespace VSC.AST
             this.Name = name;
             if (declaringType != null)
                 this.UnresolvedFile = declaringType.UnresolvedFile;
+
+            this.typeParameters = new List<IUnresolvedTypeParameter>();
         }
 
         public IList<IUnresolvedAttribute> ReturnTypeAttributes

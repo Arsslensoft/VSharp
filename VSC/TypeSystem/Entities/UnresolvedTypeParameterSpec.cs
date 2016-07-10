@@ -169,11 +169,11 @@ namespace VSC.TypeSystem.Implementation
 
 	    }
 	    public ITypeParameter ResolvedTypeParameter; 
-	    void CheckCircular(TypeParameterSpec p, TypeParameterSpec baseType, ResolveContext rc, bool ignore_first = false, TypeParameterSpec parent = null)
+	    void CheckCircular(TypeParameterSpec p, TypeParameterSpec baseType, ResolveContext rc, bool ignoreFirst = false, TypeParameterSpec parent = null)
 	    {
-	        if (p == baseType && !ignore_first)
+	        if (p == baseType && !ignoreFirst)
 	        {
-                rc.Report.Error(454, Location,
+                rc.Report.Error(173, Location,
                   "Circular constraint dependency involving `{0}' and `{1}'",
                   p.Name, parent.Name);
                 return;
@@ -191,36 +191,29 @@ namespace VSC.TypeSystem.Implementation
             ResolvedTypeParameter = CreateResolvedTypeParameter(rc.CurrentTypeResolveContext);  
            
             // check for conflicting constraints (struct & class)
-            if(ResolvedTypeParameter.HasReferenceTypeConstraint && ResolvedTypeParameter.HasValueTypeConstraint )
-                rc.Report.Error(455, Location,
-        "Type parameter `{0}' inherits conflicting constraints `{1}' and `{2}'",
-        name, "struct","class");
+        //    if(ResolvedTypeParameter.HasReferenceTypeConstraint && ResolvedTypeParameter.HasValueTypeConstraint )
+        //        rc.Report.Error(174, Location,
+        //"Type parameter `{0}' inherits conflicting constraints `{1}' and `{2}'",
+        //name, "struct","class");
 
-            // check class_type
-            if (ResolvedTypeParameter.EffectiveBaseClass.IsReferenceType.HasValue && !ResolvedTypeParameter.EffectiveBaseClass.IsReferenceType.Value)
-            {
-                rc.Report.Error(450, Location,
-                     "`{0}': Only class or interface could be specified as a constraint",
-                     ResolvedTypeParameter.EffectiveBaseClass.ToString());
-            }
-      
+            
                             
             // check direct base types
-            List<string> checked_types = new List<string>();
+            List<IType> checked_types = new List<IType>();
             foreach (var type in ResolvedTypeParameter.DirectBaseTypes)
             {
                 // check for duplicate constraints
-                if (checked_types.Contains(type.FullName))
+                if (checked_types.Contains(type))
                 {
-                    rc.Report.Error(405, Location,
+                    rc.Report.Error(176, Location,
                             "Duplicate constraint `{0}' for type parameter `{1}'", type.ToString(), name);
                     continue;
 
                 }
-                checked_types.Add(type.FullName);
+                checked_types.Add(type);
                 // check accessibility of type & constraint
                 if (!ResolvedTypeParameter.Owner.IsAccessibleAs(type))
-                    rc.Report.Error(703, Location,
+                    rc.Report.Error(177, Location,
                              "Inconsistent accessibility: constraint type `{0}' is less accessible than `{1}'",
                              type.ToString(), ResolvedTypeParameter.Owner.ToString());
 
@@ -229,7 +222,7 @@ namespace VSC.TypeSystem.Implementation
                 {
                     TypeParameterSpec t = (type as TypeParameterSpec);
                     if (t.HasValueTypeConstraint)
-                        rc.Report.Error(456, Location,
+                        rc.Report.Error(178, Location,
                             "Type parameter `{0}' has the `struct' constraint, so it cannot be used as a constraint for `{1}'",
                             t.Name, name);
 
@@ -252,7 +245,7 @@ namespace VSC.TypeSystem.Implementation
                     if ((t.HasValueTypeConstraint && ResolvedTypeParameter.HasReferenceTypeConstraint) ||
                         (t.HasReferenceTypeConstraint && ResolvedTypeParameter.HasValueTypeConstraint))
                     {
-                        rc.Report.Error(450, Location,
+                        rc.Report.Error(179, Location,
                             "`{0}' and `{1}' : cannot specify both `class' and `struct' constraint",
                             t.Name, Name);
                     }
@@ -262,20 +255,28 @@ namespace VSC.TypeSystem.Implementation
                 {
 
                     // check static or sealed
-                    if ((type as ResolvedTypeDefinitionSpec).IsSealed)
+                    if ((type as IEntity).IsSealed)
                     {
-                        rc.Report.Error(701, Location,
-                            "`{0}' is not a valid constraint. A constraint must be an interface, a non-sealed nor static class or a type parameter",
+                        rc.Report.Error(180, Location,
+                            "`{0}' A constraint must be an interface,  a type parameter or a non sealed/static class",
                             type.ToString());
                     }
                 }
+
+                // primitive types check
+                if (type.IsBuiltinType())
+                 rc.Report.Error(182, Location,
+                       "The type `{0}' cannot not be used as a base type for type parameter `{1}' in type or method `{2}'. ",
+                    type.ToString(), name, ResolvedTypeParameter.Owner.ToString());
+
+
+
             }
             
-            // TODO: Add base types checks (Object, Delegate)
-
+            
             // constructor constraint
             if (ResolvedTypeParameter.HasDefaultConstructorConstraint && !ResolvedTypeParameter.EffectiveBaseClass.GetConstructors(x => x.Parameters.Count == 0).Any())
-                rc.Report.Error(310, Location,
+                rc.Report.Error(181, Location,
                         "The type `{0}' must have a public parameterless constructor in order to use it as parameter `{1}' in the generic type or method `{2}'",
                        ResolvedTypeParameter.EffectiveBaseClass.ToString(), name, ResolvedTypeParameter.Owner.ToString());
 

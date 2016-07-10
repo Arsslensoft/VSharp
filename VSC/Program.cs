@@ -43,7 +43,8 @@ namespace VSC
         }
         static void Main(string[] args)
         {
-            foreach (string g in Directory.GetFiles(@"C:\Users\Arsslen\Desktop\AST", "*.cs", SearchOption.AllDirectories))
+           
+            foreach (string g in Directory.GetFiles(@"C:\Users\Arsslen\Desktop\AST", "*.vs", SearchOption.AllDirectories))
                 Parse(g);
             Console.Read();
         }

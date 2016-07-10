@@ -1,5 +1,6 @@
 using System;
 using VSC.TypeSystem;
+using VSC.TypeSystem.Resolver;
 
 namespace VSC.AST
 {
@@ -45,6 +46,12 @@ namespace VSC.AST
 
         public override bool IsZeroInteger {
             get { return true; }
+        }
+
+
+        public override IConstantValue BuilConstantValue(ResolveContext rc, bool isAttributeConstant)
+        {
+            return new PrimitiveConstantExpression(KnownTypeReference.Object, null);
         }
     }
 }

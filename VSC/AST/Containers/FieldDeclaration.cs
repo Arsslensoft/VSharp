@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using VSC.Context;
 using VSC.TypeSystem;
 using VSC.TypeSystem.Implementation;
+using VSC.TypeSystem.Resolver;
 
 namespace VSC.AST
 {
@@ -12,7 +14,7 @@ namespace VSC.AST
     [Serializable]
     public class FieldDeclaration : MemberContainer, IUnresolvedField
     {
-      
+        public ResolvedFieldSpec ResolvedField;
         public List<FieldDeclaration> Declarators = new List<FieldDeclaration>();
        	// <summary>
 		//   Modifiers allowed in a class declaration
@@ -33,7 +35,7 @@ namespace VSC.AST
             FreezableHelper.Freeze(constantValue);
             base.FreezeInternal();
         }
-
+        public Expression Initializer { get; set; }
           // For declarators
         public FieldDeclaration(FieldDeclaration baseconstant, MemberName name, Modifiers allowed)
             : this(baseconstant.Parent, baseconstant.ReturnType, baseconstant.mod_flags,allowed, baseconstant.member_name,baseconstant.attributes)
@@ -96,6 +98,19 @@ namespace VSC.AST
             this.returnType = type;
 
 
+        }
+
+        public override bool ResolveMember(ResolveContext rc)
+        {
+            if (ConstantValue == null)
+                ConstantValue = (Initializer.BuilConstantValue(rc, false)  as Constant).ConvertConstantValue(returnType);
+            else
+                ConstantValue = (ConstantValue as Constant).ConvertConstantValue(returnType);
+
+
+            ResolvedField = MemberContainer.Resolve(rc.CurrentTypeResolveContext, SymbolKind, name) as ResolvedFieldSpec;
+      
+            return base.ResolveMember(rc);
         }
 
         public FieldDeclaration()
@@ -166,6 +181,13 @@ namespace VSC.AST
         IField IUnresolvedField.Resolve(ITypeResolveContext context)
         {
             return (IField)Resolve(context);
+        }
+
+
+    
+        public virtual void ResolveFieldWithCurrentContext(ResolveContext rc)
+        {
+            
         }
     }
 }

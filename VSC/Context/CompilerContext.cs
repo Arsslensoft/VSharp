@@ -14,10 +14,12 @@ namespace VSC.Context
     {
         public static Report report;
         public static InterningProvider InternProvider = new SimpleInterningProvider();
-        public CompilerContext(CompilerSettings settings = null)
+        public CompilerContext(CompilerSettings settings = null,bool console=true)
         {
             Settings = settings;
+            if(console)
             report = new Report(this, new ConsoleReportPrinter());
+            else report = new Report(this, new ListReportPrinter());
         }
         public Report Report { get { return report; } }
         public CompilerSettings Settings { get; set; }

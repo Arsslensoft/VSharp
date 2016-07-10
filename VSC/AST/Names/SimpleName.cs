@@ -60,14 +60,7 @@ namespace VSC.AST
 
             Result = Resolve(rc);
 
-            if (Result.IsError)
-            {
-              if(Result is AmbiguousTypeResolveResult)
-                  rc.Report.Error(7, loc, "The name `{0}' is ambigious", name);
-            }
-            else if (Result is LocalResolveResult && typeArgumentsrefs.Count > 0)
-                rc.Report.Error(8, loc, "The name `{0}' does not need type arguments because it's a local name", name);
-
+          
         
             
 
@@ -106,6 +99,16 @@ namespace VSC.AST
             if ((Result == null || Result.IsError) && LookForAttribute)
                 Result = rc.LookupSimpleNameOrTypeName(name, typeArgs, lookupMode);
 
+
+            if (Result.IsError)
+            {
+                if (Result is AmbiguousTypeResolveResult)
+                    rc.Report.Error(7, loc, "The name `{0}' is ambigious", name);
+                else rc.Report.Error(6, loc, "This name `{0}' does not exist in the current context", name);
+            }
+            else if (Result is LocalResolveResult && typeArgumentsrefs.Count > 0)
+                rc.Report.Error(8, loc, "The name `{0}' does not need type arguments because it's a local name", name);
+
             LookForAttribute = false;
             return Result;
         }
@@ -143,5 +146,10 @@ namespace VSC.AST
                    && this.typeArgumentsrefs == o.typeArgumentsrefs && this.lookupMode == o.lookupMode;
         }
         #endregion
+
+        public override IConstantValue BuilConstantValue(ResolveContext rc, bool isAttributeConstant)
+        {
+            return new ConstantIdentifierReference(Name, TypeArgumentsReferences);
+        }
     }
 }

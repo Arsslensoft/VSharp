@@ -97,7 +97,7 @@ namespace VSC.AST
                 Usings.Add(u as TypeNameExpression);
             else UsingAliases.Add(new KeyValuePair<string, TypeNameExpression>(imp.Alias.Value, u as TypeNameExpression));
         }
-
+     
         public void ResolveWithCurrentContext(ResolveContext rc)
         {
             foreach (var i in _imports)
@@ -110,6 +110,8 @@ namespace VSC.AST
                 n.Resolve(rc);
 
         }
+
+    
         public bool Resolve(ResolveContext rc)
         {
             ResolveContext previousResolver = rc;

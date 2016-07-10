@@ -1,3 +1,6 @@
+using VSC.TypeSystem;
+using VSC.TypeSystem.Resolver;
+
 namespace VSC.AST
 {
     /// <summary>
@@ -21,5 +24,9 @@ namespace VSC.AST
             }
         }
 
+        public override IConstantValue BuilConstantValue(ResolveContext rc, bool isAttributeConstant)
+        {
+            return new SizeOfConstantValue(TypeExpression as ITypeReference);
+        }
     }
 }

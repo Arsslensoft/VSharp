@@ -1,3 +1,6 @@
+using VSC.TypeSystem;
+using VSC.TypeSystem.Resolver;
+
 namespace VSC.AST
 {
     /// <summary>
@@ -50,5 +53,14 @@ namespace VSC.AST
 
 
         #endregion
+
+        public override IConstantValue BuilConstantValue(ResolveContext rc, bool isAttributeConstant)
+        {
+            Constant cleft = left.BuilConstantValue(rc, isAttributeConstant) as Constant;
+            Constant cright = right.BuilConstantValue(rc, isAttributeConstant) as Constant;
+            if (cleft == null || cright == null)
+                return null;
+            return new ConstantBinaryOperator(cleft, oper, cright);
+        }
     }
 }

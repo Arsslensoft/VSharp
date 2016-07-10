@@ -6,7 +6,7 @@ namespace VSC.TypeSystem.Implementation
 {
 	public class ResolvedFieldSpec : ResolvedMemberSpec, IField
 	{
-		volatile ResolveResult constantValue;
+		public volatile ResolveResult constantValue;
 		
 		public ResolvedFieldSpec(IUnresolvedField unresolved, ITypeResolveContext parentContext)
 			: base(unresolved, parentContext)

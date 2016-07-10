@@ -1,3 +1,6 @@
+using VSC.TypeSystem;
+using VSC.TypeSystem.Resolver;
+
 namespace VSC.AST
 {
     /// <summary>
@@ -12,6 +15,15 @@ namespace VSC.AST
         {
             Expr = e;
             loc = l;
+        }
+
+        public override IConstantValue BuilConstantValue(ResolveContext rc, bool isAttributeConstant)
+        {
+            Constant v = Expr.BuilConstantValue(rc, isAttributeConstant) as Constant;
+            if (v != null)
+                return new ConstantCheckedExpression(false, v);
+            else
+                return null;
         }
     }
 }

@@ -60,9 +60,7 @@ namespace VSC.AST
                 return this;
 
             Result = Resolve(rc);
-            //if (Result.IsError)
-            //    rc.Report.Error(148, loc, "Type `{0}' does not contain a definition for `{1}' and no extension method `{1}' of type `{0}' could be found.", expr.GetSignatureForError(), GetSignatureForError());           
-           
+   
             return this;
         }
 
@@ -119,7 +117,9 @@ namespace VSC.AST
                     Result = rc.ResolveMemberAccess(targetRR, name, typeArgs, lookupMode);
 
             }
-
+            if (Result.IsError)
+               rc.Report.Error(148, loc, "Type `{0}' does not contain a definition for `{1}' and no extension method `{1}' of type `{0}' could be found.", expr.GetSignatureForError(), GetSignatureForError());           
+           
             LookForAttribute = false;
             return Result;
         }
@@ -160,5 +160,24 @@ namespace VSC.AST
 
         #endregion
 
+        public override IConstantValue BuilConstantValue(ResolveContext rc, bool isAttributeConstant)
+        {
+            string memberName = Name;
+            if (LeftExpression is ITypeReference)
+            {
+                // handle "int.MaxValue"
+                return new ConstantMemberReference(
+                    LeftExpression as ITypeReference, 
+                    memberName,
+                   TypeArgumentsReferences);
+            }
+            Constant v =LeftExpression.BuilConstantValue(rc,isAttributeConstant) as Constant;
+            
+            if (v == null)
+                return null;
+            return new ConstantMemberReference(
+                v, memberName,
+               TypeArgumentsReferences);
+        }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using VSC.TypeSystem;
+using VSC.TypeSystem.Resolver;
 
 namespace VSC.AST
 {
@@ -31,5 +32,8 @@ namespace VSC.AST
             mod_flags |= Modifiers.STATIC;
             IsStatic = true;
         }
+
+       
+     
     }
 }

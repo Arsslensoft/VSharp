@@ -11,6 +11,14 @@ namespace VSC.TypeSystem
 	/// </summary>
 	public static class TypeSystemExtensions
 	{
+        public static bool IsBuiltinType(this IType type)
+        {
+            return type.IsKnownType(KnownTypeCode.Byte) || type.IsKnownType(KnownTypeCode.SByte)
+                   || type.IsKnownType(KnownTypeCode.Int16) || type.IsKnownType(KnownTypeCode.UInt16)
+                   || type.IsKnownType(KnownTypeCode.Int32) || type.IsKnownType(KnownTypeCode.UInt32)
+                   || type.IsKnownType(KnownTypeCode.Int64) || type.IsKnownType(KnownTypeCode.UInt64)
+                   || type.IsKnownType(KnownTypeCode.Double) || type.IsKnownType(KnownTypeCode.Single);
+        }
 		#region GetAllBaseTypes
 		/// <summary>
 		/// Gets all base types.

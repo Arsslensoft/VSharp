@@ -1,0 +1,7 @@
+E:\Projects\VSharp\VSCTests\bin\Debug\VSCTests.dll
+E:\Projects\VSharp\VSCTests\bin\Debug\VSCTests.pdb
+E:\Projects\VSharp\VSCTests\bin\Debug\VSC.exe
+E:\Projects\VSharp\VSCTests\bin\Debug\VSC.pdb
+E:\Projects\VSharp\VSCTests\obj\Debug\VSCTests.csprojResolveAssemblyReference.cache
+E:\Projects\VSharp\VSCTests\obj\Debug\VSCTests.dll
+E:\Projects\VSharp\VSCTests\obj\Debug\VSCTests.pdb
