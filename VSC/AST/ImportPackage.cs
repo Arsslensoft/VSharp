@@ -11,7 +11,7 @@ namespace VSC.AST
            
         }
         public IAstNode ParentNode { get; set; }
-        public override bool Resolve(ResolveContext rc)
+        public override bool DoResolve(ResolveContext rc)
         {
      
             Expression tp = expr.DoResolve(rc);

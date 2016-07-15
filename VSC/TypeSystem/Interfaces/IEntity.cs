@@ -79,6 +79,7 @@ namespace VSC.TypeSystem
 		/// </summary>
 		bool IsSynthetic { get; }
 
+   
 
         bool IsBaseTypeDefinition(IType baseType);
         bool IsAccessibleAs(IType b);

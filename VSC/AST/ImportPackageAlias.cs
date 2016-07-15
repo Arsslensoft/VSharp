@@ -19,7 +19,7 @@ namespace VSC.AST
         }
    
 
-        public override bool Resolve(ResolveContext rc)
+        public override bool DoResolve(ResolveContext rc)
         {
             Expression tp = expr.DoResolve(rc);
 

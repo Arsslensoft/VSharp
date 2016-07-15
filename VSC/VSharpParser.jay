@@ -34,12 +34,12 @@ namespace VSC
 		PackageContainer current_package;
 	    TypeContainer current_container;
 		TypeDeclaration current_type;
-		FieldDeclaration current_field;
+		FieldContainer current_field;
 		PropertyOrIndexer current_property;
 		EventDeclaration current_event;
 		EventFieldDeclaration current_event_field;
 		EnumMemberDeclaration prevField;
-
+		ModuleContext current_module;
 		/// <summary>
 		///   Current block is used to add statements as we find
 		///   them.  
@@ -1612,10 +1612,10 @@ property_declaration
 			(MemberName) $4, (VSharpAttributes) $1);
 
 		property.Getter = new GetterDeclaration (property, Modifiers.COMPILER_GENERATED, null, property.Location);
-		(property.Getter  as MethodOrOperator).Block = (ToplevelBlock) $6;
+		(property.Getter  as MethodCore).Block = (ToplevelBlock) $6;
 
 		if (current_container is InterfaceDeclaration) {
-			report.Error (70, (property.Getter as MethodOrOperator).Block.StartLocation,
+			report.Error (70, (property.Getter as MethodCore).Block.StartLocation,
 			"`{0}': interface members cannot have a definition", property.GetSignatureForError ());
 		}
 
@@ -1705,7 +1705,7 @@ indexer_body
 	| expression_block
 	  {
 		current_property.Getter = new IndexerGetterDeclaration (current_property, Modifiers.COMPILER_GENERATED, current_local_parameters, null, current_property.Location);
-		(current_property.Getter as MethodOrOperator).Block = (ToplevelBlock) $1;
+		(current_property.Getter as MethodCore).Block = (ToplevelBlock) $1;
 	  }
 	;
 
@@ -1744,17 +1744,17 @@ get_accessor_declaration
 				(Modifiers) $2, (VSharpAttributes) $1, GetLocation ($3));
 		}	
 	  
-		current_local_parameters = (current_property.Getter as MethodOrOperator).ParameterInfo;	  
+		current_local_parameters = (current_property.Getter as MethodCore).ParameterInfo;	  
 		lexer.PropertyParsing = false;
 	  }
 	  accessor_body
 	  {
 	  	if ($5 != null) {
-	  	 (current_property.Getter as MethodOrOperator).Block = (ToplevelBlock) $5;			
+	  	 (current_property.Getter as MethodCore).Block = (ToplevelBlock) $5;			
 	  	
 			if (current_container is InterfaceDeclaration) {
-				report.Error (78,  (current_property.Getter as MethodOrOperator).Block.StartLocation,
-					"`{0}': interface members cannot have a definition",  (current_property.Getter as MethodOrOperator).GetSignatureForError ());
+				report.Error (78,  (current_property.Getter as MethodCore).Block.StartLocation,
+					"`{0}': interface members cannot have a definition",  (current_property.Getter as MethodCore).GetSignatureForError ());
 			}
 
 		} 
@@ -1788,17 +1788,17 @@ set_accessor_declaration
 				(VSharpAttributes) $1, GetLocation ($3));
 		}
 		
-		current_local_parameters = (current_property.Setter as MethodOrOperator).ParameterInfo;	
+		current_local_parameters = (current_property.Setter as MethodCore).ParameterInfo;	
 		lexer.PropertyParsing = false;
 	  }
 	  accessor_body
 	  {
 		if ($5 != null) {		
-			(current_property.Setter as MethodOrOperator).Block = (ToplevelBlock) $5;
+			(current_property.Setter as MethodCore).Block = (ToplevelBlock) $5;
 		
 		if (current_container is InterfaceDeclaration) {
-			report.Error (70, (current_property.Setter as MethodOrOperator).Block.StartLocation,
-					"`{0}': interface members cannot have a definition", (current_property.Setter as MethodOrOperator).GetSignatureForError ());
+			report.Error (70, (current_property.Setter as MethodCore).Block.StartLocation,
+					"`{0}': interface members cannot have a definition", (current_property.Setter as MethodCore).GetSignatureForError ());
 		}
 	}
 
@@ -2408,7 +2408,7 @@ add_accessor_declaration
 	  
 	  	Modifiers mods = (Modifiers)$2;
 	 	current_event.AddAccessor = new AddEventAccessor (current_event, mods,(VSharpAttributes) $1, GetLocation ($3));
-		current_local_parameters = (current_event.AddAccessor as MethodOrOperator).ParameterInfo;
+		current_local_parameters = (current_event.AddAccessor as MethodCore).ParameterInfo;
 		
 	
 		lexer.EventParsing = false;		
@@ -2417,11 +2417,11 @@ add_accessor_declaration
 	  {
 		lexer.EventParsing = true;
 	  
-		(current_event.AddAccessor as MethodOrOperator).Block = (ToplevelBlock) $5;
+		(current_event.AddAccessor as MethodCore).Block = (ToplevelBlock) $5;
 		
 		if (current_container is InterfaceDeclaration) {
-		report.Error (70, (current_event.AddAccessor as MethodOrOperator).Block.StartLocation,
-			"`{0}': interface members cannot have a definition", (current_event.AddAccessor as MethodOrOperator).GetSignatureForError ());
+		report.Error (70, (current_event.AddAccessor as MethodCore).Block.StartLocation,
+			"`{0}': interface members cannot have a definition", (current_event.AddAccessor as MethodCore).GetSignatureForError ());
 		}
 		
 		current_local_parameters = null;
@@ -2433,7 +2433,7 @@ remove_accessor_declaration
 	  {	
 	   	Modifiers mods = (Modifiers)$2;
 	  	current_event.RemoveAccessor = new RemoveEventAccessor(current_event, mods, (VSharpAttributes) $1, GetLocation ($3));
-		current_local_parameters =( current_event.RemoveAccessor as MethodOrOperator).ParameterInfo;
+		current_local_parameters =( current_event.RemoveAccessor as MethodCore).ParameterInfo;
 
 		lexer.EventParsing = false;		
 	  }
@@ -2441,11 +2441,11 @@ remove_accessor_declaration
 	  {
 		lexer.EventParsing = true;
 	  
-	 ( current_event.RemoveAccessor as MethodOrOperator).Block = (ToplevelBlock) $5;
+	 ( current_event.RemoveAccessor as MethodCore).Block = (ToplevelBlock) $5;
 		
 		if (current_container is InterfaceDeclaration) {
-			report.Error (70, ( current_event.RemoveAccessor as MethodOrOperator).Block.StartLocation,
-				"`{0}': interface members cannot have a definition", ( current_event.RemoveAccessor as MethodOrOperator).GetSignatureForError ());
+			report.Error (70, ( current_event.RemoveAccessor as MethodCore).Block.StartLocation,
+				"`{0}': interface members cannot have a definition", ( current_event.RemoveAccessor as MethodCore).GetSignatureForError ());
 		}
 		
 		current_local_parameters = null;
@@ -6596,13 +6596,14 @@ public Tokenizer Lexer {
 	}
 }		   
 
-public VSharpParser (SeekableStreamReader reader, CompilationSourceFile file, ParserSession session)
-	: this (reader, file, file.Compiler.Report, session)
+public VSharpParser (SeekableStreamReader reader, CompilationSourceFile file, ParserSession session, ModuleContext cm)
+	: this (reader, file, file.Compiler.Report, session,cm)
 {
 }
 
-public VSharpParser (SeekableStreamReader reader, CompilationSourceFile file, Report report, ParserSession session)
+public VSharpParser (SeekableStreamReader reader, CompilationSourceFile file, Report report, ParserSession session, ModuleContext cm)
 {
+	current_module = cm;
 	this.file = file;
 	current_container = file.RootPackage.DefaultType;
 	current_package = file.RootPackage;

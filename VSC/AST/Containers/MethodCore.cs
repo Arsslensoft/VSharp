@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using VSC.TypeSystem;
 using VSC.TypeSystem.Implementation;
@@ -12,9 +13,11 @@ namespace VSC.AST
     /// Default implementation of <see cref="IUnresolvedMethod" /> interface.
     /// </summary>
     [Serializable]
-    public class MethodOrOperator : MemberContainer, IUnresolvedMethod
+    public class MethodCore : InterfaceMemberContainer, IUnresolvedMethod
     {
-        public ResolvedMethodSpec ResolvedMethod;
+
+
+
         protected ParametersCompiled aparameters;
         protected ToplevelBlock block;
         public ToplevelBlock Block
@@ -45,7 +48,7 @@ namespace VSC.AST
             get
             {
                 CallingConventions cc = aparameters.CallingConvention;
-                if (!IsInterfaceMethod)
+                if (!IsInterfaceMember)
                     if ((ModFlags & Modifiers.STATIC) == 0)
                         cc |= CallingConventions.HasThis;
 
@@ -54,56 +57,47 @@ namespace VSC.AST
                 return cc;
             }
         }
-        public bool IsInterfaceMethod= false;
+        public ResolvedMethodSpec ResolvedMethod;
 
-        public MethodOrOperator(TypeContainer parent, FullNamedExpression returnType, Modifiers mod,Modifiers allowed,
-            MemberName name, ParametersCompiled parameters, VSharpAttributes attrs)
-            : this(parent, name.Name)
+
+        public override IType ResolvedMemberType
         {
-            type_expr = returnType;
-            Parent = parent;
-            CheckModifiersAndSetNames(mod, allowed, Modifiers.PRIVATE, name);
+            get { return ResolvedMethod.ReturnType; }
+        }
+        public override IEntity ResolvedEntity
+        {
+            get { return ResolvedMethod; }
+        }
+    
 
-            if (attrs != null)
-                foreach (var a in attrs.Attrs)
-                    this.attributes.Add(a);
+        public MethodCore(TypeContainer parent, FullNamedExpression returnType, Modifiers mod,Modifiers allowed,
+            MemberName name, ParametersCompiled parameters, VSharpAttributes attrs, SymbolKind sym)
+            : base(parent, returnType, mod, allowed, name, attrs,sym)
+        {
+ 
+            this.DeclaringTypeDefinition = parent;
+            this.Name = name.Name;
+            if (parent != null)
+                this.UnresolvedFile = parent.UnresolvedFile;
+            this.typeParameters = new List<IUnresolvedTypeParameter>();
 
-
-            this.returnType = returnType as ITypeReference;
-            aparameters = parameters;
-
-            this.parameters = parameters.parameters;
-            if (member_name.ExplicitInterface != null)
-                ApplyExplicit(parameters.parameters);
+            this.aparameters = parameters;
+            this.parameters = aparameters.parameters;
           
         }
 
 
-        public MethodOrOperator(TypeContainer parent, ITypeReference returnType, Modifiers mod,Modifiers allowed,
-            MemberName name, ParametersCompiled parameters, VSharpAttributes attrs)
-            : this(parent, name.Name)
+
+        public MethodCore()
         {
-            type_expr = returnType as FullNamedExpression;
-            Parent = parent;
-            CheckModifiersAndSetNames(mod, allowed, Modifiers.PRIVATE, name);
-
-            if (attrs != null)
-                foreach (var a in attrs.Attrs)
-                    this.attributes.Add(a);
-
-
-            this.returnType = returnType;
-            aparameters = parameters;
-
-            this.parameters = parameters.parameters;
-            if (member_name.ExplicitInterface != null)
-                ApplyExplicit(parameters.parameters);
-
+            
         }
+
+
 
         #region Unresolved
         IList<IUnresolvedAttribute> returnTypeAttributes;
-      protected  IList<IUnresolvedTypeParameter> typeParameters;
+          protected  IList<IUnresolvedTypeParameter> typeParameters;
         IList<IUnresolvedParameter> parameters;
         IUnresolvedMember accessorOwner;
 
@@ -119,7 +113,7 @@ namespace VSC.AST
         {
             
         }
-        public override bool ResolveMember(ResolveContext rc)
+        public override bool DoResolve(ResolveContext rc)
         {
             ResolveContext oldResolver = rc;
             try
@@ -151,7 +145,14 @@ namespace VSC.AST
                 }
                 rc = rc.WithCurrentMember(member);
                 ResolvedMethod = member as ResolvedMethodSpec;
-                
+    
+			// Check whether arguments were correct.
+                if (!CheckParameters(ResolvedMethod.Parameters, rc))
+				return false;
+
+			     base.CheckBase (rc);
+		
+                base.DoResolve(rc);
                 ResolveWithCurrentContext(rc);
 
               
@@ -165,7 +166,7 @@ namespace VSC.AST
 
         public override object Clone()
         {
-            var copy = (MethodOrOperator)base.Clone();
+            var copy = (MethodCore)base.Clone();
             if (returnTypeAttributes != null)
                 copy.returnTypeAttributes = new List<IUnresolvedAttribute>(returnTypeAttributes);
             if (typeParameters != null)
@@ -184,22 +185,6 @@ namespace VSC.AST
                 typeParameters = provider.InternList(typeParameters);
                 parameters = provider.InternList(parameters);
             }
-        }
-
-        public MethodOrOperator()
-        {
-            this.SymbolKind = SymbolKind.Method;
-        }
-
-        public MethodOrOperator(IUnresolvedTypeDefinition declaringType, string name)
-        {
-            this.SymbolKind = SymbolKind.Method;
-            this.DeclaringTypeDefinition = declaringType;
-            this.Name = name;
-            if (declaringType != null)
-                this.UnresolvedFile = declaringType.UnresolvedFile;
-
-            this.typeParameters = new List<IUnresolvedTypeParameter>();
         }
 
         public IList<IUnresolvedAttribute> ReturnTypeAttributes
@@ -266,7 +251,7 @@ namespace VSC.AST
             }
         }
 
-        public bool HasBody
+        public virtual bool HasBody
         {
             get { return flags[FlagHasBody]; }
             set
@@ -366,13 +351,13 @@ namespace VSC.AST
             return (IMethod)Resolve(context);
         }
 
-        public static MethodOrOperator CreateDefaultConstructor(IUnresolvedTypeDefinition typeDefinition)
+        public static MethodCore CreateDefaultConstructor(IUnresolvedTypeDefinition typeDefinition)
         {
             if (typeDefinition == null)
                 throw new ArgumentNullException("typeDefinition");
             DomRegion region = typeDefinition.Region;
             region = new DomRegion(region.FileName, region.BeginLine, region.BeginColumn); // remove endline/endcolumn
-            return new MethodOrOperator(typeDefinition, ".ctor")
+            return  new ConstructorDeclaration(typeDefinition as TypeContainer, ".ctor", Modifiers.PUBLIC, null,ParametersCompiled.EmptyReadOnlyParameters,Location.Null  )
             {
                 SymbolKind = SymbolKind.Constructor,
                 Accessibility = typeDefinition.IsAbstract ? Accessibility.Protected : Accessibility.Public,
@@ -399,7 +384,7 @@ namespace VSC.AST
 
         static IUnresolvedMethod CreateDummyConstructor()
         {
-            var m = new MethodOrOperator
+            var m = new MethodCore
             {
                 SymbolKind = SymbolKind.Constructor,
                 Name = ".ctor",
@@ -411,5 +396,19 @@ namespace VSC.AST
             return m;
         }
         #endregion
+    }
+
+    public class MethodOrOperator : MethodCore
+    {
+        public MethodOrOperator(TypeContainer parent, FullNamedExpression returnType, Modifiers mod, Modifiers allowed,
+            MemberName name, ParametersCompiled parameters, VSharpAttributes attrs, SymbolKind sym)
+            : base(parent, returnType, mod, allowed, name,parameters, attrs, sym)
+        {
+        }
+
+        public override bool DoResolve(ResolveContext rc)
+        {
+            return base.DoResolve(rc);
+        }
     }
 }

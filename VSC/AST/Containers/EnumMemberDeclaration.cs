@@ -1,6 +1,7 @@
 using System.Linq;
 using VSC.Base;
 using VSC.TypeSystem;
+using VSC.TypeSystem.Implementation;
 using VSC.TypeSystem.Resolver;
 
 namespace VSC.AST
@@ -15,9 +16,25 @@ namespace VSC.AST
           
         }
 
-        public override bool ResolveMember(ResolveContext rc)
+  
+
+        public override bool DoResolve(ResolveContext rc)
         {
-            bool ok = base.ResolveMember(rc);
+            if (ConstantValue == null && Initializer != null)
+            {
+                ConstantValue = (Initializer.BuilConstantValue(false) as Constant);
+                if (ConstantValue != null)
+                    ConstantValue = (ConstantValue as Constant).ConvertConstantValue(returnType);
+            }
+            else if (ConstantValue != null)
+            {
+                ConstantValue = (ConstantValue as Constant);
+                if (ConstantValue != null)
+                    ConstantValue = (ConstantValue as Constant).ConvertConstantValue(returnType);
+            }
+
+
+            ResolvedField = Resolve(rc.CurrentTypeResolveContext, SymbolKind, name) as ResolvedFieldSpec;
 
             if (ResolvedField.ConstantValue  != null)
             {
@@ -31,7 +48,7 @@ namespace VSC.AST
             else
                 rc.Report.Error(196, Location, "Cannot convert value to target type `{0}'", rc.CurrentTypeDefinition.EnumUnderlyingType.ToString());
 
-            return ok;
+            return true;
         }
     }
 }

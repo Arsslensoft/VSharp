@@ -46,8 +46,24 @@ namespace VSC.TypeSystem.Implementation
 				}
 			}
 		}
-		
-		IList<IMember> FindImplementedInterfaceMembers()
+
+	   public IMember FindBaseMembers()
+	   {
+           var result = InheritanceHelper.GetBaseMembers(this, false);
+            //var result = bm
+            //    .Where(m => m.DeclaringTypeDefinition != null && m.DeclaringTypeDefinition.Kind == TypeKind.Class)
+            //    .ToArray();
+
+            ////IEnumerable<IMember> otherMembers = DeclaringTypeDefinition.Members;
+            ////if (SymbolKind == SymbolKind.Accessor)
+            ////    otherMembers = DeclaringTypeDefinition.GetAccessors(options: GetMemberOptions.IgnoreInheritedMembers);
+            ////result = result.Where(item => !otherMembers.Any(m => m.IsExplicitInterfaceImplementation && m.ImplementedInterfaceMembers.Contains(item))).ToArray();
+
+            return result.FirstOrDefault();
+	    }
+            
+            
+            IList<IMember> FindImplementedInterfaceMembers()
 		{
 			if (unresolved.IsExplicitInterfaceImplementation) {
 				List<IMember> result = new List<IMember>();

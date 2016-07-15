@@ -1,10 +1,11 @@
 using System.Collections.Generic;
 using VSC.Context;
+using VSC.TypeSystem;
 using VSC.TypeSystem.Resolver;
 
 namespace VSC.AST
 {
-    public class PackageContainer : UsingScope, IAstNode, IResolve
+    public class PackageContainer : UsingScope, IAstNode, IResolve, IModuleSupport
     {
         public IAstNode ParentNode { get; set; }
         public static PackageContainer CreateContainers(PackageContainer parent, MemberName mn,Location loc, CompilationSourceFile file)
@@ -32,29 +33,34 @@ namespace VSC.AST
         public PackageContainer(PackageContainer parent, string name,Location loc, CompilationSourceFile file)
             : base(parent, name)
         {
+            Parent = parent;
             _imports = new List<Import>();
             _containers = new List<TypeContainer>();
             _ncontainers = new List<PackageContainer>();
-            DefaultType = new TypeContainer(this,new MemberName( "default",loc),loc,file);
+            DefaultType = new ClassDeclaration(this, new MemberName("default", Location.Null), 
+               Modifiers.PUBLIC | Modifiers.STATIC, null, Location.Null, file);
             DefaultType.IsPartial = true;
             DefaultType.IsSealed = true;
             DefaultType.IsStatic = true;
-            DefaultType.IsSynthetic = false; DeclarationFound = false;
+            DefaultType.IsSynthetic = true;
+            DeclarationFound = false;
            
            DefaultTypesContainers.Add(DefaultType);
-            Parent = parent;
+          
         }
 
-        public PackageContainer(CompilationSourceFile file)
+        public PackageContainer(CompilationSourceFile file, ModuleContext module)
         {
             _imports = new List<Import>();
             _containers = new List<TypeContainer>();
+            this.module = module;
             _ncontainers = new List<PackageContainer>();
-            DefaultType = new TypeContainer(this, new MemberName("default", Location.Null), Location.Null,file);
+            DefaultType = new ClassDeclaration(this, new MemberName("default", Location.Null), Modifiers.PUBLIC | Modifiers.STATIC,null, Location.Null,file);
             DefaultType.IsPartial = true;
            DefaultType.IsSealed = true;
             DefaultType.IsStatic = true;
-            DefaultType.IsSynthetic = false; DeclarationFound = false;
+            DefaultType.IsSynthetic = true;
+            DeclarationFound = false;
            
             DefaultTypesContainers.Add(DefaultType);
         }
@@ -101,18 +107,18 @@ namespace VSC.AST
         public void ResolveWithCurrentContext(ResolveContext rc)
         {
             foreach (var i in _imports)
-                i.Resolve(rc);
+                i.DoResolve(rc);
 
             foreach (var c in _containers)
-                c.Resolve(rc);
+                c.DoResolve(rc);
 
             foreach (var n in _ncontainers)
-                n.Resolve(rc);
+                n.DoResolve(rc);
 
         }
 
     
-        public bool Resolve(ResolveContext rc)
+        public bool DoResolve(ResolveContext rc)
         {
             ResolveContext previousResolver = rc;
             try
@@ -134,6 +140,18 @@ namespace VSC.AST
         public virtual void AcceptVisitor(IVisitor visitor)
         {
             visitor.Visit(this);
+        }
+
+        private ModuleContext module;
+        public virtual ModuleContext Module
+        {
+            get
+            {
+                if (Parent != null)
+                    return Parent.Module;
+                else return module;
+            }
+            set { module = value; }
         }
     }
 }

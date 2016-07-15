@@ -27,11 +27,11 @@ namespace VSC.AST
         Dictionary<string, SourceFile> include_files;
         Dictionary<string, bool> conditionals;
         public CompilerContext Compiler { get; set; }
-        public CompilationSourceFile(CompilerContext compiler, SourceFile sourceFile)
+        public CompilationSourceFile(ModuleContext module, SourceFile sourceFile)
         {
-            this.Compiler = compiler;
+            this.Compiler = module.Compiler;
             this.file = sourceFile;
-            RootPackage = new PackageContainer(this);
+            RootPackage = new PackageContainer(this, module);
             rootUsingScope = RootPackage;
         }
 
@@ -126,28 +126,24 @@ namespace VSC.AST
         }
 
 
-        public object DoResolve(ResolveContext rc)
-        {
-            throw new NotImplementedException();
-        }
-
+    
         public void ResolveWithCurrentContext(ResolveContext rc)
         {
             foreach (var attr in moduleAttributes)
             {
                 VSharpAttribute a = (VSharpAttribute)attr;
-                a.Resolve(rc);
+                a.DoResolve(rc);
                 resolvedAttributes.Add(a.ResolvedAttribute);
 
             }
 
 
            
-            RootPackage.Resolve(rc);
+            RootPackage.DoResolve(rc);
             
         }
         List<IAttribute> resolvedAttributes = new List<IAttribute>();
-        public bool Resolve(ResolveContext rc)
+        public bool DoResolve(ResolveContext rc)
         {
 
             ResolveContext previousResolver = rc;

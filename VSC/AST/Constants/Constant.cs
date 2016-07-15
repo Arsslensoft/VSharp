@@ -20,7 +20,7 @@ namespace VSC.AST
             return new ConstantResolveResult(type.Resolve(resolver.CurrentTypeResolveContext), GetValue());
         }
 
-        public override IConstantValue BuilConstantValue(ResolveContext rc, bool isAttributeConstant)
+        public override IConstantValue BuilConstantValue(bool isAttributeConstant)
         {
             object val = GetValue();
             return new PrimitiveConstantExpression(type, val);

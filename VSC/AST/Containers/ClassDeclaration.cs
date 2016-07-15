@@ -22,7 +22,11 @@ namespace VSC.AST
         {
 
         }
+        public ClassDeclaration(PackageContainer parent, MemberName name, Modifiers mod, VSharpAttributes attrs, Location l, CompilationSourceFile file)
+            : base(parent, mod, AllowedModifiers, name, attrs, l, TypeKind.Class, file)
+        {
 
+        }
         public override void ResolveWithCurrentContext(ResolveContext rc)
         {
             base.ResolveWithCurrentContext(rc);

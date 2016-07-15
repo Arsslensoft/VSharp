@@ -26,7 +26,7 @@ namespace VSC.AST
         public IndexerDeclaration(TypeContainer parent, FullNamedExpression type, MemberName name, Modifiers mod, ParametersCompiled parameters, VSharpAttributes attrs)
             : base(parent, type, mod,
                 parent is InterfaceDeclaration ? AllowedInterfaceModifiers : AllowedModifiers,
-                name, attrs)
+                name, attrs,SymbolKind.Indexer)
         {
             this.parameters = parameters;
         }

@@ -1,4 +1,5 @@
 using VSC.TypeSystem;
+using VSC.TypeSystem.Resolver;
 
 namespace VSC.AST
 {
@@ -19,5 +20,20 @@ namespace VSC.AST
             mod_flags |= Modifiers.ABSTRACT;
             IsAbstract = true;
         }
+
+        public override void ResolveWithCurrentContext(ResolveContext rc)
+        {
+            // DoResolve nested types
+            foreach (var t in TypeContainers)
+                t.DoResolve(rc);
+            // DoResolve members
+            foreach (var m in TypeMembers)
+
+                // resolve method
+                (m as IResolve).DoResolve(rc);
+
+        }
+
+    
     }
 }

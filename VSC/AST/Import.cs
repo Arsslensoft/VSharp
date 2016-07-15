@@ -43,7 +43,7 @@ namespace VSC.AST
 
         #endregion
 
-        public virtual bool Resolve(ResolveContext rc)
+        public virtual bool DoResolve(ResolveContext rc)
         {
             return false;
         }

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using VSC.Base;
+using VSC.Context;
+using VSC.TypeSystem.Resolver;
 
 namespace VSC.TypeSystem.Implementation
 {
@@ -33,23 +35,33 @@ namespace VSC.TypeSystem.Implementation
 			get { return ((IUnresolvedField)unresolved).IsFixed; }
 		}
 
+	    public Location ConstantLocation;
 		public object ConstantValue {
 			get {
+         
 				ResolveResult rr = this.constantValue;
+			  
 				if (rr == null) {
 					using (var busyLock = BusyManager.Enter(this)) {
-						if (!busyLock.Success)
-							return null;
+					    if (!busyLock.Success)
+					    {
+                            CompilerContext.report.Error(110, ConstantLocation,
+                    "The evaluation of the constant value for `{0}' involves a circular definition",
+                    ToString());
+                            return null;
+					    }
+							
 
 						IConstantValue unresolvedCV = ((IUnresolvedField)unresolved).ConstantValue;
                         if (unresolvedCV != null)
                             rr = unresolvedCV.Resolve(context);
                         else
-                            //rr = ErrorResolveResult.UnknownError; //TODO:Fix this
-                            rr = null;
+                            rr = ErrorResolveResult.UnknownError; //TODO:Fix this
+                            //rr = null;
 						this.constantValue = rr;
 					}
 				}
+		
 				return rr.ConstantValue;
 			}
 		}

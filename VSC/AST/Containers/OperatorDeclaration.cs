@@ -3,7 +3,7 @@ using VSC.TypeSystem;
 
 namespace VSC.AST
 {
-    public  class OperatorDeclaration : MethodOrOperator
+    public  class OperatorDeclaration : MethodCore
     {
         const Modifiers AllowedModifiers =
             Modifiers.PUBLIC |
@@ -14,11 +14,10 @@ namespace VSC.AST
 
         public OperatorDeclaration(TypeContainer parent, VSC.TypeSystem.Resolver.OperatorType type, FullNamedExpression ret_type, Modifiers mod_flags, ParametersCompiled parameters,
             ToplevelBlock block, VSharpAttributes attrs, Location loc)
-            : base(parent, ret_type, mod_flags, AllowedModifiers, new MemberName(VSC.TypeSystem.Resolver.ResolveContext.GetMetadataName(type), loc),parameters, attrs )
+            : base(parent, ret_type, mod_flags, AllowedModifiers, new MemberName(VSC.TypeSystem.Resolver.ResolveContext.GetMetadataName(type), loc),parameters, attrs , SymbolKind.Operator)
         {
             OperatorType = type;
             this.block = block;
-            SymbolKind = SymbolKind.Operator;
         }
 
         public VSC.TypeSystem.Resolver.OperatorType GetMatchingOperator()

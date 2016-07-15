@@ -7,6 +7,7 @@ using VSC.Context;
 
 namespace VSC.AST
 {
+  
     public interface IAstNode
     {
      

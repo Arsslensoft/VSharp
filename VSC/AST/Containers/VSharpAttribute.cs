@@ -216,7 +216,7 @@ namespace VSC.AST
 
 
 
-        public bool Resolve(ResolveContext rc)
+        public bool DoResolve(ResolveContext rc)
         {
             AttributeType.LookForAttribute = true;
             ResolvedAttribute = CreateResolvedAttribute(rc);

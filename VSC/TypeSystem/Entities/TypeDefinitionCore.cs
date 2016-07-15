@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using VSC.AST;
 
 namespace VSC.TypeSystem.Implementation
 {
@@ -9,7 +10,7 @@ namespace VSC.TypeSystem.Implementation
 	/// Represents an unresolved type definition.
 	/// </summary>
 	[Serializable]
-	public class UnresolvedTypeDefinitionSpec : UnresolvedEntitySpec, IUnresolvedTypeDefinition
+	public class TypeDefinitionCore : EntityCore, IUnresolvedTypeDefinition
 	{
 		TypeKind kind = TypeKind.Class;
 		string namespaceName;
@@ -18,12 +19,12 @@ namespace VSC.TypeSystem.Implementation
 		IList<IUnresolvedTypeDefinition> nestedTypes;
 		IList<IUnresolvedMember> members;
 		
-		public UnresolvedTypeDefinitionSpec()
+		public TypeDefinitionCore()
 		{
 			this.SymbolKind = SymbolKind.TypeDefinition;
 		}
 		
-		public UnresolvedTypeDefinitionSpec(string fullName)
+		public TypeDefinitionCore(string fullName)
 		{
 			string namespaceName;
 			string name;
@@ -41,14 +42,14 @@ namespace VSC.TypeSystem.Implementation
 			this.Name = name;
 		}
 		
-		public UnresolvedTypeDefinitionSpec(string namespaceName, string name)
+		public TypeDefinitionCore(string namespaceName, string name)
 		{
 			this.SymbolKind = SymbolKind.TypeDefinition;
 			this.namespaceName = namespaceName;
 			this.Name = name;
 		}
 		
-		public UnresolvedTypeDefinitionSpec(IUnresolvedTypeDefinition declaringTypeDefinition, string name)
+		public TypeDefinitionCore(IUnresolvedTypeDefinition declaringTypeDefinition, string name)
 		{
 		    if (declaringTypeDefinition.Name != "default")
 		    {
@@ -77,7 +78,7 @@ namespace VSC.TypeSystem.Implementation
 		
 		public override object Clone()
 		{
-			var copy = (UnresolvedTypeDefinitionSpec)base.Clone();
+			var copy = (TypeDefinitionCore)base.Clone();
 			if (baseTypes != null)
 				copy.baseTypes = new List<ITypeReference>(baseTypes);
 			if (typeParameters != null)
@@ -173,8 +174,10 @@ namespace VSC.TypeSystem.Implementation
 				return typeParameters;
 			}
 		}
-		
-		public IList<IUnresolvedTypeDefinition> NestedTypes {
+
+
+
+	    public IList<IUnresolvedTypeDefinition> NestedTypes {
 			get {
 				if (nestedTypes == null)
 					nestedTypes = new List<IUnresolvedTypeDefinition>();
@@ -229,5 +232,11 @@ namespace VSC.TypeSystem.Implementation
 		{
 			return parentContext;
 		}
+
+
+        public override string GetSignatureForDocumentation()
+        {
+            throw new NotImplementedException();
+        }
 	}
 }

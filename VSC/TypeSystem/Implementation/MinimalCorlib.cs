@@ -21,11 +21,11 @@ namespace VSC.TypeSystem.Implementation
 		
 		private MinimalCorlib() : base("corlib")
 		{
-			var types = new UnresolvedTypeDefinitionSpec[KnownTypeReference.KnownTypeCodeCount];
+			var types = new TypeDefinitionCore[KnownTypeReference.KnownTypeCodeCount];
 			for (int i = 0; i < types.Length; i++) {
 				var typeRef = KnownTypeReference.Get((KnownTypeCode)i);
 				if (typeRef != null) {
-					types[i] = new UnresolvedTypeDefinitionSpec(typeRef.Namespace, typeRef.Name);
+					types[i] = new TypeDefinitionCore(typeRef.Namespace, typeRef.Name);
 					for (int j = 0; j < typeRef.TypeParameterCount; j++) {
 						types[i].TypeParameters.Add(new UnresolvedTypeParameterSpec(SymbolKind.TypeDefinition, j, VSC.Location.Null));
 					}

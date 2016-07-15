@@ -21,7 +21,7 @@ namespace VSC.AST
             }
         }
 
-        public override IConstantValue BuilConstantValue(ResolveContext rc, bool isAttributeConstant)
+        public override IConstantValue BuilConstantValue( bool isAttributeConstant)
         {
             return new ConstantDefaultValue(Expr as ITypeReference);
         }

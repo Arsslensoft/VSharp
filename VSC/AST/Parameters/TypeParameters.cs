@@ -1,11 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using VSC.TypeSystem;
 using VSC.TypeSystem.Implementation;
 
 namespace VSC.AST
 {
-    public class TypeParameters
+    public class TypeParameters : IList<IUnresolvedTypeParameter>
     {
         public List<UnresolvedTypeParameterSpec> names;
         TypeParameterSpec[] types;
@@ -52,17 +53,7 @@ namespace VSC.AST
 
 
 
-        public UnresolvedTypeParameterSpec this[int index]
-        {
-            get
-            {
-                return names[index];
-            }
-            set
-            {
-                names[index] = value;
-            }
-        }
+      
 
         public UnresolvedTypeParameterSpec Find(string name)
         {
@@ -95,7 +86,65 @@ namespace VSC.AST
 
             return sb.ToString();
         }
+        public int IndexOf(IUnresolvedTypeParameter item)
+        {
+            return names.IndexOf((UnresolvedTypeParameterSpec)item);
+        }
 
+        public void Insert(int index, IUnresolvedTypeParameter item)
+        {
+            names.Insert(index, (UnresolvedTypeParameterSpec)item);
+        }
+
+        public void RemoveAt(int index)
+        {
+            names.RemoveAt(index);
+        }
+
+        public IUnresolvedTypeParameter this[int index]
+        {
+            get { return names[index]; }
+            set { names[index] = (UnresolvedTypeParameterSpec)value; }
+        }
+
+        public void Add(IUnresolvedTypeParameter item)
+        {
+            names.Add((UnresolvedTypeParameterSpec)item);
+        }
+
+        public void Clear()
+        {
+            names.Clear();
+        }
+
+        public bool Contains(IUnresolvedTypeParameter item)
+        {
+            return names.Contains((UnresolvedTypeParameterSpec)item);
+        }
+
+        public void CopyTo(IUnresolvedTypeParameter[] array, int arrayIndex)
+        {
+            names.Cast<IUnresolvedTypeParameter>().ToList().CopyTo(array, arrayIndex);
+        }
+        public bool IsReadOnly
+        {
+            get { return false; }
+        }
+
+        public bool Remove(IUnresolvedTypeParameter item)
+        {
+            return names.Remove((UnresolvedTypeParameterSpec)item);
+        }
+
+        public IEnumerator<IUnresolvedTypeParameter> GetEnumerator()
+        {
+            return names.GetEnumerator();
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            return names.GetEnumerator();
+        }
 
     }
 }

@@ -8,7 +8,7 @@ using VSC.TypeSystem.Implementation;
 namespace VSC.AST
 {
     [Serializable]
-    public class MethodDeclaration : MethodOrOperator
+    public class MethodDeclaration : MethodCore
     {
         public void SetTypeParameters(MemberName mn)
         {
@@ -40,21 +40,10 @@ namespace VSC.AST
             MemberName name, ParametersCompiled parameters, VSharpAttributes attrs)
             :base(parent,returnType, mod,parent is InterfaceDeclaration ? AllowedModifiersInterface :
                 parent is StructDeclaration ? AllowedModifiersStruct :
-                    AllowedModifiersClass, name, parameters, attrs)
+                    AllowedModifiersClass, name, parameters, attrs, SymbolKind.Method)
         {
             SetTypeParameters(name);
         }
 
-    }
-
-
-  internal  interface X
-    {
-        
-    }
-  public class H{}
-   public class I : H, X
-    {
-        
     }
 }

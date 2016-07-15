@@ -185,7 +185,7 @@ namespace VSC.TypeSystem.Implementation
 	            CheckCircular(p, t as TypeParameterSpec, rc, false, baseType);
 	      
 	    }
-        public bool Resolve(Resolver.ResolveContext rc)
+        public bool DoResolve(Resolver.ResolveContext rc)
         {
             
             ResolvedTypeParameter = CreateResolvedTypeParameter(rc.CurrentTypeResolveContext);  

@@ -41,6 +41,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AST\Containers\AbstractPropertyEventMethod.cs" />
+    <Compile Include="AST\Containers\Done\FieldContainer.cs" />
+    <Compile Include="AST\Containers\Done\InterfaceMemberContainer.cs" />
+    <Compile Include="AST\Containers\PropertyBasedMember.cs" />
     <Compile Include="AST\Parameters\AnonymousTypeParameter.cs" />
     <Compile Include="AST\Parameters\AParametersCollection.cs" />
     <Compile Include="AST\Expressions\ArrayCreation.cs" />
@@ -65,8 +69,8 @@
     <Compile Include="AST\Expressions\ConditionalMemberAccess.cs" />
     <Compile Include="AST\Constants\Constant.cs" />
     <Compile Include="AST\Containers\AddEventAccessor.cs" />
-    <Compile Include="AST\Containers\Argument.cs" />
-    <Compile Include="AST\Containers\Arguments.cs" />
+    <Compile Include="AST\Parameters\Argument.cs" />
+    <Compile Include="AST\Parameters\Arguments.cs" />
     <Compile Include="AST\Containers\EventFieldDeclaration.cs" />
     <Compile Include="AST\Containers\VSharpAttribute.cs" />
     <Compile Include="AST\Containers\ClassDeclaration.cs" />
@@ -89,9 +93,9 @@
     <Compile Include="AST\Containers\IndexerGetterDeclaration.cs" />
     <Compile Include="AST\Containers\IndexerSetterDeclaration.cs" />
     <Compile Include="AST\Containers\InterfaceDeclaration.cs" />
-    <Compile Include="AST\Containers\FieldDeclaration.cs" />
+    <Compile Include="AST\Containers\Done\FieldDeclaration.cs" />
     <Compile Include="AST\Containers\MethodDeclaration.cs" />
-    <Compile Include="AST\Containers\MethodOrOperator.cs" />
+    <Compile Include="AST\Containers\MethodCore.cs" />
     <Compile Include="AST\Containers\MovableArgument.cs" />
     <Compile Include="AST\Containers\NamedArgument.cs" />
     <Compile Include="AST\Containers\OperatorDeclaration.cs" />
@@ -166,7 +170,7 @@
     <Compile Include="AST\Names\MemberAccess.cs" />
     <Compile Include="AST\Names\MemberName.cs" />
     <Compile Include="AST\Names\FullNamedExpression.cs" />
-    <Compile Include="AST\Containers\MemberContainer.cs" />
+    <Compile Include="AST\Containers\Done\MemberContainer.cs" />
     <Compile Include="AST\Names\QualifiedAlias.cs" />
     <Compile Include="AST\Names\SimpleMemberName.cs" />
     <Compile Include="AST\Names\SimpleName.cs" />
@@ -362,7 +366,7 @@
     <Compile Include="TypeSystem\Abstract\ResolvedMemberSpec.cs" />
     <Compile Include="TypeSystem\Abstract\TypeParameterSpec.cs" />
     <Compile Include="TypeSystem\Abstract\TypeSpec.cs" />
-    <Compile Include="TypeSystem\Abstract\UnresolvedEntitySpec.cs" />
+    <Compile Include="AST\Containers\EntityCore.cs" />
     <Compile Include="TypeSystem\Accessibility.cs" />
     <Compile Include="TypeSystem\AttributeTypeReference.cs" />
     <Compile Include="TypeSystem\CallingConventions.cs" />
@@ -391,7 +395,7 @@
     <Compile Include="TypeSystem\Entities\SpecializedProperty.cs" />
     <Compile Include="TypeSystem\Entities\SpecializingMemberReference.cs" />
     <Compile Include="TypeSystem\Entities\UnresolvedAssemblySpec.cs" />
-    <Compile Include="TypeSystem\Entities\UnresolvedTypeDefinitionSpec.cs" />
+    <Compile Include="TypeSystem\Entities\TypeDefinitionCore.cs" />
     <Compile Include="TypeSystem\Entities\UnresolvedTypeParameterSpec.cs" />
     <Compile Include="TypeSystem\Entities\VariableReference.cs" />
     <Compile Include="TypeSystem\Entities\VariableSpec.cs" />

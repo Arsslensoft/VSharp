@@ -1499,11 +1499,13 @@ namespace VSC.TypeSystem.Resolver
 			else
 				return new ConversionResolveResult(targetType, rr, c, checkForOverflow);
 		}
-		
+
+        public bool LookOnlyForImplicitCoversions = false;
 		public ResolveResult ResolveCast(IType targetType, ResolveResult expression)
 		{
 			// V# 4.0 spec: §7.7.6 Cast expressions
 			Conversion c = conversions.ExplicitConversion(expression, targetType);
+      
 			if (expression.IsCompileTimeConstant && !c.IsUserDefined) {
 				TypeCode code = ReflectionHelper.GetTypeCode(targetType);
 				if (code >= TypeCode.Boolean && code <= TypeCode.Decimal && expression.ConstantValue != null) {
@@ -1541,6 +1543,7 @@ namespace VSC.TypeSystem.Resolver
 		}
 		#endregion
 
+        
         #region ResolveSimpleName
         public ResolveResult ResolveSimpleName(string identifier, IList<IType> typeArguments, bool isInvocationTarget = false)
         {

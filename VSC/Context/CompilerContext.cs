@@ -10,6 +10,23 @@ using VSC.TypeSystem.Implementation;
 
 namespace VSC.Context
 {
+    interface IModuleSupport
+    {
+        ModuleContext Module { get; set; }
+    }
+
+
+    public class ModuleContext
+    {
+       
+        public CompilerContext Compiler { get; set; }
+      
+        public ModuleContext(CompilerContext compiler)
+        {
+            Compiler = compiler;
+
+        }
+    }
     public class CompilerContext
     {
         public static Report report;

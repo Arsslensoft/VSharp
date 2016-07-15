@@ -15,9 +15,9 @@ namespace VSC.AST
             this.loc = loc;
         }
 
-        public override IConstantValue BuilConstantValue(ResolveContext rc, bool isAttributeConstant)
+        public override IConstantValue BuilConstantValue( bool isAttributeConstant)
         {
-            Constant v = Expr.BuilConstantValue(rc, isAttributeConstant) as Constant;
+            Constant v = Expr.BuilConstantValue(isAttributeConstant) as Constant;
             if (v == null)
                 return null;
             switch (Oper)

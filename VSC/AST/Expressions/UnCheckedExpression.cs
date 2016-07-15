@@ -17,9 +17,9 @@ namespace VSC.AST
             loc = l;
         }
 
-        public override IConstantValue BuilConstantValue(ResolveContext rc, bool isAttributeConstant)
+        public override IConstantValue BuilConstantValue( bool isAttributeConstant)
         {
-            Constant v = Expr.BuilConstantValue(rc, isAttributeConstant) as Constant;
+            Constant v = Expr.BuilConstantValue(isAttributeConstant) as Constant;
             if (v != null)
                 return new ConstantCheckedExpression(false, v);
             else

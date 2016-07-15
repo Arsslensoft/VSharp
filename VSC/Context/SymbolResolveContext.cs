@@ -29,7 +29,7 @@ namespace VSC.Context
         internal TypeContainer currentTypeDefinition;
 
         public TypeContainer DefaultTypeDefinition = null;
-        internal MethodOrOperator currentMethod;
+        internal MethodCore currentMethod;
 
         internal InterningProvider interningProvider = new SimpleInterningProvider();
         internal CompilationSourceFile unresolvedFile;
@@ -306,7 +306,7 @@ namespace VSC.Context
         //#endregion
 
         //#region Modifiers
-        //public void ApplyModifiers(UnresolvedTypeDefinitionSpec td, VSC.TypeSystem.Modifiers modifiers)
+        //public void ApplyModifiers(TypeDefinitionCore td, VSC.TypeSystem.Modifiers modifiers)
         //{
         //    td.Accessibility = GetAccessibility(modifiers) ?? (td.DeclaringTypeDefinition != null ? Accessibility.Private : Accessibility.Internal);
         //    td.IsAbstract = (modifiers & (VSC.TypeSystem.Modifiers.ABSTRACT | VSC.TypeSystem.Modifiers.STATIC)) != 0;
@@ -653,11 +653,11 @@ namespace VSC.Context
 
 
         //#region Accessor
-        //public MethodOrOperator ConvertAccessor(RaiseAccessorDeclaration accessor, IUnresolvedMember p, bool memberIsExtern)
+        //public MethodCore ConvertAccessor(RaiseAccessorDeclaration accessor, IUnresolvedMember p, bool memberIsExtern)
         //{
         //    if (accessor == null)
         //        return null;
-        //    var a = new MethodOrOperator(currentTypeDefinition, "raise_" + p.Name);
+        //    var a = new MethodCore(currentTypeDefinition, "raise_" + p.Name);
         //    a.SymbolKind = SymbolKind.Accessor;
         //    a.AccessorOwner = p;
         //    a.Accessibility = GetAccessibility(accessor._opt_modifiers._Modifiers) ?? p.Accessibility;
@@ -702,11 +702,11 @@ namespace VSC.Context
         //    a.ApplyInterningProvider(interningProvider);
         //    return a;
         //}
-        //public MethodOrOperator ConvertAccessor(AddAccessorDeclaration accessor, IUnresolvedMember p, bool memberIsExtern)
+        //public MethodCore ConvertAccessor(AddAccessorDeclaration accessor, IUnresolvedMember p, bool memberIsExtern)
         //{
         //    if (accessor == null)
         //        return null;
-        //    var a = new MethodOrOperator(currentTypeDefinition, "add_" + p.Name);
+        //    var a = new MethodCore(currentTypeDefinition, "add_" + p.Name);
         //    a.SymbolKind = SymbolKind.Accessor;
         //    a.AccessorOwner = p;
         //    a.Accessibility = GetAccessibility(accessor._opt_modifiers._Modifiers) ?? p.Accessibility;
@@ -750,11 +750,11 @@ namespace VSC.Context
         //    a.ApplyInterningProvider(interningProvider);
         //    return a;
         //}
-        //public MethodOrOperator ConvertAccessor(RemoveAccessorDeclaration accessor, IUnresolvedMember p, bool memberIsExtern)
+        //public MethodCore ConvertAccessor(RemoveAccessorDeclaration accessor, IUnresolvedMember p, bool memberIsExtern)
         //{
         //    if (accessor == null)
         //        return null;
-        //    var a = new MethodOrOperator(currentTypeDefinition, "remove_" + p.Name);
+        //    var a = new MethodCore(currentTypeDefinition, "remove_" + p.Name);
         //    a.SymbolKind = SymbolKind.Accessor;
         //    a.AccessorOwner = p;
         //    a.Accessibility = GetAccessibility(accessor._opt_modifiers._Modifiers) ?? p.Accessibility;
@@ -799,11 +799,11 @@ namespace VSC.Context
         //    a.ApplyInterningProvider(interningProvider);
         //    return a;
         //}
-        //public MethodOrOperator ConvertAccessor(GetAccessorDeclaration accessor, IUnresolvedMember p, bool memberIsExtern)
+        //public MethodCore ConvertAccessor(GetAccessorDeclaration accessor, IUnresolvedMember p, bool memberIsExtern)
         //{
         //    if (accessor == null)
         //        return null;
-        //    var a = new MethodOrOperator(currentTypeDefinition, "get_" + p.Name);
+        //    var a = new MethodCore(currentTypeDefinition, "get_" + p.Name);
         //    a.SymbolKind = SymbolKind.Accessor;
         //    a.AccessorOwner = p;
         //    a.Accessibility = GetAccessibility(accessor._opt_modifiers._Modifiers) ?? p.Accessibility;
@@ -846,11 +846,11 @@ namespace VSC.Context
         //    a.ApplyInterningProvider(interningProvider);
         //    return a;
         //}
-        //public MethodOrOperator ConvertAccessor(SetAccessorDeclaration accessor, IUnresolvedMember p, bool memberIsExtern)
+        //public MethodCore ConvertAccessor(SetAccessorDeclaration accessor, IUnresolvedMember p, bool memberIsExtern)
         //{
         //    if (accessor == null)
         //        return null;
-        //    var a = new MethodOrOperator(currentTypeDefinition, "set_" + p.Name);
+        //    var a = new MethodCore(currentTypeDefinition, "set_" + p.Name);
         //    a.SymbolKind = SymbolKind.Accessor;
         //    a.AccessorOwner = p;
         //    a.Accessibility = GetAccessibility(accessor._opt_modifiers._Modifiers) ?? p.Accessibility;
@@ -895,9 +895,9 @@ namespace VSC.Context
         //    return a;
         //}
 
-        //public MethodOrOperator CreateDefaultEventAccessor(IUnresolvedEvent ev, string name, IUnresolvedParameter valueParameter)
+        //public MethodCore CreateDefaultEventAccessor(IUnresolvedEvent ev, string name, IUnresolvedParameter valueParameter)
         //{
-        //    var a = new MethodOrOperator(currentTypeDefinition, name);
+        //    var a = new MethodCore(currentTypeDefinition, name);
         //    a.SymbolKind = SymbolKind.Accessor;
         //    a.AccessorOwner = ev;
         //    a.Region = ev.BodyRegion;
@@ -928,7 +928,7 @@ namespace VSC.Context
         ///// <summary>
         ///// Adds the 'Invoke' method, and a constructor, to the <paramref name="delegateType"/>.
         ///// </summary>
-        //public void AddDefaultMethodsToDelegate(UnresolvedTypeDefinitionSpec delegateType, ITypeReference returnType, IEnumerable<IUnresolvedParameter> parameters)
+        //public void AddDefaultMethodsToDelegate(TypeDefinitionCore delegateType, ITypeReference returnType, IEnumerable<IUnresolvedParameter> parameters)
         //{
         //    if (delegateType == null)
         //        throw new ArgumentNullException("delegateType");
@@ -940,7 +940,7 @@ namespace VSC.Context
         //    DomRegion region = delegateType.Region;
         //    region = new DomRegion(region.FileName, region.BeginLine, region.BeginColumn); // remove end position
 
-        //    MethodOrOperator invoke = new MethodOrOperator(delegateType, "Invoke");
+        //    MethodCore invoke = new MethodCore(delegateType, "Invoke");
         //    invoke.Accessibility = Accessibility.Public;
         //    invoke.IsSynthetic = true;
         //    foreach (var p in parameters)
@@ -949,7 +949,7 @@ namespace VSC.Context
         //    invoke.Region = region;
         //    delegateType.Members.Addition(invoke);
 
-        //    MethodOrOperator ctor = new MethodOrOperator(delegateType, ".ctor");
+        //    MethodCore ctor = new MethodCore(delegateType, ".ctor");
         //    ctor.SymbolKind = SymbolKind.Constructor;
         //    ctor.Accessibility = Accessibility.Public;
         //    ctor.IsSynthetic = true;
@@ -970,7 +970,7 @@ namespace VSC.Context
 
         //    return interningProvider.InternList(types);
         //}
-        //public bool InheritsConstraints(MethodOrOperator methodDeclaration)
+        //public bool InheritsConstraints(MethodCore methodDeclaration)
         //{
         //    // overrides and explicit interface implementations inherit constraints
         //    if ((methodDeclaration._Modifiers & VSC.TypeSystem.Modifiers.OVERRIDE) == VSC.TypeSystem.Modifiers.OVERRIDE)

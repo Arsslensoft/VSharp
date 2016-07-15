@@ -41,8 +41,26 @@ namespace VSC.AST
         {
             vis.Visit(this);
         }
-        
-       
+
+        // TODO: Move it to MemberCore
+        public static string GetMemberType(MemberContainer mc)
+        {
+            if (mc is PropertyDeclaration)
+                return "property";
+            if (mc is IndexerDeclaration)
+                return "indexer";
+            if (mc is EnumMemberDeclaration)
+                return "enum";
+            if (mc is FieldDeclaration)
+                return "field";
+            if (mc is MethodCore)
+                return "method";
+          
+            if (mc is EventBase)
+                return "event";
+
+            return "type";
+        }
         public override Expression DoResolve(ResolveContext rc)
         {
             if (Result != null && !Result.IsError)
@@ -147,7 +165,7 @@ namespace VSC.AST
         }
         #endregion
 
-        public override IConstantValue BuilConstantValue(ResolveContext rc, bool isAttributeConstant)
+        public override IConstantValue BuilConstantValue(bool isAttributeConstant)
         {
             return new ConstantIdentifierReference(Name, TypeArgumentsReferences);
         }

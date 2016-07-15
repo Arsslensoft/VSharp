@@ -54,10 +54,10 @@ namespace VSC.AST
 
         #endregion
 
-        public override IConstantValue BuilConstantValue(ResolveContext rc, bool isAttributeConstant)
+        public override IConstantValue BuilConstantValue(bool isAttributeConstant)
         {
-            Constant cleft = left.BuilConstantValue(rc, isAttributeConstant) as Constant;
-            Constant cright = right.BuilConstantValue(rc, isAttributeConstant) as Constant;
+            Constant cleft = left.BuilConstantValue(isAttributeConstant) as Constant;
+            Constant cright = right.BuilConstantValue( isAttributeConstant) as Constant;
             if (cleft == null || cright == null)
                 return null;
             return new ConstantBinaryOperator(cleft, oper, cright);

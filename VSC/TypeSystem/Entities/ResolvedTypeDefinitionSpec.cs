@@ -405,7 +405,7 @@ namespace VSC.TypeSystem.Implementation
 				    || kind == TypeKind.Enum || kind == TypeKind.Struct)
 				{
 					contextPerMember.Add(parts[0].CreateResolveContext(parentContext).WithCurrentTypeDefinition(this));
-					unresolvedMembers.Add(MethodOrOperator.CreateDefaultConstructor(parts[0]));
+					unresolvedMembers.Add(MethodCore.CreateDefaultConstructor(parts[0]));
 				}
 			}
 			result = new MemberList(contextPerMember, unresolvedMembers);

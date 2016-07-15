@@ -2,7 +2,7 @@ using VSC.TypeSystem;
 
 namespace VSC.AST
 {
-    public class EventAccessor : MethodOrOperator
+    public class EventAccessor : AbstractPropertyEventMethod
     {
         const Modifiers AllowedModifiers =
             Modifiers.PUBLIC |
@@ -14,9 +14,8 @@ namespace VSC.AST
         public const string AddPrefix = "add_";
         public const string RemovePrefix = "remove_";
         protected EventAccessor(EventDeclaration method, string prefix,Modifiers mods, VSharpAttributes attrs, Location loc)
-            : base(method.Parent, method.ReturnType, mods, AllowedModifiers, new MemberName(prefix + method.Name, loc), ParametersCompiled.CreateImplicitParameter(method.TypeExpression, loc), attrs)
+            : base(method, new TypeExpression(KnownTypeReference.Void, loc), mods, AllowedModifiers, prefix, ParametersCompiled.CreateImplicitParameter(method.TypeExpression, loc), attrs, loc)
         {
-            SymbolKind = SymbolKind.Accessor;
             this.method = method;
         }
     }

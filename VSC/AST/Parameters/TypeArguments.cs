@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VSC.TypeSystem;
@@ -8,7 +9,7 @@ namespace VSC.AST
     //
 	// A set of parsed constraints for a type parameter
 	//
-    public class TypeArguments
+    public class TypeArguments : IList<ITypeReference>
     {
 
         public List<ITypeReference> ToTypeReferences(InterningProvider intern)
@@ -66,5 +67,71 @@ namespace VSC.AST
 
             return sb.ToString();
         }
+
+
+
+
+        public int IndexOf(ITypeReference item)
+        {
+            return args.IndexOf((FullNamedExpression)item);
+        }
+
+        public void Insert(int index, ITypeReference item)
+        {
+            args.Insert(index, (FullNamedExpression)item);
+        }
+
+        public void RemoveAt(int index)
+        {
+            args.RemoveAt(index);
+        }
+
+        public ITypeReference this[int index]
+        {
+            get { return (ITypeReference)args[index]; }
+            set { args[index] = (FullNamedExpression)value; }
+        }
+
+        public void Add(ITypeReference item)
+        {
+            args.Add((FullNamedExpression)item);
+        }
+
+        public void Clear()
+        {
+            args.Clear();
+        }
+
+        public bool Contains(ITypeReference item)
+        {
+            return args.Contains((FullNamedExpression)item);
+        }
+
+        public void CopyTo(ITypeReference[] array, int arrayIndex)
+        {
+            args.Cast<ITypeReference>().ToList().CopyTo(array, arrayIndex);
+        }
+        public bool IsReadOnly
+        {
+            get { return false; }
+        }
+
+        public bool Remove(ITypeReference item)
+        {
+            return args.Remove((FullNamedExpression)item);
+        }
+
+        public IEnumerator<ITypeReference> GetEnumerator()
+        {
+            return args.Cast<ITypeReference>().GetEnumerator();
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            return args.GetEnumerator();
+        }
+
+
+   
     }
 }

@@ -160,7 +160,7 @@ namespace VSC.AST
 
         #endregion
 
-        public override IConstantValue BuilConstantValue(ResolveContext rc, bool isAttributeConstant)
+        public override IConstantValue BuilConstantValue(bool isAttributeConstant)
         {
             string memberName = Name;
             if (LeftExpression is ITypeReference)
@@ -171,7 +171,7 @@ namespace VSC.AST
                     memberName,
                    TypeArgumentsReferences);
             }
-            Constant v =LeftExpression.BuilConstantValue(rc,isAttributeConstant) as Constant;
+            Constant v =LeftExpression.BuilConstantValue(isAttributeConstant) as Constant;
             
             if (v == null)
                 return null;

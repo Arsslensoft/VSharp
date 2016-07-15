@@ -31,7 +31,7 @@ namespace VSC.AST
             base.ResolveWithCurrentContext(rc);
             // resolve enum members
             foreach (var m in TypeMembers)
-                (m as IResolve).Resolve(rc);
+                (m as IResolve).DoResolve(rc);
 
 
         }

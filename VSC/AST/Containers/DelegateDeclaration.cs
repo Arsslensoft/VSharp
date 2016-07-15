@@ -43,9 +43,9 @@ namespace VSC.AST
             }
             
         }
-        static readonly IUnresolvedParameter delegateObjectParameter = MakeParameter(KnownTypeReference.Object, "object");
-        static readonly IUnresolvedParameter delegateIntPtrMethodParameter = MakeParameter(KnownTypeReference.IntPtr, "method");
-        static IUnresolvedParameter MakeParameter(ITypeReference type, string name)
+        static readonly Parameter delegateObjectParameter = MakeParameter(KnownTypeReference.Object, "object");
+        static readonly Parameter delegateIntPtrMethodParameter = MakeParameter(KnownTypeReference.IntPtr, "method");
+        static Parameter MakeParameter(ITypeReference type, string name)
         {
             Parameter p = new Parameter(type, name, Location.Null);
             p.Freeze();
@@ -62,24 +62,22 @@ namespace VSC.AST
             DomRegion region = Region;
             region = new DomRegion(region.FileName, region.BeginLine, region.BeginColumn); // remove end position
 
-            MethodOrOperator invoke = new MethodOrOperator(this,"Invoke");
-            invoke.Accessibility = Accessibility.Public;
-            invoke.IsSynthetic = true;
-            foreach (var p in parameters)
-                invoke.Parameters.Add(p);
-            invoke.ReturnType = returnType;
-            invoke.Region = region;
-            this.Members.Add(invoke);
-
-            MethodOrOperator ctor = new MethodOrOperator(this, ".ctor");
-            ctor.SymbolKind = SymbolKind.Constructor;
-            ctor.Accessibility = Accessibility.Public;
-            ctor.IsSynthetic = true;
-            ctor.Parameters.Add(delegateObjectParameter);
-            ctor.Parameters.Add(delegateIntPtrMethodParameter);
-            ctor.ReturnType = this;
-            ctor.Region = region;
-            this.Members.Add(ctor);
+            //TODO:IMPL DELEGATE METHODS
+            //MethodCore invoke = new MethodDeclaration(this, new TypeExpression(returnType, Location.Null), Modifiers.PUBLIC ,Modifiers.PUBLIC, new MemberName("Invoke"), ParametersCompiled.EmptyReadOnlyParameters, null );
+            //invoke.Accessibility = Accessibility.Public;
+            //invoke.IsSynthetic = true;
+            //foreach (var p in parameters)
+            //    invoke.Parameters.Add(p);
+            //invoke.Region = region;
+            //this.Members.Add(invoke);
+           
+            //MethodCore ctor = new ConstructorDeclaration(this, ".ctor", Modifiers.PUBLIC, null,new ParametersCompiled(delegateObjectParameter,delegateIntPtrMethodParameter),Location   );
+            //ctor.SymbolKind = SymbolKind.Constructor;
+            //ctor.Accessibility = Accessibility.Public;
+            //ctor.IsSynthetic = true;
+            //ctor.ReturnType = this;
+            //ctor.Region = region;
+            //this.Members.Add(ctor);
         }
 
     }

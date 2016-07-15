@@ -262,7 +262,7 @@ namespace VSC.TypeSystem.Implementation
             {
                 if (this.HasDefaultConstructorConstraint || this.HasValueTypeConstraint)
                 {
-                    if (filter == null || filter(MethodOrOperator.DummyConstructor))
+                    if (filter == null || filter(MethodCore.DummyConstructor))
                     {
                         return new[] { ResolvedMethodSpec.GetDummyConstructor(compilation, this) };
                     }

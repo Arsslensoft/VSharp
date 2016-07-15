@@ -40,9 +40,9 @@ namespace VSC.AST
 
         #endregion
 
-        public override IConstantValue BuilConstantValue(ResolveContext rc, bool isAttributeConstant)
+        public override IConstantValue BuilConstantValue( bool isAttributeConstant)
         {
-            if (Arguments.Count == 0)
+            if (Arguments != null && Arguments.Count == 0)
             {
                 // built in primitive type constants can be created with new
                 // Todo: correctly resolve the type instead of doing the string approach

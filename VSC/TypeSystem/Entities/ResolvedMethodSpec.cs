@@ -15,7 +15,7 @@ namespace VSC.TypeSystem.Implementation
 	{
 		IUnresolvedMethod[] parts;
 		
-		public ResolvedMethodSpec(MethodOrOperator unresolved, ITypeResolveContext parentContext)
+		public ResolvedMethodSpec(MethodCore unresolved, ITypeResolveContext parentContext)
 			: this(unresolved, parentContext, unresolved.IsExtensionMethod)
 		{
 		}
@@ -283,10 +283,10 @@ namespace VSC.TypeSystem.Implementation
 		/// <returns>
 		/// A public instance constructor with IsSynthetic=true and no declaring type.
 		/// </returns>
-		/// <seealso cref="MethodOrOperator.DummyConstructor"/>
+		/// <seealso cref="MethodCore.DummyConstructor"/>
 		public static IMethod GetDummyConstructor(ICompilation compilation)
 		{
-			var dummyConstructor = MethodOrOperator.DummyConstructor;
+			var dummyConstructor = MethodCore.DummyConstructor;
 			// Reuse the same IMethod instance for all dummy constructors
 			// so that two occurrences of 'new T()' refer to the same constructor.
 			return (IMethod)compilation.CacheManager.GetOrAddShared(
@@ -299,7 +299,7 @@ namespace VSC.TypeSystem.Implementation
 		/// <returns>
 		/// A public instance constructor with IsSynthetic=true and the specified declaring type.
 		/// </returns>
-		/// <seealso cref="MethodOrOperator.DummyConstructor"/>
+		/// <seealso cref="MethodCore.DummyConstructor"/>
 		public static IMethod GetDummyConstructor(ICompilation compilation, IType declaringType)
 		{
 			var resolvedCtor = GetDummyConstructor(compilation);

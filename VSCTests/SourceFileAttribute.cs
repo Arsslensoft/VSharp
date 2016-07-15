@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using VSC;
 using VSC.AST;
 using VSC.Base;
+using VSC.Context;
 using VSC.TypeSystem;
 using VSC.TypeSystem.Implementation;
 using VSC.TypeSystem.Resolver;
@@ -23,10 +24,12 @@ namespace VSCTests
 
             SeekableStreamReader ssr = new SeekableStreamReader(File.OpenRead(file), Encoding.UTF8);
             SourceFile sf = new SourceFile(Path.GetFileName(file), file, 1);
-            CompilationSourceFile csf = new CompilationSourceFile(new VSC.Context.CompilerContext(new CompilerSettings(),false), sf);
+            ModuleContext mctx = new ModuleContext(new VSC.Context.CompilerContext(new CompilerSettings(), false));
+            CompilationSourceFile csf = new CompilationSourceFile(mctx, sf);
             ParserSession ps = new ParserSession();
+
             //  Tokenizer cs = new Tokenizer(ssr,csf,ps,mc.Compiler.Report);
-            VSharpParser vp = new VSharpParser(ssr, csf, csf.Compiler.Report, ps);
+            VSharpParser vp = new VSharpParser(ssr, csf, csf.Compiler.Report, ps,mctx);
             vp.parse();
 
 
@@ -37,7 +40,7 @@ namespace VSCTests
             var c = pc.CreateCompilation();
 
             ResolveContext rc = new ResolveContext(c, csf.Compiler.Report);
-            csf.Resolve(rc);
+            csf.DoResolve(rc);
             Errors = (csf.Compiler.Report.Printer as ListReportPrinter).Messages;
         }
     }

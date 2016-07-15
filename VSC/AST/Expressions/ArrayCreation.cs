@@ -91,7 +91,7 @@ namespace VSC.AST
         }
 
 
-        public override IConstantValue BuilConstantValue(ResolveContext rc, bool isAttributeConstant)
+        public override IConstantValue BuilConstantValue(bool isAttributeConstant)
         {
             var initializer = Initializers;
             // Attributes only allow one-dimensional arrays
@@ -116,7 +116,7 @@ namespace VSC.AST
                 int pos = 0;
                 foreach (Expression expr in initializer.Elements)
                 {
-                    Constant c = expr.BuilConstantValue(rc, isAttributeConstant) as Constant;
+                    Constant c = expr.BuilConstantValue( isAttributeConstant) as Constant;
                     if (c == null)
                         return null;
                     elements[pos++] = c;

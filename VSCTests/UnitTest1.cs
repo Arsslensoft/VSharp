@@ -37,7 +37,7 @@ E:\Projects\VSharp\Tests\TPAR_CONSTRAINTS.vs(17,46) error VS0179: `T' and `Z' : 
             Assert.IsTrue(errors.HasCode(180, 17, 44));
             Assert.IsTrue(errors.HasCode(181, 17, 27));
             Assert.IsTrue(errors.HasCode(182, 17, 29));
-
+            Assert.AreEqual(errors.Count,11);
         }
         /*
          E:\Projects\VSharp\Tests\BASE_CLASS.vs(3,5) error VS0162: Inconsistent accessibility: base interface `X.C' is less accessible than interface `C'
@@ -73,6 +73,20 @@ E:\Projects\VSharp\Tests\BASE_CLASS.vs(49,8) error VS0162: Inconsistent accessib
             List<AbstractMessage> errors = TestManager.RunTests(this);
 
         }
+        [SourceFile(@"E:\Projects\VSharp\Tests\ENUM.vs")]
+        [TestMethod]
+        public void EnumCheck()
+        {
+            List<AbstractMessage> errors = TestManager.RunTests(this);
 
+        }
+
+        [SourceFile(@"E:\Projects\VSharp\Tests\PROPERTY.vs")]
+        [TestMethod]
+        public void PropertyCheck()
+        {
+            List<AbstractMessage> errors = TestManager.RunTests(this);
+
+        }
     }
 }

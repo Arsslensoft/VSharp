@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using VSC.Base;
@@ -11,16 +12,18 @@ using VSC.TypeSystem.Resolver;
 
 namespace VSC.AST
 {
+    // It is used as a base class for all property based members
+	// This includes properties, indexers, and events
 
-   
     /// <summary>
     /// Base class for <see cref="IUnresolvedMember"/> implementations.
     /// </summary>
     [Serializable]
-    public abstract class MemberContainer : UnresolvedEntitySpec, IUnresolvedMember, IAstNode, IResolve
+    public abstract class MemberContainer : EntityCore, IUnresolvedMember, IAstNode, IResolve
     {
 
-        public IAstNode ParentNode { get; set; }
+        public abstract IEntity ResolvedEntity { get; }
+        public abstract IType ResolvedMemberType { get; }
         //
         // Common modifiers allowed in a class declaration
         //
@@ -56,158 +59,38 @@ namespace VSC.AST
         protected const Modifiers AllowedModifiersInterface =
             Modifiers.NEW;
 
-        // <summary>
-        //   Checks the object @mod modifiers to be in @allowed.
-        //   Returns the new mask.  Side effect: reports any
-        //   incorrect attributes. 
-        // </summary>
-        public static Modifiers Check(Modifiers allowed, Modifiers mod, Modifiers def_access, Location l)
+
+        protected VSharpAttributes attribs;
+         protected MemberContainer(){}
+        protected MemberContainer(TypeContainer parent, FullNamedExpression type, Modifiers mod, Modifiers allowed_mod, Modifiers def_mod, MemberName name, VSharpAttributes attrs, SymbolKind sym)
         {
-            int invalid_flags = (~(int)allowed) & ((int)mod & ((int)Modifiers.TOP - 1));
-            int i;
+            this.SymbolKind = sym;
+			this.Parent = parent;
+            this.declaringTypeDefinition = parent;
+            this.name = name.Name;
+            if (parent != null)
+                this.UnresolvedFile = parent.UnresolvedFile;
+			this.type_expr = type;
+            this.attribs = attrs;
+            member_name = name;
+            mod_flags = mod;
+            mod_flags = ModifiersExtensions.Check(allowed_mod, mod, def_mod, name.Location, Report);
+            ApplyModifiers(mod);
 
-            if (invalid_flags == 0)
-            {
-                //
-                // If no accessibility bits provided
-                // then provide the defaults.
-                //
-                if ((mod & Modifiers.AccessibilityMask) == 0)
-                {
-                    mod |= def_access;
-                    if (def_access != 0)
-                        mod |= Modifiers.DEFAULT_ACCESS_MODIFIER;
-                    return mod;
-                }
+            if (attrs != null)
+                foreach (var a in attrs.Attrs)
+                    this.attributes.Add(a);
 
-                return mod;
-            }
+            this.returnType = type as ITypeReference;
 
-            for (i = 1; i < (int)Modifiers.TOP; i <<= 1)
-            {
-                if ((i & invalid_flags) == 0)
-                    continue;
-
-                Error_InvalidModifier((Modifiers)i, l, CompilerContext.report);
-            }
-
-            return allowed & mod;
-        }
-
-        static void Error_InvalidModifier(Modifiers mod, Location l, Report Report)
-        {
-            Report.Error(2, l, "The modifier `{0}' is not valid for this item",
-                GetModifierName(mod));
-        }
-        static public string GetModifierName(Modifiers i)
-        {
-            string s = "";
-
-            switch (i)
-            {
-                case Modifiers.NEW:
-                    s = "new"; break;
-                case Modifiers.PUBLIC:
-                    s = "public"; break;
-                case Modifiers.PROTECTED:
-                    s = "protected"; break;
-                case Modifiers.INTERNAL:
-                    s = "internal"; break;
-                case Modifiers.PRIVATE:
-                    s = "private"; break;
-                case Modifiers.ABSTRACT:
-                    s = "abstract"; break;
-                case Modifiers.SEALED:
-                    s = "sealed"; break;
-                case Modifiers.STATIC:
-                    s = "static"; break;
-                case Modifiers.READONLY:
-                    s = "readonly"; break;
-                case Modifiers.VIRTUAL:
-                    s = "virtual"; break;
-                case Modifiers.OVERRIDE:
-                    s = "override"; break;
-                case Modifiers.EXTERN:
-                    s = "extern"; break;
-                case Modifiers.SUPERSEDE:
-                    s = "supersede"; break;
-
-            }
-
-            return s;
-        }
-        public virtual void SetConstraints(List<TypeParameterConstraints> constraints_list)
-        {
-            var tparams = member_name.TypeParameters;
-            if (tparams == null)
-            {
-                CompilerContext.report.Error(3, Location, "Constraints are not allowed on non-generic declarations");
-                return;
-            }
-
-            foreach (var c in constraints_list)
-            {
-                var tp = tparams.Find(c.TypeParameter.Value);
-                if (tp == null)
-                {
-                    CompilerContext.report.Error(4, c.Location, "`{0}': A constraint references nonexistent type parameter `{1}'",
-                        GetSignatureForError(), c.TypeParameter.Value);
-                    continue;
-                }
-
-                // add constraint
-                foreach (var tc in c.TypeExpressions)
-                {
-                    if (tc is SpecialContraintExpr)
-                    {
-                        var sp = tc as SpecialContraintExpr;
-                        if (sp.Constraint == SpecialConstraint.Constructor)
-                        {
-                            tp.HasDefaultConstructorConstraint = true;
-                            continue;
-                        }
-                        else if (sp.Constraint == SpecialConstraint.Class)
-                        {
-                            tp.HasReferenceTypeConstraint = true;
-                            continue;
-                        }
-                        else if (sp.Constraint == SpecialConstraint.Struct)
-                        {
-                            tp.HasValueTypeConstraint = true;
-                            continue;
-                        }
-
-
-                    }
-                    else if (tc is TypeNameExpression)
-                    {
-                        (tc as TypeNameExpression).lookupMode = NameLookupMode.BaseTypeReference;
-                        tp.Constraints.Add(tc as ITypeReference);
-                    }
-                }
-            }
-        }
-        public TypeContainer Parent=null;
-        public virtual string GetSignatureForError()
-        {
-            if (Parent != null)
-            {
-                var parent = Parent.GetSignatureForError();
-                if (parent == null)
-                    return member_name.GetSignatureForError();
-
-                return parent + "." + member_name.GetSignatureForError();
-
-            }
-            else
-                return member_name.GetSignatureForError();
-
-
-        }
+            if (member_name.ExplicitInterface != null)
+                ApplyExplicit(null);
+		}
 
         public IList<ITypeReference> GetParameterTypes(IList<IUnresolvedParameter> parameters)
         {
-            if (parameters.Count == 0)
+
+            if (parameters == null || parameters.Count == 0)
                 return EmptyList<ITypeReference>.Instance;
             ITypeReference[] types = new ITypeReference[parameters.Count];
             for (int i = 0; i < types.Length; i++)
@@ -223,7 +106,8 @@ namespace VSC.AST
               CompilerContext.InternProvider.Intern(new MemberReferenceSpec(
                     SymbolKind,
                       member_name.ExplicitInterface as ITypeReference,
-                        member_name.Name, member_name.TypeParameters.Count, GetParameterTypes(parameters))));
+                        member_name.Name, member_name.TypeParameters != null ?member_name.TypeParameters.Count : 0, GetParameterTypes(parameters))));
+            
         }
         public void ApplyModifiers( VSC.TypeSystem.Modifiers modifiers)
         {
@@ -262,14 +146,7 @@ namespace VSC.AST
             }
         }
 
-        public void CheckModifiersAndSetNames(Modifiers mods, Modifiers allowed_mods, Modifiers def_mod, MemberName name)
-        {
-            member_name = name;
-            mod_flags = mods;
-              mod_flags=   Check(allowed_mods, mods, def_mod, name.Location);
-            ApplyModifiers(mods);
-        }
-
+ 
         protected FullNamedExpression type_expr;
         public FullNamedExpression TypeExpression
         {
@@ -282,55 +159,92 @@ namespace VSC.AST
                 type_expr = value;
             }
         }
+  
 
-        protected MemberName member_name;
-        public MemberName MemberName
-        {
-            get { return member_name; }
-        }
-        /// <summary>
-        ///   Location where this declaration happens
-        /// </summary>
-        public Location Location
-        {
-            get { return member_name.Location; }
-        }
+      
 
-        string comment = "";
-        public string DocComment
-        {
-            get
-            {
-                return comment;
-            }
-            set
-            {
-                if (value == null)
-                    return;
-
-                comment += value;
-            }
-        }
 
         public void AcceptVisitor(IVisitor visitor)
         {
             throw new NotImplementedException();
         }
 
-        public object DoResolve(ResolveContext rc)
-        {
-            throw new NotImplementedException();
-        }
+       public virtual bool DoResolve(ResolveContext rc)
+       {
 
-        bool IResolve.Resolve(ResolveContext rc)
-        {
-            return ResolveMember(rc);
-        }
+           CheckTypeIndependency(rc);
+           CheckTypeDependency(rc);
+           return true;
+       }
+  
+        
+       protected virtual void CheckTypeDependency(ResolveContext rc)
+       { 
+           // verify accessibility
+           if (!ResolvedEntity.IsAccessibleAs(ResolvedMemberType))
+           {
+             
+               if (this is PropertyDeclaration)
+                   rc.Report.Error(206, Location,
+                       "Inconsistent accessibility: property type `" +
+                       ResolvedMemberType.ToString() + "' is less " +
+                       "accessible than property `" + GetSignatureForError() + "'");
+               else if (this is IndexerDeclaration)
+                   rc.Report.Error(207, Location,
+                       "Inconsistent accessibility: indexer return type `" +
+                       ResolvedMemberType.ToString() + "' is less " +
+                       "accessible than indexer `" + GetSignatureForError() + "'");
+               else if (this is MethodCore)
+               {
+                   if (this is OperatorDeclaration)
+                       rc.Report.Error(208, Location,
+                           "Inconsistent accessibility: return type `" +
+                           ResolvedMemberType.ToString() + "' is less " +
+                           "accessible than operator `" + GetSignatureForError() + "'");
+                   else
+                       rc.Report.Error(209, Location,
+                           "Inconsistent accessibility: return type `" +
+                           ResolvedMemberType.ToString() + "' is less " +
+                           "accessible than method `" + GetSignatureForError() + "'");
+               }
+               else if (this is EventDeclaration)
+               {
+                   rc.Report.Error(210, Location,
+                       "Inconsistent accessibility: event type `{0}' is less accessible than event `{1}'",
+                       ResolvedMemberType.ToString(), GetSignatureForError());
+               }
+               else
+               {
+                   rc.Report.Error(211, Location,
+                             "Inconsistent accessibility: field type `" +
+                             ResolvedMemberType.ToString() + "' is less " +
+                             "accessible than field `" + GetSignatureForError() + "'");
+               }
+           }
+       }
+       protected virtual void CheckTypeIndependency(ResolveContext rc)
+       {
+           if ((Parent.ModFlags & Modifiers.SEALED) != 0 &&
+               (ModFlags & (Modifiers.VIRTUAL | Modifiers.ABSTRACT)) != 0)
+           {
+               rc.Report.Error(212, Location, "New virtual member `{0}' is declared in a sealed class `{1}'",
+                   GetSignatureForError(), Parent.GetSignatureForError());
+           }
+       }
+       protected virtual bool CheckBase(ResolveContext rc)
+       {
+           CheckProtected(rc);
 
-        public virtual bool ResolveMember(ResolveContext rc)
-        {
-            return true;
-        }
+           return true;
+       }
+
+
+      
+       public override string GetSignatureForDocumentation()
+       {
+           return Parent.GetSignatureForDocumentation() + "." + MemberName.Basename;
+       }
+
         #region unresolved
        protected ITypeReference returnType = SpecialTypeSpec.UnknownType;
         IList<IMemberReference> interfaceImplementations;
@@ -357,7 +271,7 @@ namespace VSC.AST
 
         /*
         [Serializable]
-        internal new class RareFields : UnresolvedEntitySpec.RareFields
+        internal new class RareFields : EntityCore.RareFields
         {
             internal IList<IMemberReference> interfaceImplementations;
 			
@@ -376,7 +290,7 @@ namespace VSC.AST
             override Clone(){}
         }
 		
-        internal override UnresolvedEntitySpec.RareFields WriteRareFields()
+        internal override EntityCore.RareFields WriteRareFields()
         {
             ThrowIfFrozen();
             if (rareFields == null) rareFields = new RareFields();
@@ -605,5 +519,7 @@ namespace VSC.AST
         }
         #endregion
         #endregion
+
+   
     }
 }

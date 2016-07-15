@@ -29,7 +29,7 @@ namespace VSC.AST
 
         #endregion
 
-        public override IConstantValue BuilConstantValue(ResolveContext rc, bool isAttributeConstant)
+        public override IConstantValue BuilConstantValue(bool isAttributeConstant)
         {
             if (isAttributeConstant)
             {

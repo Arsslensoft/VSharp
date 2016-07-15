@@ -105,9 +105,8 @@ namespace VSC.AST
             return true;
         }
 
-        public override void ResolveWithCurrentContext(ResolveContext rc)
-        {
-            base.ResolveWithCurrentContext(rc);
-        }
+
     }
+
+ 
 }

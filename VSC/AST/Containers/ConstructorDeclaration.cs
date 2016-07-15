@@ -2,7 +2,7 @@ using VSC.TypeSystem;
 
 namespace VSC.AST
 {
-    public sealed class ConstructorDeclaration : MethodOrOperator
+    public sealed class ConstructorDeclaration : MethodCore
     {
 
         // <summary>
@@ -22,9 +22,9 @@ namespace VSC.AST
 
         public ConstructorInitializer Initializer;
         public ConstructorDeclaration(TypeContainer parent, string name, Modifiers mod, VSharpAttributes attrs, ParametersCompiled args, Location loc)
-            : base(parent, KnownTypeReference.Void, mod, AllowedModifiers, new MemberName(name, loc), args, attrs)
+            : base(parent, new TypeExpression(parent, loc), mod, AllowedModifiers, new MemberName(name, loc), args, attrs, SymbolKind.Constructor)
         {
-            SymbolKind = SymbolKind.Constructor;
+        
         }
 
     }

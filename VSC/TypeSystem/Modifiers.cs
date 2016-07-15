@@ -35,6 +35,10 @@ namespace VSC.TypeSystem
         METHOD_EXTENSION = 0x80000,
         COMPILER_GENERATED = 0x100000,
         BACKING_FIELD = 0x200000,
+        DEBUGGER_HIDDEN = 0x400000,
+        DEBUGGER_STEP_THROUGH = 0x800000,
+        AutoProperty = 0x1000000,
+        SYNC = 0x2000000,
 
         AccessibilityMask = PUBLIC | PROTECTED | INTERNAL | PRIVATE,
         AllowedExplicitImplFlags = EXTERN,

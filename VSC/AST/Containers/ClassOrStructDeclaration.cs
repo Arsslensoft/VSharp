@@ -20,6 +20,8 @@ namespace VSC.AST
         {
 
         }
+
+
         public ClassOrStructDeclaration(TypeContainer ns, Modifiers mods, Modifiers allowed, MemberName name, VSharpAttributes attr, Location l, TypeKind kind, CompilationSourceFile file)
             : base(ns,mods,allowed, name, attr, l,kind,file)
         {
@@ -44,14 +46,14 @@ namespace VSC.AST
                 }
             }
 
-            // Resolve nested types
+            // DoResolve nested types
             foreach (var t in TypeContainers)
-                t.Resolve(rc);
-            // Resolve members
+                t.DoResolve(rc);
+            // DoResolve members
             foreach (var m in TypeMembers)
             {
                 // resolve method
-                (m as  IResolve).Resolve(rc);
+                (m as  IResolve).DoResolve(rc);
 
                 if (m is OperatorDeclaration)
                 {
@@ -209,7 +211,7 @@ namespace VSC.AST
                     }
                 }
             }
-            // Resolve members
+            // DoResolve members
             ResolveMembersAndImplementation(rc);
 
         }
