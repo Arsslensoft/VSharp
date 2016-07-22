@@ -15,9 +15,9 @@ namespace VSC.AST
         {
      
             Expression tp = expr.DoResolve(rc);
-            if (!tp.Result.IsError)
+            if (tp != null)
             {
-                if (!(tp.Result is NamespaceResolveResult))
+                if (tp is AliasNamespace)
                 {
                     rc.Report.Error(149, Location,
                         "An `import' directive can only be applied to namespaces but `{0}' denotes a type.",

@@ -10,7 +10,7 @@ namespace VSC.AST
         ComposedTypeSpecifier spec;
         public override IType Resolve(ITypeResolveContext ctx)
         {
-            return Result.type;
+            return ResolvedType;
         }
         public ComposedType(FullNamedExpression left, ComposedTypeSpecifier spec)
         {
@@ -23,9 +23,12 @@ namespace VSC.AST
         }
         public override Expression DoResolve(ResolveContext rc)
         {
+            if (_resolved)
+                return this;
+
             left = (FullNamedExpression)left.DoResolve(rc);
 
-            IType t = left.Result.type;
+            IType t = left.Type;
             var nxt = spec;
             while (nxt != null)
             {
@@ -40,9 +43,8 @@ namespace VSC.AST
                 nxt = spec.Next;
             }
 
-          
-            
-            Result =  new TypeResolveResult(t);
+            ResolvedType = t;
+            _resolved = true;
             return this;
         }
 

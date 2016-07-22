@@ -3,9 +3,11 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using VSC.AST;
 using VSC.Base;
 using VSC.Context;
 using VSC.TypeSystem.Implementation;
+using Expression = VSC.AST.Expression;
 
 namespace VSC.TypeSystem.Resolver
 {
@@ -16,8 +18,8 @@ namespace VSC.TypeSystem.Resolver
 	{
 		readonly VSharpTypeResolveContext parentContext;
 		readonly UsingScope usingScope;
-		
-		internal readonly ConcurrentDictionary<string, ResolveResult> ResolveCache = new ConcurrentDictionary<string, ResolveResult>();
+
+        internal readonly ConcurrentDictionary<string, Expression> ResolveCache = new ConcurrentDictionary<string, Expression>();
 		internal List<List<IMethod>> AllExtensionMethods;
 		
 		public ResolvedUsingScope(VSharpTypeResolveContext context, UsingScope usingScope)
@@ -85,25 +87,25 @@ namespace VSC.TypeSystem.Resolver
 				}
 			}
 		}
+
+        IList<KeyValuePair<string, Expression>> usingAliases;
 		
-		IList<KeyValuePair<string, ResolveResult>> usingAliases;
-		
-		public IList<KeyValuePair<string, ResolveResult>> UsingAliases {
+		public IList<KeyValuePair<string, Expression>> UsingAliases {
 			get {
 				var result = LazyInit.VolatileRead(ref this.usingAliases);
 				if (result != null) {
 					return result;
 				} else {
                     ResolveContext resolver = new ResolveContext(parentContext.WithUsingScope(this), CompilerContext.report);
-					result = new KeyValuePair<string, ResolveResult>[usingScope.UsingAliases.Count];
+                    result = new KeyValuePair<string, Expression>[usingScope.UsingAliases.Count];
 					for (int i = 0; i < result.Count; i++) {
 						var rr = usingScope.UsingAliases[i].Value.Resolve(resolver);
-						if (rr is TypeResolveResult) {
-							rr = new AliasTypeResolveResult (usingScope.UsingAliases[i].Key, (TypeResolveResult)rr);
-						} else if (rr is NamespaceResolveResult) {
-							rr = new AliasNamespaceResolveResult (usingScope.UsingAliases[i].Key, (NamespaceResolveResult)rr);
-						}
-						result[i] = new KeyValuePair<string, ResolveResult>(
+                        //if (rr is TypeResolveResult) {
+                        //    rr = new AliasTypeResolveResult (usingScope.UsingAliases[i].Key, (TypeResolveResult)rr);
+                        //} else if (rr is NamespaceResolveResult) {
+                        //    rr = new AliasNamespace(usingScope.UsingAliases[i].Key, (AliasNamespace)rr);
+                        //}
+                        result[i] = new KeyValuePair<string, Expression>(
 							usingScope.UsingAliases[i].Key,
 							rr
 						);

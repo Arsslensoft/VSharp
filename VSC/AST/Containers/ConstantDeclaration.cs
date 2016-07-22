@@ -62,14 +62,14 @@ namespace VSC.AST
 
                 if (ResolvedField.ConstantValue != null)
                 {
-                    ResolveResult rr = ResolvedField.constantValue;
+                    AST.Expression rr = ResolvedField.constantValue;
                     if (rr.IsError)
-                        rc.Report.Error(196, Location, "Cannot convert source type `{0}' to target type `{1}'", rr.type.ToString(), ResolvedField.ReturnType.ToString());
+                        rc.Report.Error(196, Location, "Cannot convert source type `{0}' to target type `{1}'", rr.Type.ToString(), ResolvedField.ReturnType.ToString());
 
                 }
           
-                else if (Initializer != null && Initializer.Type != null)
-                    rc.Report.Error(196, Location, "Cannot convert source type `{0}' to target type `{1}'", Initializer.Type.ToString(), ResolvedField.ReturnType.ToString());
+                else if (Initializer != null && Initializer.UnresolvedTypeReference != null)
+                    rc.Report.Error(196, Location, "Cannot convert source type `{0}' to target type `{1}'", Initializer.UnresolvedTypeReference.ToString(), ResolvedField.ReturnType.ToString());
                 else
                     rc.Report.Error(196, Location, "Cannot convert value to target type `{0}'", ResolvedField.ReturnType.ToString());
 

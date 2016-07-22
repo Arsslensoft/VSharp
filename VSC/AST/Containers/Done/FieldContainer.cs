@@ -49,18 +49,18 @@ namespace VSC.AST
             set
             {
                 init = value;
-                if (ConstantValue == null && init != null)
-                {
-                    ConstantValue = (init.BuilConstantValue(false) as Constant);
-                    if (ConstantValue != null)
-                        ConstantValue = (ConstantValue as Constant).ConvertConstantValue(returnType);
-                }
-                else if (ConstantValue != null)
-                {
-                    ConstantValue = (ConstantValue as Constant);
-                    if (ConstantValue != null)
-                        ConstantValue = (ConstantValue as Constant).ConvertConstantValue(returnType);
-                }
+                //if (ConstantValue == null && init != null)
+                //{
+                //    ConstantValue = (init.BuilConstantValue(false) as Constant);
+                //    if (ConstantValue != null)
+                //        ConstantValue = (ConstantValue as Constant).ConvertConstantValue(returnType);
+                //}
+                //else if (ConstantValue != null)
+                //{
+                //    ConstantValue = (ConstantValue as Constant);
+                //    if (ConstantValue != null)
+                //        ConstantValue = (ConstantValue as Constant).ConvertConstantValue(returnType);
+                //}
             }
         }
         IConstantValue constantValue;
@@ -165,7 +165,7 @@ namespace VSC.AST
         {
             base.CheckTypeDependency(rc);
 
-            if (ResolvedMemberType is ResolvedTypeDefinitionSpec && (ResolvedMemberType as ResolvedTypeDefinitionSpec).IsStatic )
+            if (rc.IsStaticType(ResolvedMemberType))
                 Report.Error(237, Location, "`{0}': cannot declare variables of static types",
                     name);
 

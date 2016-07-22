@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using VSC.AST;
 using VSC.Base;
 using VSC.TypeSystem.Implementation;
-
+using Expression = VSC.AST.Expression;
 
 
 namespace VSC.TypeSystem.Resolver
@@ -111,7 +112,7 @@ namespace VSC.TypeSystem.Resolver
         }
 
         readonly ICompilation compilation;
-        readonly ResolveResult[] arguments;
+        readonly AST.Expression[] arguments;
         readonly string[] argumentNames;
         readonly VSharpConversions conversions;
         //List<Candidate> candidates = new List<Candidate>();
@@ -122,7 +123,7 @@ namespace VSC.TypeSystem.Resolver
         OverloadResolutionErrors bestCandidateValidationResult;
 
         #region Constructor
-        public OverloadResolution(ICompilation compilation, ResolveResult[] arguments, string[] argumentNames = null, IType[] typeArguments = null, VSharpConversions conversions = null)
+        public OverloadResolution(ICompilation compilation, AST.Expression[] arguments, string[] argumentNames = null, IType[] typeArguments = null, VSharpConversions conversions = null)
         {
             if (compilation == null)
                 throw new ArgumentNullException("compilation");
@@ -179,7 +180,7 @@ namespace VSC.TypeSystem.Resolver
         /// <summary>
         /// Gets the arguments for which this OverloadResolution instance was created.
         /// </summary>
-        public IList<ResolveResult> Arguments
+        public IList<Expression> Arguments
         {
             get { return arguments; }
         }
@@ -601,7 +602,7 @@ namespace VSC.TypeSystem.Resolver
                     continue;
                 }
 
-                ByReferenceResolveResult brrr = arguments[i] as ByReferenceResolveResult;
+                ByReferenceExpression brrr = arguments[i] as ByReferenceExpression;
                 if (brrr != null)
                 {
                     if ((brrr.IsOut && !candidate.Parameters[parameterIndex].IsOut) || (brrr.IsRef && !candidate.Parameters[parameterIndex].IsRef))
@@ -907,10 +908,10 @@ namespace VSC.TypeSystem.Resolver
 
         /// <summary>
         /// Returns the arguments for the method call in the order they were provided (not in the order of the parameters).
-        /// Arguments are wrapped in a <see cref="ConversionResolveResult"/> if an implicit conversion is being applied
+        /// Arguments are wrapped in a <see cref="CastExpression"/> if an implicit conversion is being applied
         /// to them when calling the method.
         /// </summary>
-        public IList<ResolveResult> GetArgumentsWithConversions()
+        public IList<Expression> GetArgumentsWithConversions()
         {
             if (bestCandidate == null)
                 return arguments;
@@ -920,12 +921,12 @@ namespace VSC.TypeSystem.Resolver
 
         /// <summary>
         /// Returns the arguments for the method call in the order they were provided (not in the order of the parameters).
-        /// Arguments are wrapped in a <see cref="ConversionResolveResult"/> if an implicit conversion is being applied
+        /// Arguments are wrapped in a <see cref="CastExpression"/> if an implicit conversion is being applied
         /// to them when calling the method.
         /// For arguments where an explicit argument name was provided, the argument will
-        /// be wrapped in a <see cref="NamedArgumentResolveResult"/>.
+        /// be wrapped in a <see cref="NamedArgumentExpression"/>.
         /// </summary>
-        public IList<ResolveResult> GetArgumentsWithConversionsAndNames()
+        public IList<Expression> GetArgumentsWithConversionsAndNames()
         {
             if (bestCandidate == null)
                 return arguments;
@@ -933,15 +934,15 @@ namespace VSC.TypeSystem.Resolver
                 return GetArgumentsWithConversions(null, GetBestCandidateWithSubstitutedTypeArguments());
         }
 
-        IList<ResolveResult> GetArgumentsWithConversions(ResolveResult targetResolveResult, IParameterizedMember bestCandidateForNamedArguments)
+        IList<Expression> GetArgumentsWithConversions(Expression targetExpression, IParameterizedMember bestCandidateForNamedArguments)
         {
             var conversions = this.ArgumentConversions;
-            ResolveResult[] args = new ResolveResult[arguments.Length];
+            Expression[] args = new Expression[arguments.Length];
             for (int i = 0; i < args.Length; i++)
             {
                 var argument = arguments[i];
-                if (this.IsExtensionMethodInvocation && i == 0 && targetResolveResult != null)
-                    argument = targetResolveResult;
+                if (this.IsExtensionMethodInvocation && i == 0 && targetExpression != null)
+                    argument = targetExpression;
                 int parameterIndex = bestCandidate.ArgumentToParameterMap[i];
                 if (parameterIndex >= 0 && conversions[i] != Conversion.IdentityConversion)
                 {
@@ -950,13 +951,10 @@ namespace VSC.TypeSystem.Resolver
                     if (parameterType.Kind != TypeKind.Unknown)
                     {
                         if (arguments[i].IsCompileTimeConstant && conversions[i].IsValid && !conversions[i].IsUserDefined)
-                        {
-                            argument = new ResolveContext(compilation).WithCheckForOverflow(CheckForOverflow).ResolveCast(parameterType, argument);
-                        }
+                            argument = new CastExpression(parameterType, argument).DoResolve(new ResolveContext(compilation).WithCheckForOverflow(CheckForOverflow));
                         else
-                        {
-                            argument = new ConversionResolveResult(parameterType, argument, conversions[i], CheckForOverflow);
-                        }
+                            argument = new AST.CastExpression(parameterType, argument, conversions[i], CheckForOverflow);
+                        
                     }
                 }
                 if (bestCandidateForNamedArguments != null && argumentNames[i] != null)
@@ -964,11 +962,11 @@ namespace VSC.TypeSystem.Resolver
                     // Wrap argument in NamedArgumentResolveResult
                     if (parameterIndex >= 0)
                     {
-                        argument = new NamedArgumentResolveResult(bestCandidateForNamedArguments.Parameters[parameterIndex], argument, bestCandidateForNamedArguments);
+                        argument = new NamedArgumentExpression(bestCandidateForNamedArguments.Parameters[parameterIndex], argument, bestCandidateForNamedArguments);
                     }
                     else
                     {
-                        argument = new NamedArgumentResolveResult(argumentNames[i], argument);
+                        argument = new NamedArgumentExpression(argumentNames[i], argument);
                     }
                 }
                 args[i] = argument;
@@ -1001,25 +999,25 @@ namespace VSC.TypeSystem.Resolver
         /// <summary>
         /// Creates a ResolveResult representing the result of overload resolution.
         /// </summary>
-        /// <param name="targetResolveResult">
+        /// <param name="targetExpression">
         /// The target expression of the call. May be <c>null</c> for static methods/constructors.
         /// </param>
         /// <param name="initializerStatements">
         /// Statements for Objects/Collections initializer.
-        /// <see cref="InvocationResolveResult.InitializerStatements"/>
+        /// <see cref="InvocationExpression.InitializerStatements"/>
         /// <param name="returnTypeOverride">
         /// If not null, use this instead of the ReturnType of the member as the type of the created resolve result.
         /// </param>
-        public VSharpInvocationResolveResult CreateResolveResult(ResolveResult targetResolveResult, IList<ResolveResult> initializerStatements = null, IType returnTypeOverride = null)
+        public VSharpInvocationExpression CreateInvocation(Expression targetExpression, IList<Expression> initializerStatements = null, IType returnTypeOverride = null)
         {
             IParameterizedMember member = GetBestCandidateWithSubstitutedTypeArguments();
             if (member == null)
                 throw new InvalidOperationException();
 
-            return new VSharpInvocationResolveResult(
-                this.IsExtensionMethodInvocation ? new TypeResolveResult(member.DeclaringType ?? SpecialTypeSpec.UnknownType) : targetResolveResult,
+            return new VSharpInvocationExpression(
+                this.IsExtensionMethodInvocation ? new TypeExpression(member.DeclaringType ?? SpecialTypeSpec.UnknownType) : targetExpression,
                 member,
-                GetArgumentsWithConversions(targetResolveResult, member),
+                GetArgumentsWithConversions(targetExpression, member),
                 this.BestCandidateErrors,
                 this.IsExtensionMethodInvocation,
                 this.BestCandidateIsExpandedForm,

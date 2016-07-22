@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using VSC.AST;
 using VSC.Base;
 using VSC.Context;
 using VSC.TypeSystem.Resolver;
@@ -8,7 +9,7 @@ namespace VSC.TypeSystem.Implementation
 {
 	public class ResolvedFieldSpec : ResolvedMemberSpec, IField
 	{
-		public volatile ResolveResult constantValue;
+		public volatile AST.Expression constantValue;
 		
 		public ResolvedFieldSpec(IUnresolvedField unresolved, ITypeResolveContext parentContext)
 			: base(unresolved, parentContext)
@@ -39,7 +40,7 @@ namespace VSC.TypeSystem.Implementation
 		public object ConstantValue {
 			get {
          
-				ResolveResult rr = this.constantValue;
+				Expression rr = this.constantValue;
 			  
 				if (rr == null) {
 					using (var busyLock = BusyManager.Enter(this)) {
@@ -56,7 +57,7 @@ namespace VSC.TypeSystem.Implementation
                         if (unresolvedCV != null)
                             rr = unresolvedCV.Resolve(context);
                         else
-                            rr = ErrorResolveResult.UnknownError; //TODO:Fix this
+                            rr = ErrorExpression.UnknownError; //TODO:Fix this
                             //rr = null;
 						this.constantValue = rr;
 					}

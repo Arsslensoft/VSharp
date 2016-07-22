@@ -326,13 +326,13 @@ namespace VSC.AST
             public bool IsOptional { get { return true; } }
             bool IVariable.IsConst { get { return false; } }
 
-            ResolveResult resolvedDefaultValue;
+            AST.Expression resolvedDefaultValue;
 
             public object ConstantValue
             {
                 get
                 {
-                    ResolveResult rr = LazyInit.VolatileRead(ref this.resolvedDefaultValue);
+                    AST.Expression rr = LazyInit.VolatileRead(ref this.resolvedDefaultValue);
                     if (rr == null)
                     {
                         rr = defaultValue.Resolve(context);

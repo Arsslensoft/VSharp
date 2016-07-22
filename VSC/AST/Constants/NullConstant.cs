@@ -12,9 +12,15 @@ namespace VSC.AST
 	
             this.type = KnownTypeReference.Object;
         }
+        public NullConstant(IType t,Location loc)
+           : base(loc)
+        {
 
-	
-		
+            this.ResolvedType = t;
+            this._resolved = true;
+        }
+
+
 
         public override object GetValue ()
         {
@@ -49,9 +55,9 @@ namespace VSC.AST
         }
 
 
-        public override IConstantValue BuilConstantValue(bool isAttributeConstant)
-        {
-            return new PrimitiveConstantExpression(KnownTypeReference.Object, null);
-        }
+        //public override IConstantValue BuilConstantValue(bool isAttributeConstant)
+        //{
+        //    return new PrimitiveConstantExpression(KnownTypeReference.Object, null);
+        //}
     }
 }

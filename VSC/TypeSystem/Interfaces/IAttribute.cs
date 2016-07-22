@@ -30,11 +30,11 @@ namespace VSC.TypeSystem
 		/// <summary>
 		/// Gets the positional arguments.
 		/// </summary>
-		IList<ResolveResult> PositionalArguments { get; }
+        IList<AST.Expression> PositionalArguments { get; }
 		
 		/// <summary>
 		/// Gets the named arguments passed to the attribute.
 		/// </summary>
-		IList<KeyValuePair<IMember, ResolveResult>> NamedArguments { get; }
+        IList<KeyValuePair<IMember, AST.Expression>> NamedArguments { get; }
 	}
 }

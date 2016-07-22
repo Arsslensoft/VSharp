@@ -4,8 +4,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using VSC.AST;
 using VSC.Base;
 using VSC.TypeSystem;
+using Expression = VSC.AST.Expression;
 
 namespace VSC.TypeSystem.Resolver
 {
@@ -79,7 +81,7 @@ namespace VSC.TypeSystem.Resolver
 		#endregion
 		
 		#region ImplicitConversion
-		private Conversion ImplicitConversion(ResolveResult resolveResult, IType toType, bool allowUserDefined)
+        private Conversion ImplicitConversion(AST.Expression resolveResult, IType toType, bool allowUserDefined)
 		{
 			Conversion c;
 			if (resolveResult.IsCompileTimeConstant) {
@@ -114,7 +116,7 @@ namespace VSC.TypeSystem.Resolver
 			return c;
 		}
 
-		public Conversion ImplicitConversion(ResolveResult resolveResult, IType toType)
+		public Conversion ImplicitConversion(AST.Expression resolveResult, IType toType)
 		{
 			if (resolveResult == null)
 				throw new ArgumentNullException("resolveResult");
@@ -200,22 +202,22 @@ namespace VSC.TypeSystem.Resolver
 		#endregion
 		
 		#region ExplicitConversion
-		public Conversion ExplicitConversion(ResolveResult resolveResult, IType toType)
+		public Conversion ExplicitConversion(Expression expression, IType toType)
 		{
-			if (resolveResult == null)
-				throw new ArgumentNullException("resolveResult");
+			if (expression == null)
+				throw new ArgumentNullException("expression");
 			if (toType == null)
 				throw new ArgumentNullException("toType");
 			
-			if (resolveResult.Type.Kind == TypeKind.Dynamic)
+			if (expression.Type.Kind == TypeKind.Dynamic)
 				return Conversion.ExplicitDynamicConversion;
-			Conversion c = ImplicitConversion(resolveResult, toType, allowUserDefined: false);
+			Conversion c = ImplicitConversion(expression, toType, allowUserDefined: false);
 			if (c != Conversion.None)
 				return c;
-			c = ExplicitConversionImpl(resolveResult.Type, toType);
+			c = ExplicitConversionImpl(expression.Type, toType);
 			if (c != Conversion.None)
 				return c;
-			return UserDefinedExplicitConversion(resolveResult, resolveResult.Type, toType);
+			return UserDefinedExplicitConversion(expression, expression.Type, toType);
 		}
 		
 		public Conversion ExplicitConversion(IType fromType, IType toType)
@@ -335,7 +337,7 @@ namespace VSC.TypeSystem.Resolver
 		#endregion
 		
 		#region Enumeration Conversions
-		Conversion ImplicitEnumerationConversion(ResolveResult rr, IType toType)
+        Conversion ImplicitEnumerationConversion(AST.Expression rr, IType toType)
 		{
 			// V# 4.0 spec: §6.1.3
 			Debug.Assert(rr.IsCompileTimeConstant);
@@ -625,7 +627,7 @@ namespace VSC.TypeSystem.Resolver
 		#endregion
 		
 		#region Implicit Constant-Expression Conversion
-		bool ImplicitConstantExpressionConversion(ResolveResult rr, IType toType)
+		bool ImplicitConstantExpressionConversion(Expression rr, IType toType)
 		{
 			if (rr == null || !rr.IsCompileTimeConstant)
 				return false;
@@ -769,7 +771,7 @@ namespace VSC.TypeSystem.Resolver
 			return Conversion.UserDefinedConversion(selected[0].Method, isLifted: selected[0].IsLifted, isImplicit: isImplicit, isAmbiguous: true, conversionBeforeUserDefinedOperator: ExplicitConversion(source, mostSpecificSource), conversionAfterUserDefinedOperator: ExplicitConversion(mostSpecificTarget, target));
 		}
 
-		Conversion UserDefinedImplicitConversion(ResolveResult fromResult, IType fromType, IType toType)
+		Conversion UserDefinedImplicitConversion(Expression fromResult, IType fromType, IType toType)
 		{
 			// V# 4.0 spec §6.4.4 User-defined implicit conversions
 			var operators = GetApplicableConversionOperators(fromResult, fromType, toType, false);
@@ -806,7 +808,7 @@ namespace VSC.TypeSystem.Resolver
 			}
 		}
 		
-		Conversion UserDefinedExplicitConversion(ResolveResult fromResult, IType fromType, IType toType)
+		Conversion UserDefinedExplicitConversion(Expression fromResult, IType fromType, IType toType)
 		{
 			// V# 4.0 spec §6.4.5 User-defined implicit conversions
 			var operators = GetApplicableConversionOperators(fromResult, fromType, toType, true);
@@ -876,7 +878,7 @@ namespace VSC.TypeSystem.Resolver
 			}
 		}
 		
-		List<OperatorInfo> GetApplicableConversionOperators(ResolveResult fromResult, IType fromType, IType toType, bool isExplicit)
+		List<OperatorInfo> GetApplicableConversionOperators(Expression fromResult, IType fromType, IType toType, bool isExplicit)
 		{
 			// Find the candidate operators:
 			Predicate<IUnresolvedMethod> opFilter;
@@ -926,10 +928,10 @@ namespace VSC.TypeSystem.Resolver
 		#endregion
 		
 		#region AnonymousFunctionConversion
-		Conversion AnonymousFunctionConversion(ResolveResult resolveResult, IType toType)
+		Conversion AnonymousFunctionConversion(Expression expression, IType toType)
 		{
 			// V# 5.0 spec §6.5 Anonymous function conversions
-			LambdaResolveResult f = resolveResult as LambdaResolveResult;
+			LambdaExpression f = expression as LambdaExpression;
 			if (f == null)
 				return Conversion.None;
 	
@@ -987,9 +989,9 @@ namespace VSC.TypeSystem.Resolver
 		/// Gets the better conversion (V# 4.0 spec, §7.5.3.3)
 		/// </summary>
 		/// <returns>0 = neither is better; 1 = t1 is better; 2 = t2 is better</returns>
-		public int BetterConversion(ResolveResult resolveResult, IType t1, IType t2)
+		public int BetterConversion(Expression expression, IType t1, IType t2)
 		{
-			LambdaResolveResult lambda = resolveResult as LambdaResolveResult;
+			LambdaExpression lambda = expression as LambdaExpression;
 			if (lambda != null) {
 				
 				IMethod m1 = t1.GetDelegateInvokeMethod();
@@ -1019,7 +1021,7 @@ namespace VSC.TypeSystem.Resolver
 				
 				return r;
 			} else {
-				return BetterConversion(resolveResult.Type, t1, t2);
+				return BetterConversion(expression.Type, t1, t2);
 			}
 		}
 		

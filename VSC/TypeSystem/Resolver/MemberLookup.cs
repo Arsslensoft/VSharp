@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using VSC.AST;
 using VSC.Base;
-
+using Expression = VSC.AST.Expression;
 
 
 namespace VSC.TypeSystem.Resolver
@@ -44,9 +45,9 @@ namespace VSC.TypeSystem.Resolver
 		/// <summary>
 		/// Gets whether access to protected instance members of the target expression is possible.
 		/// </summary>
-		public bool IsProtectedAccessAllowed(ResolveResult targetResolveResult)
+		public bool IsProtectedAccessAllowed(AST.Expression targetResolveResult)
 		{
-			return targetResolveResult is ThisResolveResult || IsProtectedAccessAllowed(targetResolveResult.Type);
+			return targetResolveResult is SelfReference || IsProtectedAccessAllowed(targetResolveResult.Type);
 		}
 		
 		/// <summary>
@@ -168,13 +169,13 @@ namespace VSC.TypeSystem.Resolver
 		/// Retrieves all members that are accessible and not hidden (by being overridden or shadowed).
 		/// Returns both members and nested type definitions. Does not include extension methods.
 		/// </summary>
-		public IEnumerable<IEntity> GetAccessibleMembers(ResolveResult targetResolveResult)
+		public IEnumerable<IEntity> GetAccessibleMembers(Expression targetExpression)
 		{
-			if (targetResolveResult == null)
-				throw new ArgumentNullException("targetResolveResult");
+			if (targetExpression == null)
+				throw new ArgumentNullException("targetExpression");
 			
-			bool targetIsTypeParameter = targetResolveResult.Type.Kind == TypeKind.TypeParameter;
-			bool allowProtectedAccess = IsProtectedAccessAllowed(targetResolveResult);
+			bool targetIsTypeParameter = targetExpression.Type.Kind == TypeKind.TypeParameter;
+			bool allowProtectedAccess = IsProtectedAccessAllowed(targetExpression);
 			
 			// maps the member name to the list of lookup groups
 			var lookupGroupDict = new Dictionary<string, List<LookupGroup>>();
@@ -186,7 +187,7 @@ namespace VSC.TypeSystem.Resolver
 			// 2) It adds a new lookup group with the members from a declaring type.
 			// 3) It replaces virtual members with the overridden version, placing the override in the
 			//    lookup group belonging to the base class.
-			foreach (IType type in targetResolveResult.Type.GetNonInterfaceBaseTypes()) {
+			foreach (IType type in targetExpression.Type.GetNonInterfaceBaseTypes()) {
 				
 				List<IEntity> entities = new List<IEntity>();
 				entities.AddRange(type.GetMembers(options: GetMemberOptions.IgnoreInheritedMembers));
@@ -285,7 +286,7 @@ namespace VSC.TypeSystem.Resolver
 		#endregion
 		
 		#region LookupType
-        public ResolveResult LookupType(IType declaringType, string name, IList<IType> typeArguments, bool parameterizeResultType = true)
+        public AST.Expression LookupType(IType declaringType, string name, IList<IType> typeArguments, bool parameterizeResultType = true)
         {
             if (declaringType == null)
                 throw new ArgumentNullException("declaringType");
@@ -328,16 +329,16 @@ namespace VSC.TypeSystem.Resolver
             Debug.Assert(lookupGroups.All(g => g.NestedTypes != null && g.NestedTypes.Count > 0));
 
             if (lookupGroups.Count == 0)
-            {
-                return new UnknownMemberResolveResult(declaringType, name, typeArguments);
-            }
+                return new AST.UnknownMemberExpression(declaringType, name, typeArguments);
+            
 
             LookupGroup resultGroup = lookupGroups[lookupGroups.Count - 1];
 
             if (resultGroup.NestedTypes.Count > 1 || lookupGroups.Count > 1)
-                return new AmbiguousTypeResolveResult(resultGroup.NestedTypes[0]);
+                //return new AmbiguousTypeResolveResult(resultGroup.NestedTypes[0]);// TODO:ERROR AMBIGIOUS
+                return null;
             else
-                return new TypeResolveResult(resultGroup.NestedTypes[0]);
+                return new TypeExpression(resultGroup.NestedTypes[0]);
         }
 		
 		static int InnerTypeParameterCount(IType type)
@@ -351,7 +352,7 @@ namespace VSC.TypeSystem.Resolver
 		/// <summary>
 		/// Performs a member lookup.
 		/// </summary>
-        public ResolveResult Lookup(ResolveResult targetResolveResult, string name, IList<IType> typeArguments, bool isInvocation)
+        public AST.Expression Lookup(AST.Expression targetResolveResult, string name, IList<IType> typeArguments, bool isInvocation)
         {
             if (targetResolveResult == null)
                 throw new ArgumentNullException("targetResolveResult");
@@ -437,13 +438,13 @@ namespace VSC.TypeSystem.Resolver
 		/// <summary>
 		/// Looks up the indexers on the target type.
 		/// </summary>
-		public IList<MethodListWithDeclaringType> LookupIndexers(ResolveResult targetResolveResult)
+		public IList<MethodListWithDeclaringType> LookupIndexers(Expression targetExpression)
 		{
-			if (targetResolveResult == null)
-				throw new ArgumentNullException("targetResolveResult");
+			if (targetExpression == null)
+				throw new ArgumentNullException("targetExpression");
 			
-			IType targetType = targetResolveResult.Type;
-			bool allowProtectedAccess = IsProtectedAccessAllowed(targetResolveResult);
+			IType targetType = targetExpression.Type;
+			bool allowProtectedAccess = IsProtectedAccessAllowed(targetExpression);
 			Predicate<IUnresolvedProperty> filter = p => p.IsIndexer;
 			
 			List<LookupGroup> lookupGroups = new List<LookupGroup>();
@@ -688,7 +689,7 @@ namespace VSC.TypeSystem.Resolver
         #endregion
 
         #region CreateResult
-        ResolveResult CreateResult(ResolveResult targetResolveResult, List<LookupGroup> lookupGroups, string name, IList<IType> typeArguments)
+        Expression CreateResult(Expression targetExpression, List<LookupGroup> lookupGroups, string name, IList<IType> typeArguments)
         {
             // Remove all hidden groups
             lookupGroups.RemoveAll(g => g.AllHidden);
@@ -696,7 +697,7 @@ namespace VSC.TypeSystem.Resolver
             if (lookupGroups.Count == 0)
             {
                 // No members found
-                return new UnknownMemberResolveResult(targetResolveResult.Type, name, typeArguments);
+                return new UnknownMemberExpression(targetExpression.Type, name, typeArguments);
             }
 
             if (lookupGroups.Any(g => !g.MethodsAreHidden && g.Methods.Count > 0))
@@ -718,7 +719,7 @@ namespace VSC.TypeSystem.Resolver
                     }
                 }
 
-                return new MethodGroupResolveResult(targetResolveResult, name, methodLists, typeArguments);
+                return new MethodGroupExpression(targetExpression, name, methodLists, typeArguments);
             }
 
             // If there are ambiguities, report the most-derived result (last group)
@@ -726,19 +727,20 @@ namespace VSC.TypeSystem.Resolver
             if (resultGroup.NestedTypes != null && resultGroup.NestedTypes.Count > 0)
             {
                 if (resultGroup.NestedTypes.Count > 1 || !resultGroup.NonMethodIsHidden || lookupGroups.Count > 1)
-                    return new AmbiguousTypeResolveResult(resultGroup.NestedTypes[0]);
+                 //   return new AmbiguousTypeResolveResult(resultGroup.NestedTypes[0]); // TODO:ERROR AMBIGIOUS
+                    return null;
                 else
-                    return new TypeResolveResult(resultGroup.NestedTypes[0]);
+                    return new TypeExpression(resultGroup.NestedTypes[0]);
             }
 
-            if (resultGroup.NonMethod.IsStatic && targetResolveResult is ThisResolveResult)
+            if (resultGroup.NonMethod.IsStatic && targetExpression is SelfReference)
             {
-                targetResolveResult = new TypeResolveResult(targetResolveResult.Type);
+                targetExpression = new TypeExpression(targetExpression.Type);
             }
 
             if (lookupGroups.Count > 1)
             {
-                return new AmbiguousMemberResolveResult(targetResolveResult, resultGroup.NonMethod);
+                return new AmbiguousMemberExpression(targetExpression, resultGroup.NonMethod);
             }
             else
             {
@@ -747,13 +749,13 @@ namespace VSC.TypeSystem.Resolver
                     IField field = resultGroup.NonMethod as IField;
                     if (field != null && field.DeclaringTypeDefinition != null && field.DeclaringTypeDefinition.Kind == TypeKind.Enum)
                     {
-                        return new MemberResolveResult(
-                            targetResolveResult, field,
+                        return new MemberExpressionStatement(
+                            targetExpression, field,
                             field.DeclaringTypeDefinition.EnumUnderlyingType,
                             field.IsConst, field.ConstantValue);
                     }
                 }
-                return new MemberResolveResult(targetResolveResult, resultGroup.NonMethod);
+                return new MemberExpressionStatement(targetExpression, resultGroup.NonMethod);
             }
         }
         #endregion

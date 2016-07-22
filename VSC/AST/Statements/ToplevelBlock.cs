@@ -1,11 +1,17 @@
 using System;
+using System.Collections.Generic;
 using VSC.Context;
 
 namespace VSC.AST
 {
     public class ToplevelBlock : ParametersBlock
     {
+        LocalVariable this_variable;
         CompilerContext compiler;
+        Dictionary<string, object> names;
+
+        List<ExplicitBlock> this_references;
+
         public ToplevelBlock(CompilerContext ctx, Location loc)
             : this(ctx, ParametersCompiled.EmptyReadOnlyParameters, loc)
         {
@@ -16,6 +22,9 @@ namespace VSC.AST
         {
             this.compiler = ctx;
             this.flags = flags;
+            top_block = this;
+
+       
         }
 
         //
@@ -34,6 +43,40 @@ namespace VSC.AST
         public void AddLocalName(string name, INamedBlockVariable li, bool ignoreChildrenBlocks)
         {
             throw new NotSupportedException();
+        }
+        //
+        // Used by anonymous blocks to track references of `this' variable
+        //
+        public List<ExplicitBlock> ThisReferencesFromChildrenBlock
+        {
+            get
+            {
+                return this_references;
+            }
+        }
+        public void AddThisReferenceFromChildrenBlock(ExplicitBlock block)
+        {
+            if (this_references == null)
+                this_references = new List<ExplicitBlock>();
+
+            if (!this_references.Contains(block))
+                this_references.Add(block);
+        }
+        public void RemoveThisReferenceFromChildrenBlock(ExplicitBlock block)
+        {
+            this_references.Remove(block);
+        }
+     
+        //
+        // Returns the "this" instance variable of this block.
+        // See AddThisVariable() for more information.
+        //
+        public LocalVariable ThisVariable
+        {
+            get
+            {
+                return this_variable;
+            }
         }
 
         public bool IsIterator

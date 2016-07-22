@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
+using VSC.AST;
 using VSC.Base;
 using VSC.Context;
 using VSC.TypeSystem.Implementation;
+using Expression = VSC.AST.Expression;
 
 namespace VSC.TypeSystem.Resolver
 {
@@ -19,6 +21,122 @@ namespace VSC.TypeSystem.Resolver
 	/// </remarks>
 	public partial class ResolveContext : ICodeContext
 	{
+        //
+        // Holds a varible used during collection or object initialization.
+        //
+        public Expression CurrentInitializerVariable;
+        [Flags]
+        public enum Options
+        {
+            /// <summary>
+            ///   This flag tracks the `checked' state of the compilation,
+            ///   it controls whether we should generate code that does overflow
+            ///   checking, or if we generate code that ignores overflows.
+            ///
+            ///   The default setting comes from the command line option to generate
+            ///   checked or unchecked code plus any source code changes using the
+            ///   checked/unchecked statements or expressions.   Contrast this with
+            ///   the ConstantCheckState flag.
+            /// </summary>
+            CheckedScope = 1 << 0,
+
+            /// <summary>
+            ///   The constant check state is always set to `true' and cant be changed
+            ///   from the command line.  The source code can change this setting with
+            ///   the `checked' and `unchecked' statements and expressions. 
+            /// </summary>
+            ConstantCheckState = 1 << 1,
+
+            AllCheckStateFlags = CheckedScope | ConstantCheckState,
+
+            //
+            // unsafe { ... } scope
+            //
+            UnsafeScope = 1 << 2,
+            CatchScope = 1 << 3,
+            FinallyScope = 1 << 4,
+            FieldInitializerScope = 1 << 5,
+            CompoundAssignmentScope = 1 << 6,
+            FixedInitializerScope = 1 << 7,
+            BaseInitializer = 1 << 8,
+
+            //
+            // Inside an enum definition, we do not resolve enumeration values
+            // to their enumerations, but rather to the underlying type/value
+            // This is so EnumVal + EnumValB can be evaluated.
+            //
+            // There is no "E operator + (E x, E y)", so during an enum evaluation
+            // we relax the rules
+            //
+            EnumScope = 1 << 9,
+
+            ConstantScope = 1 << 10,
+
+            ConstructorScope = 1 << 11,
+
+            UsingInitializerScope = 1 << 12,
+
+            LockScope = 1 << 13,
+
+            TryScope = 1 << 14,
+
+            TryWithCatchScope = 1 << 15,
+
+            DontSetConditionalAccessReceiver = 1 << 16,
+
+            ///
+            /// Indicates the current context is in probing mode, no errors are reported. 
+            ///
+            ProbingMode = 1 << 22,
+
+            //
+            // Return and ContextualReturn statements will set the ReturnType
+            // value based on the expression types of each return statement
+            // instead of the method return type which is initially null.
+            //
+            InferReturnType = 1 << 23,
+
+            OmitDebuggingInfo = 1 << 24,
+
+            ExpressionTreeConversion = 1 << 25,
+
+            InvokeSpecialName = 1 << 26,
+            LoopScope = 1 << 27,
+            SafeScope = 1 << 28,
+            RestrictScope = 1 << 29
+        }
+        // utility helper for CheckExpr, UnCheckExpr, Checked and Unchecked statements
+        // it's public so that we can use a struct at the callsite
+        public struct FlagsHandle : IDisposable
+        {
+            readonly ResolveContext ec;
+            readonly Options invmask, oldval;
+
+            public FlagsHandle(ResolveContext ec, Options flagsToSet)
+                : this(ec, flagsToSet, flagsToSet)
+            {
+            }
+
+            internal FlagsHandle(ResolveContext ec, Options mask, Options val)
+            {
+                this.ec = ec;
+                invmask = ~mask;
+                oldval = ec.flags & mask;
+                ec.flags = (ec.flags & invmask) | (val & mask);
+
+                //				if ((mask & Options.ProbingMode) != 0)
+                //					ec.Report.DisableReporting ();
+            }
+
+            public void Dispose()
+            {
+                //				if ((invmask & Options.ProbingMode) == 0)
+                //					ec.Report.EnableReporting ();
+
+                ec.flags = (ec.flags & invmask) | oldval;
+            }
+        }
+
         public static readonly string[][] names;
          static ResolveContext()
         {
@@ -55,17 +173,61 @@ namespace VSC.TypeSystem.Resolver
             //names[(int)OperatorType.BinaryOperatorConstant] = new string[] { "@@", "op_B_" };
             //names[(int)OperatorType.UnaryOperatorConstant] = new string[] { "@", "op_U_" };
         }
-        public static readonly ResolveResult ErrorResult = ErrorResolveResult.UnknownError;
+        public static readonly Expression ErrorResult = ErrorExpression.UnknownError;
         public readonly ICompilation compilation;
 		internal readonly VSharpConversions conversions;
 		public readonly VSharpTypeResolveContext context;
 		public readonly bool checkForOverflow;
 		public readonly bool isWithinLambdaExpression;
         public readonly Report Report;
+        protected Options flags;
+        //
+        // Whether we are inside an anonymous method.
+        //
+        public LambdaExpression CurrentAnonymousMethod;
+        public bool HasSet(Options options)
+        {
+            return (this.flags & options) == options;
+        }
 
-		
-		#region Constructor
-		public ResolveContext(ICompilation compilation, Report report=null)
+        public bool HasAny(Options options)
+        {
+            return (this.flags & options) != 0;
+        }
+        public bool IsStatic
+        {
+            get
+            {
+             
+                if (CurrentMember != null)
+                    return CurrentMember.IsStatic;
+                else if (CurrentTypeDefinition != null && CurrentMember == null)
+                    return CurrentTypeDefinition.IsStatic;
+                else return false;
+            }
+        }
+
+
+        public bool IsStaticType(IType t)
+        {
+            if (t is ResolvedTypeDefinitionSpec)
+                return (t as ResolvedTypeDefinitionSpec).IsStatic;
+            else if (t is ElementTypeSpec)
+                return IsStaticType((t as ElementTypeSpec).ElementType);
+            else return false;
+        }
+        // Temporarily set all the given flags to the given value.  Should be used in an 'using' statement
+        public FlagsHandle Set(Options options)
+        {
+            return new FlagsHandle(this, options);
+        }
+
+        public FlagsHandle With(Options options, bool enable)
+        {
+            return new FlagsHandle(this, options, enable ? options : 0);
+        }
+        #region Constructor
+        public ResolveContext(ICompilation compilation, Report report=null)
 		{
 			if (compilation == null)
 				throw new ArgumentNullException("compilation");
@@ -237,9 +399,9 @@ namespace VSC.TypeSystem.Resolver
 		public sealed class TypeDefinitionCache
 		{
 			public readonly ITypeDefinition TypeDefinition;
-			public readonly Dictionary<string, ResolveResult> SimpleNameLookupCacheExpression = new Dictionary<string, ResolveResult>();
-			public readonly Dictionary<string, ResolveResult> SimpleNameLookupCacheInvocationTarget = new Dictionary<string, ResolveResult>();
-			public readonly Dictionary<string, ResolveResult> SimpleTypeLookupCache = new Dictionary<string, ResolveResult>();
+            public readonly Dictionary<string, VSC.AST.Expression> SimpleNameLookupCacheExpression = new Dictionary<string, VSC.AST.Expression>();
+            public readonly Dictionary<string, VSC.AST.Expression> SimpleNameLookupCacheInvocationTarget = new Dictionary<string, VSC.AST.Expression>();
+            public readonly Dictionary<string, VSC.AST.Expression> SimpleTypeLookupCache = new Dictionary<string, VSC.AST.Expression>();
 			
 			public TypeDefinitionCache(ITypeDefinition typeDefinition)
 			{
@@ -317,10 +479,10 @@ namespace VSC.TypeSystem.Resolver
 		#region Object Initializer Context
 		sealed class ObjectInitializerContext
 		{
-			internal readonly ResolveResult initializedObject;
+			internal readonly Expression initializedObject;
 			internal readonly ObjectInitializerContext prev;
 			
-			public ObjectInitializerContext(ResolveResult initializedObject, ResolveContext.ObjectInitializerContext prev)
+			public ObjectInitializerContext(Expression initializedObject, ResolveContext.ObjectInitializerContext prev)
 			{
 				this.initializedObject = initializedObject;
 				this.prev = prev;
@@ -337,7 +499,7 @@ namespace VSC.TypeSystem.Resolver
 		/// <summary>
 		/// Pushes the type of the object that is currently being initialized.
 		/// </summary>
-		public ResolveContext PushObjectInitializer(ResolveResult initializedObject)
+		public ResolveContext PushObjectInitializer(Expression initializedObject)
 		{
 			if (initializedObject == null)
 				throw new ArgumentNullException("initializedObject");
@@ -359,11 +521,11 @@ namespace VSC.TypeSystem.Resolver
 		}
 		
 		/// <summary>
-		/// Gets the current object initializer. This usually is an <see cref="InitializedObjectResolveResult"/>
-		/// or (for nested initializers) a semantic tree based on an <see cref="InitializedObjectResolveResult"/>.
+		/// Gets the current object initializer. This usually is an <see cref="InitializedObjectExpression"/>
+		/// or (for nested initializers) a semantic tree based on an <see cref="InitializedObjectExpression"/>.
 		/// Returns ErrorResolveResult if there is no object initializer.
 		/// </summary>
-		public ResolveResult CurrentObjectInitializer {
+		public VSC.AST.Expression CurrentObjectInitializer {
 			get {
 				return objectInitializerStack != null ? objectInitializerStack.initializedObject : ErrorResult;
 			}
@@ -506,7 +668,7 @@ namespace VSC.TypeSystem.Resolver
                     throw new NotSupportedException("Invalid value for UnaryOperatorType");
             }
         }
-		public ResolveResult ResolveUnaryOperator(UnaryOperatorType op, ResolveResult expression)
+		public Expression ResolveUnaryOperator(UnaryOperatorType op, Expression expression)
 		{
 			if (expression.Type.Kind == TypeKind.Dynamic) 
 					return UnaryOperatorResolveResult(SpecialTypeSpec.Dynamic, op, expression);
@@ -528,7 +690,7 @@ namespace VSC.TypeSystem.Resolver
 				
 
 					default:
-						return ErrorResolveResult.UnknownError;
+						return ErrorExpression.UnknownError;
 				}
 			}
 			// If the type is nullable, get the underlying type:
@@ -558,7 +720,7 @@ namespace VSC.TypeSystem.Resolver
 					if ((code >= TypeCode.Char && code <= TypeCode.Decimal) || type.Kind == TypeKind.Enum || type.Kind == TypeKind.Pointer)
 						return UnaryOperatorResolveResult(expression.Type, op, expression, isNullable);
 					else
-						return new ErrorResolveResult(expression.Type);
+						return new ErrorExpression(expression.Type);
 				case UnaryOperatorType.UnaryPlus:
 					methodGroup = operators.UnaryPlusOperators;
 					break;
@@ -573,9 +735,10 @@ namespace VSC.TypeSystem.Resolver
 						if (expression.IsCompileTimeConstant && !isNullable && expression.ConstantValue != null) {
 							// evaluate as (E)(~(U)x);
 							var U = compilation.FindType(expression.ConstantValue.GetType());
-							var unpackedEnum = new ConstantResolveResult(U, expression.ConstantValue);
+							var unpackedEnum = new ConstantExpression(U, expression.ConstantValue);
 							var rr = ResolveUnaryOperator(op, unpackedEnum);
-							rr = WithCheckForOverflow(false).ResolveCast(type, rr);
+						    ResolveContext ovfrc = WithCheckForOverflow(false);
+						    rr = new CastExpression(type, rr).DoResolve(ovfrc);
 							if (rr.IsCompileTimeConstant)
 								return rr;
 						} 
@@ -601,18 +764,18 @@ namespace VSC.TypeSystem.Resolver
 				} else if (builtinOperatorOR.BestCandidateAmbiguousWith != null) {
 					// If the best candidate is ambiguous, just use the input type instead
 					// of picking one of the ambiguous overloads.
-					return new ErrorResolveResult(expression.Type);
+					return new ErrorExpression(expression.Type);
 				} else {
-					return new ErrorResolveResult(resultType);
+					return new ErrorExpression(resultType);
 				}
 			} else if (expression.IsCompileTimeConstant && m.CanEvaluateAtCompileTime) {
 				object val;
 				try {
 					val = m.Invoke(this, expression.ConstantValue);
 				} catch (ArithmeticException) {
-					return new ErrorResolveResult(resultType);
+					return new ErrorExpression(resultType);
 				}
-				return new ConstantResolveResult(resultType, val);
+				return new ConstantExpression(resultType, val);
 			} else {
 				expression = Convert(expression, m.Parameters[0].Type, builtinOperatorOR.ArgumentConversions[0]);
 				return UnaryOperatorResolveResult(resultType, op, expression,
@@ -620,16 +783,16 @@ namespace VSC.TypeSystem.Resolver
 			}
 		}
 		
-		OperatorResolveResult UnaryOperatorResolveResult(IType resultType, UnaryOperatorType op, ResolveResult expression, bool isLifted = false)
+		OperatorExpression UnaryOperatorResolveResult(IType resultType, UnaryOperatorType op, Expression expression, bool isLifted = false)
 		{
-			return new OperatorResolveResult(
+			return new OperatorExpression(
 				resultType, GetLinqNodeType(op, this.CheckForOverflow),
 				null, isLifted, new[] { expression });
 		}
 		#endregion
 		
 		#region UnaryNumericPromotion
-		ResolveResult UnaryNumericPromotion(UnaryOperatorType op, ref IType type, bool isNullable, ResolveResult expression)
+		Expression UnaryNumericPromotion(UnaryOperatorType op, ref IType type, bool isNullable, Expression expression)
 		{
 			// V# 4.0 spec: §7.3.6.1
 			TypeCode code = ReflectionHelper.GetTypeCode(type);
@@ -685,7 +848,7 @@ namespace VSC.TypeSystem.Resolver
 		
 		#region ResolveBinaryOperator
 		#region ResolveBinaryOperator method
-		public ResolveResult ResolveBinaryOperator(BinaryOperatorType op, ResolveResult lhs, ResolveResult rhs)
+		public Expression ResolveBinaryOperator(BinaryOperatorType op, Expression lhs, Expression rhs)
 		{
 			if (lhs.Type.Kind == TypeKind.Dynamic || rhs.Type.Kind == TypeKind.Dynamic) {
 				lhs = Convert(lhs, SpecialTypeSpec.Dynamic);
@@ -709,7 +872,7 @@ namespace VSC.TypeSystem.Resolver
 					// null coalescing operator is not overloadable and needs to be handled separately
 					return ResolveNullCoalescingOperator(lhs, rhs);
 				} else {
-					return ErrorResolveResult.UnknownError;
+					return ErrorExpression.UnknownError;
 				}
 			}
 			
@@ -745,7 +908,7 @@ namespace VSC.TypeSystem.Resolver
 			} else {
 				bool allowNullableConstants = op == BinaryOperatorType.Equality || op == BinaryOperatorType.Inequality;
 				if (!BinaryNumericPromotion(isNullable, ref lhs, ref rhs, allowNullableConstants))
-					return new ErrorResolveResult(lhs.Type);
+					return new ErrorExpression(lhs.Type);
 			}
 			// re-read underlying types after numeric promotion
 			lhsType = NullableType.GetUnderlyingType(lhs.Type);
@@ -806,7 +969,7 @@ namespace VSC.TypeSystem.Resolver
 							};
 						}
 						if (lhsType.Kind == TypeKind.Null && rhsType.Kind == TypeKind.Null)
-							return new ErrorResolveResult(SpecialTypeSpec.NullType);
+							return new ErrorExpression(SpecialTypeSpec.NullType);
 					}
 					break;
 				case BinaryOperatorType.Subtraction:
@@ -851,7 +1014,7 @@ namespace VSC.TypeSystem.Resolver
 								if (lhsType.Equals(rhsType)) {
 									return BinaryOperatorResolveResult(int64, lhs, op, rhs);
 								} else {
-									return new ErrorResolveResult(int64);
+									return new ErrorExpression(int64);
 								}
 							}
 							methodGroup = new [] {
@@ -863,7 +1026,7 @@ namespace VSC.TypeSystem.Resolver
 						}
 						
 						if (lhsType.Kind == TypeKind.Null && rhsType.Kind == TypeKind.Null)
-							return new ErrorResolveResult(SpecialTypeSpec.NullType);
+							return new ErrorExpression(SpecialTypeSpec.NullType);
 					}
 					break;
 				case BinaryOperatorType.LeftShift:
@@ -990,15 +1153,15 @@ namespace VSC.TypeSystem.Resolver
 				if (userDefinedOperatorOR.BestCandidate != null)
 					return CreateResolveResultForUserDefinedOperator(userDefinedOperatorOR, GetLinqNodeType(op, this.CheckForOverflow));
 				else
-					return new ErrorResolveResult(resultType);
+					return new ErrorExpression(resultType);
 			} else if (lhs.IsCompileTimeConstant && rhs.IsCompileTimeConstant && m.CanEvaluateAtCompileTime) {
 				object val;
 				try {
 					val = m.Invoke(this, lhs.ConstantValue, rhs.ConstantValue);
 				} catch (ArithmeticException) {
-					return new ErrorResolveResult(resultType);
+					return new ErrorExpression(resultType);
 				}
-				return new ConstantResolveResult(resultType, val);
+				return new ConstantExpression(resultType, val);
 			} else {
 				lhs = Convert(lhs, m.Parameters[0].Type, builtinOperatorOR.ArgumentConversions[0]);
 				rhs = Convert(rhs, m.Parameters[1].Type, builtinOperatorOR.ArgumentConversions[1]);
@@ -1012,9 +1175,9 @@ namespace VSC.TypeSystem.Resolver
 			return NullableType.IsNullable(type) || type.IsReferenceType != false;
 		}
 		
-		ResolveResult BinaryOperatorResolveResult(IType resultType, ResolveResult lhs, BinaryOperatorType op, ResolveResult rhs, bool isLifted = false)
+		Expression BinaryOperatorResolveResult(IType resultType, Expression lhs, BinaryOperatorType op, Expression rhs, bool isLifted = false)
 		{
-			return new OperatorResolveResult(
+			return new OperatorExpression(
 				resultType, GetLinqNodeType(op, this.CheckForOverflow),
 				null, isLifted, new[] { lhs, rhs });
 		}
@@ -1044,7 +1207,7 @@ namespace VSC.TypeSystem.Resolver
 		#endregion
 		
 		#region Enum helper methods
-		IType GetEnumUnderlyingType(IType enumType)
+	public	IType GetEnumUnderlyingType(IType enumType)
 		{
 			ITypeDefinition def = enumType.GetDefinition();
 			return def != null ? def.EnumUnderlyingType : SpecialTypeSpec.UnknownType;
@@ -1054,12 +1217,12 @@ namespace VSC.TypeSystem.Resolver
 		/// Handle the case where an enum value is compared with another enum value
 		/// bool operator op(E x, E y);
 		/// </summary>
-		ResolveResult HandleEnumComparison(BinaryOperatorType op, IType enumType, bool isNullable, ResolveResult lhs, ResolveResult rhs)
+		Expression HandleEnumComparison(BinaryOperatorType op, IType enumType, bool isNullable, Expression lhs, Expression rhs)
 		{
 			// evaluate as ((U)x op (U)y)
 			IType elementType = GetEnumUnderlyingType(enumType);
 			if (lhs.IsCompileTimeConstant && rhs.IsCompileTimeConstant && !isNullable && elementType.Kind != TypeKind.Enum) {
-				var rr = ResolveBinaryOperator(op, ResolveCast(elementType, lhs), ResolveCast(elementType, rhs));
+                var rr = ResolveBinaryOperator(op, new CastExpression(elementType, lhs).DoResolve(this), new CastExpression(elementType, rhs).DoResolve(this));
 				if (rr.IsCompileTimeConstant)
 					return rr;
 			}
@@ -1071,13 +1234,13 @@ namespace VSC.TypeSystem.Resolver
 		/// Handle the case where an enum value is subtracted from another enum value
 		/// U operator –(E x, E y);
 		/// </summary>
-		ResolveResult HandleEnumSubtraction(bool isNullable, IType enumType, ResolveResult lhs, ResolveResult rhs)
+		Expression HandleEnumSubtraction(bool isNullable, IType enumType, Expression lhs, Expression rhs)
 		{
 			// evaluate as (U)((U)x – (U)y)
 			IType elementType = GetEnumUnderlyingType(enumType);
 			if (lhs.IsCompileTimeConstant && rhs.IsCompileTimeConstant && !isNullable && elementType.Kind != TypeKind.Enum) {
-				var rr = ResolveBinaryOperator(BinaryOperatorType.Subtraction, ResolveCast(elementType, lhs), ResolveCast(elementType, rhs));
-				rr = WithCheckForOverflow(false).ResolveCast(elementType, rr);
+                var rr = ResolveBinaryOperator(BinaryOperatorType.Subtraction, new CastExpression(elementType, lhs).DoResolve(this), new CastExpression(elementType, rhs).DoResolve(this));
+				rr = new CastExpression(elementType, rr).DoResolve(  WithCheckForOverflow(false));
 				if (rr.IsCompileTimeConstant)
 					return rr;
 			}
@@ -1094,14 +1257,14 @@ namespace VSC.TypeSystem.Resolver
 		/// E operator |(E x, E y);
 		/// E operator ^(E x, E y);
 		/// </summary>
-		ResolveResult HandleEnumOperator(bool isNullable, IType enumType, BinaryOperatorType op, ResolveResult lhs, ResolveResult rhs)
+		Expression HandleEnumOperator(bool isNullable, IType enumType, BinaryOperatorType op, Expression lhs, Expression rhs)
 		{
 			// evaluate as (E)((U)x op (U)y)
 			if (lhs.IsCompileTimeConstant && rhs.IsCompileTimeConstant && !isNullable) {
 				IType elementType = GetEnumUnderlyingType(enumType);
 				if (elementType.Kind != TypeKind.Enum) {
-					var rr = ResolveBinaryOperator(op, ResolveCast(elementType, lhs), ResolveCast(elementType, rhs));
-					rr = WithCheckForOverflow(false).ResolveCast(enumType, rr);
+                    var rr = ResolveBinaryOperator(op, new CastExpression(elementType, lhs).DoResolve(this), new CastExpression(elementType, rhs).DoResolve(this));
+					rr =new CastExpression(enumType, rr).DoResolve(WithCheckForOverflow(false));
 					if (rr.IsCompileTimeConstant) // only report result if it's a constant; use the regular OperatorResolveResult codepath otherwise
 						return rr;
 				}
@@ -1120,7 +1283,7 @@ namespace VSC.TypeSystem.Resolver
 		#endregion
 		
 		#region BinaryNumericPromotion
-		bool BinaryNumericPromotion(bool isNullable, ref ResolveResult lhs, ref ResolveResult rhs, bool allowNullableConstants)
+		bool BinaryNumericPromotion(bool isNullable, ref Expression lhs, ref Expression rhs, bool allowNullableConstants)
 		{
 			// V# 4.0 spec: §7.3.6.2
 			TypeCode lhsCode = ReflectionHelper.GetTypeCode(NullableType.GetUnderlyingType(lhs.Type));
@@ -1162,7 +1325,7 @@ namespace VSC.TypeSystem.Resolver
 			return !bindingError;
 		}
 		
-		bool IsSigned(TypeCode code, ResolveResult rr)
+		bool IsSigned(TypeCode code, Expression rr)
 		{
 			// Determine whether the rr with code==ReflectionHelper.GetTypeCode(NullableType.GetUnderlyingType(rr.Type))
 			// is a signed primitive type.
@@ -1187,7 +1350,7 @@ namespace VSC.TypeSystem.Resolver
 			}
 		}
 		
-		ResolveResult CastTo(TypeCode targetType, bool isNullable, ResolveResult expression, bool allowNullableConstants)
+		Expression CastTo(TypeCode targetType, bool isNullable, Expression expression, bool allowNullableConstants)
 		{
 			IType elementType = compilation.FindType(targetType);
 			IType nullableType = MakeNullable(elementType, isNullable);
@@ -1195,12 +1358,12 @@ namespace VSC.TypeSystem.Resolver
 				return expression;
 			if (allowNullableConstants && expression.IsCompileTimeConstant) {
 				if (expression.ConstantValue == null)
-					return new ConstantResolveResult(nullableType, null);
-				ResolveResult rr = ResolveCast(elementType, expression);
+					return new ConstantExpression(nullableType, null);
+				Expression rr = new CastExpression(elementType, expression).DoResolve(this);
 				if (rr.IsError)
 					return rr;
 				Debug.Assert(rr.IsCompileTimeConstant);
-				return new ConstantResolveResult(nullableType, rr.ConstantValue);
+				return new ConstantExpression(nullableType, rr.ConstantValue);
 			} else {
 				return Convert(expression, nullableType,
 				               isNullable ? Conversion.ImplicitNullableConversion : Conversion.ImplicitNumericConversion);
@@ -1257,7 +1420,7 @@ namespace VSC.TypeSystem.Resolver
 		#endregion
 		
 		#region Null coalescing operator
-		ResolveResult ResolveNullCoalescingOperator(ResolveResult lhs, ResolveResult rhs)
+		Expression ResolveNullCoalescingOperator(Expression lhs, Expression rhs)
 		{
 			if (NullableType.IsNullable(lhs.Type)) {
 				IType a0 = NullableType.GetUnderlyingType(lhs.Type);
@@ -1271,7 +1434,7 @@ namespace VSC.TypeSystem.Resolver
 			if (TryConvert(ref lhs, rhs.Type)) {
 				return BinaryOperatorResolveResult(rhs.Type, lhs, BinaryOperatorType.NullCoalescing, rhs);
 			} else {
-				return new ErrorResolveResult(lhs.Type);
+				return new ErrorExpression(lhs.Type);
 			}
 		}
 		#endregion
@@ -1419,29 +1582,32 @@ namespace VSC.TypeSystem.Resolver
 			}
 		}
 		
-		ResolveResult CreateResolveResultForUserDefinedOperator(OverloadResolution r, System.Linq.Expressions.ExpressionType operatorType)
+		Expression CreateResolveResultForUserDefinedOperator(OverloadResolution r, System.Linq.Expressions.ExpressionType operatorType)
 		{
 			if (r.BestCandidateErrors != OverloadResolutionErrors.None)
-				return r.CreateResolveResult(null);
+				return r.CreateInvocation(null);
 			IMethod method = (IMethod)r.BestCandidate;
-			return new OperatorResolveResult(method.ReturnType, operatorType, method,
+			return new OperatorExpression(method.ReturnType, operatorType, method,
 			                                 isLiftedOperator: method is OverloadResolution.ILiftedOperator,
 			                                 operands: r.GetArgumentsWithConversions());
 		}
 		#endregion
 		
 		#region ResolveCast
-		bool TryConvert(ref ResolveResult rr, IType targetType)
-		{
-			Conversion c = conversions.ImplicitConversion(rr, targetType);
-			if (c.IsValid) {
-				rr = Convert(rr, targetType, c);
-				return true;
-			} else {
-				return false;
-			}
-		}
-
+		
+        internal bool TryConvert(ref Expression rr, IType targetType)
+        {
+            Conversion c = conversions.ImplicitConversion(rr, targetType);
+            if (c.IsValid)
+            {
+                rr = Convert(rr, targetType, c);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
 		/// <summary>
 		/// 
 		/// </summary>
@@ -1456,7 +1622,7 @@ namespace VSC.TypeSystem.Resolver
 		/// </param>
 		/// <returns>True if the conversion is successful; false otherwise.
 		/// If the conversion is not successful, the ref parameters will not be modified.</returns>
-		bool TryConvertEnum(ref ResolveResult rr, IType targetType, ref bool isNullable, ref ResolveResult enumRR, bool allowConversionFromConstantZero = true)
+		bool TryConvertEnum(ref Expression rr, IType targetType, ref bool isNullable, ref Expression enumRR, bool allowConversionFromConstantZero = true)
 		{
 			Conversion c;
 			if (!isNullable) {
@@ -1478,66 +1644,29 @@ namespace VSC.TypeSystem.Resolver
 				// Also convert the enum-typed RR to nullable, if it isn't already
 				if (!enumRR.Type.IsKnownType(KnownTypeCode.NullableOfT)) {
 					var nullableType = NullableType.Create(compilation, enumRR.Type);
-					enumRR = new ConversionResolveResult(nullableType, enumRR, Conversion.ImplicitNullableConversion);
+					enumRR = new CastExpression(nullableType, enumRR, Conversion.ImplicitNullableConversion);
 				}
 				return true;
 			}
 			return false;
 		}
-		
-		ResolveResult Convert(ResolveResult rr, IType targetType)
+
+        internal Expression Convert(Expression rr, IType targetType)
 		{
 			return Convert(rr, targetType, conversions.ImplicitConversion(rr, targetType));
 		}
 		
-		ResolveResult Convert(ResolveResult rr, IType targetType, Conversion c)
+	internal	Expression Convert(Expression rr, IType targetType, Conversion c)
 		{
 			if (c == Conversion.IdentityConversion)
 				return rr;
 			else if (rr.IsCompileTimeConstant && c != Conversion.None && !c.IsUserDefined)
-				return ResolveCast(targetType, rr);
+                return new CastExpression(targetType, rr).DoResolve(this);
 			else
-				return new ConversionResolveResult(targetType, rr, c, checkForOverflow);
+				return new CastExpression(targetType, rr, c, checkForOverflow);
 		}
 
-        public bool LookOnlyForImplicitCoversions = false;
-		public ResolveResult ResolveCast(IType targetType, ResolveResult expression)
-		{
-			// V# 4.0 spec: §7.7.6 Cast expressions
-			Conversion c = conversions.ExplicitConversion(expression, targetType);
-      
-			if (expression.IsCompileTimeConstant && !c.IsUserDefined) {
-				TypeCode code = ReflectionHelper.GetTypeCode(targetType);
-				if (code >= TypeCode.Boolean && code <= TypeCode.Decimal && expression.ConstantValue != null) {
-					try {
-						return new ConstantResolveResult(targetType, VSharpPrimitiveCast(code, expression.ConstantValue));
-					} catch (OverflowException) {
-						return new ErrorResolveResult(targetType);
-					} catch (InvalidCastException) {
-						return new ErrorResolveResult(targetType);
-					}
-				} else if (code == TypeCode.String) {
-					if (expression.ConstantValue == null || expression.ConstantValue is string)
-						return new ConstantResolveResult(targetType, expression.ConstantValue);
-					else
-						return new ErrorResolveResult(targetType);
-				} else if (targetType.Kind == TypeKind.Enum) {
-					code = ReflectionHelper.GetTypeCode(GetEnumUnderlyingType(targetType));
-					if (code >= TypeCode.SByte && code <= TypeCode.UInt64 && expression.ConstantValue != null) {
-						try {
-							return new ConstantResolveResult(targetType, VSharpPrimitiveCast(code, expression.ConstantValue));
-						} catch (OverflowException) {
-							return new ErrorResolveResult(targetType);
-						} catch (InvalidCastException) {
-							return new ErrorResolveResult(targetType);
-						}
-					}
-				}
-			}
-			return new ConversionResolveResult(targetType, expression, c, checkForOverflow);
-		}
-		
-		internal object VSharpPrimitiveCast(TypeCode targetType, object input)
+        internal object VSharpPrimitiveCast(TypeCode targetType, object input)
 		{
 			return Base.VSharpPrimitiveCast.Cast(targetType, input, this.CheckForOverflow);
 		}
@@ -1545,414 +1674,22 @@ namespace VSC.TypeSystem.Resolver
 
         
         #region ResolveSimpleName
-        public ResolveResult ResolveSimpleName(string identifier, IList<IType> typeArguments, bool isInvocationTarget = false)
-        {
-            // V# 4.0 spec: §7.6.2 Simple Names
 
-            return LookupSimpleNameOrTypeName(
-                identifier, typeArguments,
-                isInvocationTarget ? NameLookupMode.InvocationTarget : NameLookupMode.Expression);
-        }
 
-        public ResolveResult LookupSimpleNameOrTypeName(string identifier, IList<IType> typeArguments, NameLookupMode lookupMode)
-        {
-            // V# 4.0 spec: §3.8 Namespace and type names; §7.6.2 Simple Names
+        //public bool IsVariableReferenceWithSameType(ResolveResult rr, string identifier, out TypeResolveResult trr)
+        //{
+        //    if (!(rr is MemberResolveResult || rr is LocalResolveResult))
+        //    {
+        //        trr = null;
+        //        return false;
+        //    }
+        //    trr = LookupSimpleNameOrTypeName(identifier, EmptyList<IType>.Instance, NameLookupMode.Type) as TypeResolveResult;
+        //    return trr != null && trr.Type.Equals(rr.Type);
+        //}
 
-            if (identifier == null)
-                throw new ArgumentNullException("identifier");
-            if (typeArguments == null)
-                throw new ArgumentNullException("typeArguments");
-
-            int k = typeArguments.Count;
-
-            if (k == 0)
-            {
-                if (lookupMode == NameLookupMode.Expression || lookupMode == NameLookupMode.InvocationTarget)
-                {
-                    // Look in local variables
-                    foreach (IVariable v in this.LocalVariables)
-                    {
-                        if (v.Name == identifier)
-                        {
-                            return new LocalResolveResult(v);
-                        }
-                    }
-                    // Look in parameters of current method
-                    IParameterizedMember parameterizedMember = this.CurrentMember as IParameterizedMember;
-                    if (parameterizedMember != null)
-                    {
-                        foreach (IParameter p in parameterizedMember.Parameters)
-                        {
-                            if (p.Name == identifier)
-                            {
-                                return new LocalResolveResult(p);
-                            }
-                        }
-                    }
-                }
-
-                // look in type parameters of current method
-                IMethod m = this.CurrentMember as IMethod;
-                if (m != null)
-                {
-                    foreach (ITypeParameter tp in m.TypeParameters)
-                    {
-                        if (tp.Name == identifier)
-                            return new TypeResolveResult(tp);
-                    }
-                }
-            }
-
-            bool parameterizeResultType = !(typeArguments.Count != 0 && typeArguments.All(t => t.Kind == TypeKind.UnboundTypeArgument));
-
-            ResolveResult r = null;
-            if (currentTypeDefinitionCache != null)
-            {
-                Dictionary<string, ResolveResult> cache = null;
-                bool foundInCache = false;
-                if (k == 0)
-                {
-                    switch (lookupMode)
-                    {
-                        case NameLookupMode.Expression:
-                            cache = currentTypeDefinitionCache.SimpleNameLookupCacheExpression;
-                            break;
-                        case NameLookupMode.InvocationTarget:
-                            cache = currentTypeDefinitionCache.SimpleNameLookupCacheInvocationTarget;
-                            break;
-                        case NameLookupMode.Type:
-                            cache = currentTypeDefinitionCache.SimpleTypeLookupCache;
-                            break;
-                    }
-                    if (cache != null)
-                    {
-                        lock (cache)
-                            foundInCache = cache.TryGetValue(identifier, out r);
-                    }
-                }
-                if (foundInCache)
-                {
-                    r = (r != null ? r.ShallowClone() : null);
-                }
-                else
-                {
-                    r = LookInCurrentType(identifier, typeArguments, lookupMode, parameterizeResultType);
-                    if (cache != null)
-                    {
-                        // also cache missing members (r==null)
-                        lock (cache)
-                            cache[identifier] = r;
-                    }
-                }
-                if (r != null)
-                    return r;
-            }
-
-            if (context.CurrentUsingScope == null)
-            {
-                // If no using scope was specified, we still need to look in the global namespace:
-                r = LookInUsingScopeNamespace(null, compilation.RootNamespace, identifier, typeArguments, parameterizeResultType);
-            }
-            else
-            {
-                if (k == 0 && lookupMode != NameLookupMode.TypeInUsingDeclaration)
-                {
-                    if (context.CurrentUsingScope.ResolveCache.TryGetValue(identifier, out r))
-                    {
-                        r = (r != null ? r.ShallowClone() : null);
-                    }
-                    else
-                    {
-                        r = LookInCurrentUsingScope(identifier, typeArguments, false, false);
-                        context.CurrentUsingScope.ResolveCache.TryAdd(identifier, r);
-                    }
-                }
-                else
-                {
-                    r = LookInCurrentUsingScope(identifier, typeArguments, lookupMode == NameLookupMode.TypeInUsingDeclaration, parameterizeResultType);
-                }
-            }
-            if (r != null)
-                return r;
-
-            if (typeArguments.Count == 0 && identifier == "dynamic")
-            {
-                return new TypeResolveResult(SpecialTypeSpec.Dynamic);
-            }
-            else
-            {
-                return new UnknownIdentifierResolveResult(identifier, typeArguments.Count);
-            }
-        }
-
-        public bool IsVariableReferenceWithSameType(ResolveResult rr, string identifier, out TypeResolveResult trr)
-        {
-            if (!(rr is MemberResolveResult || rr is LocalResolveResult))
-            {
-                trr = null;
-                return false;
-            }
-            trr = LookupSimpleNameOrTypeName(identifier, EmptyList<IType>.Instance, NameLookupMode.Type) as TypeResolveResult;
-            return trr != null && trr.Type.Equals(rr.Type);
-        }
-
-        ResolveResult LookInCurrentType(string identifier, IList<IType> typeArguments, NameLookupMode lookupMode, bool parameterizeResultType)
-        {
-            int k = typeArguments.Count;
-            MemberLookup lookup = CreateMemberLookup(lookupMode);
-            // look in current type definitions
-            for (ITypeDefinition t = this.CurrentTypeDefinition; t != null; t = t.DeclaringTypeDefinition)
-            {
-                if (k == 0)
-                {
-                    // Look for type parameter with that name
-                    var typeParameters = t.TypeParameters;
-                    // Look at all type parameters, including those copied from outer classes,
-                    // so that we can fetch the version with the correct owner.
-                    for (int i = 0; i < typeParameters.Count; i++)
-                    {
-                        if (typeParameters[i].Name == identifier)
-                            return new TypeResolveResult(typeParameters[i]);
-                    }
-                }
-
-                if (lookupMode == NameLookupMode.BaseTypeReference && t == this.CurrentTypeDefinition)
-                {
-                    // don't look in current type when resolving a base type reference
-                    continue;
-                }
-
-                ResolveResult r;
-                if (lookupMode == NameLookupMode.Expression || lookupMode == NameLookupMode.InvocationTarget)
-                {
-                    var targetResolveResult = (t == this.CurrentTypeDefinition ? ResolveThisReference() : new TypeResolveResult(t));
-                    r = lookup.Lookup(targetResolveResult, identifier, typeArguments, lookupMode == NameLookupMode.InvocationTarget);
-                }
-                else
-                {
-                    r = lookup.LookupType(t, identifier, typeArguments, parameterizeResultType);
-                }
-                if (!(r is UnknownMemberResolveResult)) // but do return AmbiguousMemberResolveResult
-                    return r;
-            }
-            return null;
-        }
-
-        ResolveResult LookInCurrentUsingScope(string identifier, IList<IType> typeArguments, bool isInUsingDeclaration, bool parameterizeResultType)
-        {
-            // look in current namespace definitions
-            ResolvedUsingScope currentUsingScope = this.CurrentUsingScope;
-            for (ResolvedUsingScope u = currentUsingScope; u != null; u = u.Parent)
-            {
-                var resultInNamespace = LookInUsingScopeNamespace(u, u.Namespace, identifier, typeArguments, parameterizeResultType);
-                if (resultInNamespace != null)
-                    return resultInNamespace;
-                // then look for aliases:
-                if (typeArguments.Count == 0)
-                {
-                    if (u.ExternAliases.Contains(identifier))
-                    {
-                        return ResolveExternAlias(identifier);
-                    }
-                    if (!(isInUsingDeclaration && u == currentUsingScope))
-                    {
-                        foreach (var pair in u.UsingAliases)
-                        {
-                            if (pair.Key == identifier)
-                            {
-                                return pair.Value.ShallowClone();
-                            }
-                        }
-                    }
-                }
-                // finally, look in the imported namespaces:
-                if (!(isInUsingDeclaration && u == currentUsingScope))
-                {
-                    IType firstResult = null;
-                    foreach (var importedNamespace in u.Usings)
-                    {
-                        ITypeDefinition def = importedNamespace.GetTypeDefinition(identifier, typeArguments.Count);
-                        if (def != null)
-                        {
-                            IType resultType;
-                            if (parameterizeResultType && typeArguments.Count > 0)
-                                resultType = new ParameterizedTypeSpec(def, typeArguments);
-                            else
-                                resultType = def;
-
-                            if (firstResult == null || !TopLevelTypeDefinitionIsAccessible(firstResult.GetDefinition()))
-                            {
-                                if (TopLevelTypeDefinitionIsAccessible(resultType.GetDefinition()))
-                                    firstResult = resultType;
-                            }
-                            else if (TopLevelTypeDefinitionIsAccessible(def))
-                            {
-                                return new AmbiguousTypeResolveResult(firstResult);
-                            }
-                        }
-                    }
-                    if (firstResult != null)
-                        return new TypeResolveResult(firstResult);
-                }
-                // if we didn't find anything: repeat lookup with parent namespace
-            }
-            return null;
-        }
-
-        ResolveResult LookInUsingScopeNamespace(ResolvedUsingScope usingScope, INamespace n, string identifier, IList<IType> typeArguments, bool parameterizeResultType)
-        {
-            if (n == null)
-                return null;
-            // first look for a namespace
-            int k = typeArguments.Count;
-            if (k == 0)
-            {
-                INamespace childNamespace = n.GetChildNamespace(identifier);
-                if (childNamespace != null)
-                {
-                    if (usingScope != null && usingScope.HasAlias(identifier))
-                        return new AmbiguousTypeResolveResult(new UnknownTypeSpec(null, identifier));
-                    return new NamespaceResolveResult(childNamespace);
-                }
-            }
-            // then look for a type
-            ITypeDefinition def = n.GetTypeDefinition(identifier, k);
-            if (def != null)
-            {
-                IType result = def;
-                if (parameterizeResultType && k > 0)
-                {
-                    result = new ParameterizedTypeSpec(def, typeArguments);
-                }
-                if (usingScope != null && usingScope.HasAlias(identifier))
-                    return new AmbiguousTypeResolveResult(result);
-                else
-                    return new TypeResolveResult(result);
-            }
-            return null;
-        }
-
-        bool TopLevelTypeDefinitionIsAccessible(ITypeDefinition typeDef)
-        {
-            if (typeDef.IsInternal)
-            {
-                return typeDef.ParentAssembly.InternalsVisibleTo(compilation.MainAssembly);
-            }
-            return true;
-        }
-
-        /// <summary>
-        /// Looks up an alias (identifier in front of :: operator)
-        /// </summary>
-        public ResolveResult ResolveAlias(string identifier)
-        {
-            if (identifier == "global")
-                return new NamespaceResolveResult(compilation.RootNamespace);
-
-            for (ResolvedUsingScope n = this.CurrentUsingScope; n != null; n = n.Parent)
-            {
-                if (n.ExternAliases.Contains(identifier))
-                {
-                    return ResolveExternAlias(identifier);
-                }
-                foreach (var pair in n.UsingAliases)
-                {
-                    if (pair.Key == identifier)
-                    {
-                        return (pair.Value as NamespaceResolveResult) ?? ErrorResult;
-                    }
-                }
-            }
-            return ErrorResult;
-        }
-
-        ResolveResult ResolveExternAlias(string alias)
-        {
-            INamespace ns = compilation.GetNamespaceForExternAlias(alias);
-            if (ns != null)
-                return new NamespaceResolveResult(ns);
-            else
-                return ErrorResult;
-        }
-        #endregion
+       #endregion
 		
-		#region ResolveMemberAccess
-		public ResolveResult ResolveMemberAccess(ResolveResult target, string identifier, IList<IType> typeArguments, NameLookupMode lookupMode = NameLookupMode.Expression)
-		{
-			// V# 4.0 spec: §7.6.4
-			
-			bool parameterizeResultType = !(typeArguments.Count != 0 && typeArguments.All(t => t.Kind == TypeKind.UnboundTypeArgument));
-			NamespaceResolveResult nrr = target as NamespaceResolveResult;
-			if (nrr != null) {
-				return ResolveMemberAccessOnNamespace(nrr, identifier, typeArguments, parameterizeResultType);
-			}
-			
-			if (target.Type.Kind == TypeKind.Dynamic)
-				return new DynamicMemberResolveResult(target, identifier);
-			
-			MemberLookup lookup = CreateMemberLookup(lookupMode);
-			ResolveResult result;
-			switch (lookupMode) {
-				case NameLookupMode.Expression:
-					result = lookup.Lookup(target, identifier, typeArguments, isInvocation: false);
-					break;
-				case NameLookupMode.InvocationTarget:
-					result = lookup.Lookup(target, identifier, typeArguments, isInvocation: true);
-					break;
-				case NameLookupMode.Type:
-				case NameLookupMode.TypeInUsingDeclaration:
-				case NameLookupMode.BaseTypeReference:
-					// Don't do the UnknownMemberResolveResult/MethodGroupResolveResult processing,
-					// it's only relevant for expressions.
-					return lookup.LookupType(target.Type, identifier, typeArguments, parameterizeResultType);
-				default:
-					throw new NotSupportedException("Invalid value for NameLookupMode");
-			}
-			if (result is UnknownMemberResolveResult) {
-				// We intentionally use all extension methods here, not just the eligible ones.
-				// Proper eligibility checking is only possible for the full invocation
-				// (after we know the remaining arguments).
-				// The eligibility check in GetExtensionMethods is only intended for code completion.
-				var extensionMethods = GetExtensionMethods(identifier, typeArguments);
-				if (extensionMethods.Count > 0) {
-					return new MethodGroupResolveResult(target, identifier, EmptyList<MethodListWithDeclaringType>.Instance, typeArguments) {
-						extensionMethods = extensionMethods
-					};
-				}
-			} else {
-				MethodGroupResolveResult mgrr = result as MethodGroupResolveResult;
-				if (mgrr != null) {
-					Debug.Assert(mgrr.extensionMethods == null);
-					// set the values that are necessary to make MethodGroupResolveResult.GetExtensionMethods() work
-					mgrr.resolver = this;
-				}
-			}
-			return result;
-		}
-		
-		[Obsolete("Use ResolveMemberAccess() with NameLookupMode.Type instead")]
-		public ResolveResult ResolveMemberType(ResolveResult target, string identifier, IList<IType> typeArguments)
-		{
-			return ResolveMemberAccess(target, identifier, typeArguments, NameLookupMode.Type);
-		}
-		
-		ResolveResult ResolveMemberAccessOnNamespace(NamespaceResolveResult nrr, string identifier, IList<IType> typeArguments, bool parameterizeResultType)
-		{
-			if (typeArguments.Count == 0) {
-				INamespace childNamespace = nrr.Namespace.GetChildNamespace(identifier);
-				if (childNamespace != null)
-					return new NamespaceResolveResult(childNamespace);
-			}
-			ITypeDefinition def = nrr.Namespace.GetTypeDefinition(identifier, typeArguments.Count);
-			if (def != null) {
-				if (parameterizeResultType && typeArguments.Count > 0)
-                    return new TypeResolveResult(new ParameterizedTypeSpec(def, typeArguments));
-				else
-					return new TypeResolveResult(def);
-			}
-			return ErrorResult;
-		}
-		
+		#region ResolveMemberAccess	
 		/// <summary>
 		/// Creates a MemberLookup instance using this resolver's settings.
 		/// </summary>
@@ -1982,7 +1719,7 @@ namespace VSC.TypeSystem.Resolver
 		#endregion
 		
 		#region ResolveIdentifierInObjectInitializer
-		public ResolveResult ResolveIdentifierInObjectInitializer(string identifier)
+        public VSC.AST.Expression ResolveIdentifierInObjectInitializer(string identifier)
 		{
 			MemberLookup memberLookup = CreateMemberLookup();
 			return memberLookup.Lookup(this.CurrentObjectInitializer, identifier, EmptyList<IType>.Instance, false);
@@ -2106,7 +1843,7 @@ namespace VSC.TypeSystem.Resolver
 			if (useTypeInference && method.TypeParameters.Count > 0) {
 				// We need to infer type arguments from targetType:
 				TypeInference ti = new TypeInference(compilation, conversions);
-				ResolveResult[] arguments = { new ResolveResult(targetType) };
+				Expression[] arguments = { new Expression(targetType) };
 				IType[] parameterTypes = { method.Parameters[0].Type };
 				bool success;
 				var inferredTypes = ti.InferTypeArguments(method.TypeParameters, arguments, parameterTypes, out success);
@@ -2177,29 +1914,29 @@ namespace VSC.TypeSystem.Resolver
 		
 		#region ResolveInvocation
 
-		IList<ResolveResult> AddArgumentNamesIfNecessary(ResolveResult[] arguments, string[] argumentNames) {
+		IList<Expression> AddArgumentNamesIfNecessary(Expression[] arguments, string[] argumentNames) {
 			if (argumentNames == null) {
 				return arguments;
 			}
 			else {
-				var result = new ResolveResult[arguments.Length];
+				var result = new Expression[arguments.Length];
 				for (int i = 0; i < arguments.Length; i++) {
-					result[i] = (argumentNames[i] != null ? new NamedArgumentResolveResult(argumentNames[i], arguments[i]) : arguments[i]);
+					result[i] = (argumentNames[i] != null ? new NamedArgumentExpression(argumentNames[i], arguments[i]) : arguments[i]);
 				}
 				return result;
 			}
 		}
 
-		private ResolveResult ResolveInvocation(ResolveResult target, ResolveResult[] arguments, string[] argumentNames, bool allowOptionalParameters)
+		private Expression ResolveInvocation(Expression target, Expression[] arguments, string[] argumentNames, bool allowOptionalParameters)
 		{
 			// V# 4.0 spec: §7.6.5
 			
 			if (target.Type.Kind == TypeKind.Dynamic) {
-				return new DynamicInvocationResolveResult(target, DynamicInvocationType.Invocation, AddArgumentNamesIfNecessary(arguments, argumentNames));
+				return new DynamicInvocationExpression(target, DynamicInvocationType.Invocation, AddArgumentNamesIfNecessary(arguments, argumentNames));
 			}
 			
 			bool isDynamic = arguments.Any(a => a.Type.Kind == TypeKind.Dynamic);
-			MethodGroupResolveResult mgrr = target as MethodGroupResolveResult;
+            MethodGroupExpression mgrr = target as MethodGroupExpression;
 			if (mgrr != null) {
 				if (isDynamic) {
 					// If we have dynamic arguments, we need to represent the invocation as a dynamic invocation if there is more than one applicable method.
@@ -2207,9 +1944,9 @@ namespace VSC.TypeSystem.Resolver
 					var applicableMethods = mgrr.MethodsGroupedByDeclaringType.SelectMany(m => m, (x, m) => new { x.DeclaringType, Method = m }).Where(x => OverloadResolution.IsApplicable(or2.AddCandidate(x.Method))).ToList();
 
 					if (applicableMethods.Count > 1) {
-						ResolveResult actualTarget;
-						if (applicableMethods.All(x => x.Method.IsStatic) && !(mgrr.TargetResult is TypeResolveResult))
-							actualTarget = new TypeResolveResult(mgrr.TargetType);
+						Expression actualTarget;
+                        if (applicableMethods.All(x => x.Method.IsStatic) && !(mgrr.TargetResult is TypeExpression))
+							actualTarget = new TypeExpression(mgrr.TargetType);
 						else
 							actualTarget = mgrr.TargetResult;
 
@@ -2219,36 +1956,36 @@ namespace VSC.TypeSystem.Resolver
 								l.Add(new MethodListWithDeclaringType(m.DeclaringType));
 							l[l.Count - 1].Add(m.Method);
 						}
-						return new DynamicInvocationResolveResult(new MethodGroupResolveResult(actualTarget, mgrr.MethodName, l, mgrr.TypeArguments), DynamicInvocationType.Invocation, AddArgumentNamesIfNecessary(arguments, argumentNames));
+                        return new DynamicInvocationExpression(new MethodGroupExpression(actualTarget, mgrr.MethodName, l, mgrr.TypeArguments), DynamicInvocationType.Invocation, AddArgumentNamesIfNecessary(arguments, argumentNames));
 					}
 				}
 
 				OverloadResolution or = mgrr.PerformOverloadResolution(compilation, arguments, argumentNames, checkForOverflow: checkForOverflow, conversions: conversions, allowOptionalParameters: allowOptionalParameters);
 				if (or.BestCandidate != null) {
-					if (or.BestCandidate.IsStatic && !or.IsExtensionMethodInvocation && !(mgrr.TargetResult is TypeResolveResult))
-						return or.CreateResolveResult(new TypeResolveResult(mgrr.TargetType), returnTypeOverride: isDynamic ? SpecialTypeSpec.Dynamic : null);
+                    if (or.BestCandidate.IsStatic && !or.IsExtensionMethodInvocation && !(mgrr.TargetResult is TypeExpression))
+                        return or.CreateInvocation(new TypeExpression(mgrr.TargetType), returnTypeOverride: isDynamic ? SpecialTypeSpec.Dynamic : null);
 					else
-						return or.CreateResolveResult(mgrr.TargetResult, returnTypeOverride: isDynamic ? SpecialTypeSpec.Dynamic : null);
+						return or.CreateInvocation(mgrr.TargetResult, returnTypeOverride: isDynamic ? SpecialTypeSpec.Dynamic : null);
 				} else {
 					// No candidate found at all (not even an inapplicable one).
 					// This can happen with empty method groups (as sometimes used with extension methods)
-					return new UnknownMethodResolveResult(
+					return new UnknownMethodExpression(
 						mgrr.TargetType, mgrr.MethodName, mgrr.TypeArguments, CreateParameters(arguments, argumentNames));
 				}
 			}
-			UnknownMemberResolveResult umrr = target as UnknownMemberResolveResult;
+			UnknownMemberExpression umrr = target as UnknownMemberExpression;
 			if (umrr != null) {
-				return new UnknownMethodResolveResult(umrr.TargetType, umrr.MemberName, umrr.TypeArguments, CreateParameters(arguments, argumentNames));
+				return new UnknownMethodExpression(umrr.TargetType, umrr.MemberName, umrr.TypeArguments, CreateParameters(arguments, argumentNames));
 			}
-			UnknownIdentifierResolveResult uirr = target as UnknownIdentifierResolveResult;
+			UnknownIdentifierExpression uirr = target as UnknownIdentifierExpression;
 			if (uirr != null && CurrentTypeDefinition != null) {
-				return new UnknownMethodResolveResult(CurrentTypeDefinition, uirr.Identifier, EmptyList<IType>.Instance, CreateParameters(arguments, argumentNames));
+				return new UnknownMethodExpression(CurrentTypeDefinition, uirr.Identifier, EmptyList<IType>.Instance, CreateParameters(arguments, argumentNames));
 			}
 			IMethod invokeMethod = target.Type.GetDelegateInvokeMethod();
 			if (invokeMethod != null) {
 				OverloadResolution or = CreateOverloadResolution(arguments, argumentNames);
 				or.AddCandidate(invokeMethod);
-				return new VSharpInvocationResolveResult(
+				return new VSharpInvocationExpression(
 					target, invokeMethod, //invokeMethod.ReturnType.ResolveScope(context),
 					or.GetArgumentsWithConversionsAndNames(), or.BestCandidateErrors,
 					isExpandedForm: or.BestCandidateIsExpandedForm,
@@ -2265,18 +2002,18 @@ namespace VSC.TypeSystem.Resolver
 		/// <param name="target">The target of the invocation. Usually a MethodGroupResolveResult.</param>
 		/// <param name="arguments">
 		/// Arguments passed to the method.
-		/// The resolver may mutate this array to wrap elements in <see cref="ConversionResolveResult"/>s!
+		/// The resolver may mutate this array to wrap elements in <see cref="CastExpression"/>s!
 		/// </param>
 		/// <param name="argumentNames">
 		/// The argument names. Pass the null string for positional arguments.
 		/// </param>
 		/// <returns>InvocationResolveResult or UnknownMethodResolveResult</returns>
-		public ResolveResult ResolveInvocation(ResolveResult target, ResolveResult[] arguments, string[] argumentNames = null)
+		public Expression ResolveInvocation(Expression target, Expression[] arguments, string[] argumentNames = null)
 		{
 			return ResolveInvocation(target, arguments, argumentNames, allowOptionalParameters: true);
 		}
 		
-		List<IParameter> CreateParameters(ResolveResult[] arguments, string[] argumentNames)
+		List<IParameter> CreateParameters(Expression[] arguments, string[] argumentNames)
 		{
 			List<IParameter> list = new List<IParameter>();
 			if (argumentNames == null) {
@@ -2304,7 +2041,7 @@ namespace VSC.TypeSystem.Resolver
 				}
 				
 				// create the parameter:
-				ByReferenceResolveResult brrr = arguments[i] as ByReferenceResolveResult;
+				ByReferenceExpression brrr = arguments[i] as ByReferenceExpression;
 				if (brrr != null) {
 					list.Add(new ParameterSpec(arguments[i].Type, argumentNames[i], isRef: brrr.IsRef, isOut: brrr.IsOut));
 				} else {
@@ -2320,21 +2057,21 @@ namespace VSC.TypeSystem.Resolver
 			return list;
 		}
 		
-		static string GuessParameterName(ResolveResult rr)
+		static string GuessParameterName(Expression rr)
 		{
-			MemberResolveResult mrr = rr as MemberResolveResult;
+            MemberExpressionStatement mrr = rr as MemberExpressionStatement;
 			if (mrr != null)
 				return mrr.Member.Name;
 			
-			UnknownMemberResolveResult umrr = rr as UnknownMemberResolveResult;
+			UnknownMemberExpression umrr = rr as UnknownMemberExpression;
 			if (umrr != null)
 				return umrr.MemberName;
-			
-			MethodGroupResolveResult mgrr = rr as MethodGroupResolveResult;
+
+            MethodGroupExpression mgrr = rr as MethodGroupExpression;
 			if (mgrr != null)
 				return mgrr.MethodName;
-			
-			LocalResolveResult vrr = rr as LocalResolveResult;
+
+            LocalVariableExpression vrr = rr as LocalVariableExpression;
 			if (vrr != null)
 				return MakeParameterName(vrr.Variable.Name);
 			
@@ -2354,7 +2091,7 @@ namespace VSC.TypeSystem.Resolver
 			return char.ToLower(variableName[0]) + variableName.Substring(1);
 		}
 		
-		OverloadResolution CreateOverloadResolution(ResolveResult[] arguments, string[] argumentNames = null, IType[] typeArguments = null)
+		OverloadResolution CreateOverloadResolution(Expression[] arguments, string[] argumentNames = null, IType[] typeArguments = null)
 		{
 			var or = new OverloadResolution(compilation, arguments, argumentNames, typeArguments, conversions);
 			or.CheckForOverflow = checkForOverflow;
@@ -2369,23 +2106,23 @@ namespace VSC.TypeSystem.Resolver
 		/// <param name="target">Target expression.</param>
 		/// <param name="arguments">
 		/// Arguments passed to the indexer.
-		/// The resolver may mutate this array to wrap elements in <see cref="ConversionResolveResult"/>s!
+		/// The resolver may mutate this array to wrap elements in <see cref="CastExpression"/>s!
 		/// </param>
 		/// <param name="argumentNames">
 		/// The argument names. Pass the null string for positional arguments.
 		/// </param>
 		/// <returns>ArrayAccessResolveResult, InvocationResolveResult, or ErrorResolveResult</returns>
-		public ResolveResult ResolveIndexer(ResolveResult target, ResolveResult[] arguments, string[] argumentNames = null)
+		public Expression ResolveIndexer(Expression target, Expression[] arguments, string[] argumentNames = null)
 		{
 			switch (target.Type.Kind) {
 				case TypeKind.Dynamic:
-					return new DynamicInvocationResolveResult(target, DynamicInvocationType.Indexing, AddArgumentNamesIfNecessary(arguments, argumentNames));
+					return new DynamicInvocationExpression(target, DynamicInvocationType.Indexing, AddArgumentNamesIfNecessary(arguments, argumentNames));
 					
 				case TypeKind.Array:
 				case TypeKind.Pointer:
 					// §7.6.6.1 Array access / §18.5.3 Pointer element access
 					AdjustArrayAccessArguments(arguments);
-					return new ArrayAccessResolveResult(((ElementTypeSpec)target.Type).ElementType, target, arguments);
+					return new ArrayAccessExpression(((ElementTypeSpec)target.Type).ElementType, target, arguments);
 			}
 			
 			// §7.6.6.2 Indexer access
@@ -2399,14 +2136,14 @@ namespace VSC.TypeSystem.Resolver
 				var applicableIndexers = indexers.SelectMany(x => x).Where(m => OverloadResolution.IsApplicable(or2.AddCandidate(m))).ToList();
 
 				if (applicableIndexers.Count > 1) {
-					return new DynamicInvocationResolveResult(target, DynamicInvocationType.Indexing, AddArgumentNamesIfNecessary(arguments, argumentNames));
+					return new DynamicInvocationExpression(target, DynamicInvocationType.Indexing, AddArgumentNamesIfNecessary(arguments, argumentNames));
 				}
 			}
 
 			OverloadResolution or = CreateOverloadResolution(arguments, argumentNames);
 			or.AddMethodLists(indexers);
 			if (or.BestCandidate != null) {
-				return or.CreateResolveResult(target);
+				return or.CreateInvocation(target);
 			} else {
 				return ErrorResult;
 			}
@@ -2415,7 +2152,7 @@ namespace VSC.TypeSystem.Resolver
 		/// <summary>
 		/// Converts all arguments to int,uint,long or ulong.
 		/// </summary>
-		void AdjustArrayAccessArguments(ResolveResult[] arguments)
+		void AdjustArrayAccessArguments(Expression[] arguments)
 		{
 			for (int i = 0; i < arguments.Length; i++) {
 				if (!(TryConvert(ref arguments[i], compilation.FindType(KnownTypeCode.Int32)) ||
@@ -2437,7 +2174,7 @@ namespace VSC.TypeSystem.Resolver
 		/// <param name="type">Type of the object to create.</param>
 		/// <param name="arguments">
 		/// Arguments passed to the constructor.
-		/// The resolver may mutate this array to wrap elements in <see cref="ConversionResolveResult"/>s!
+		/// The resolver may mutate this array to wrap elements in <see cref="CastExpression"/>s!
 		/// </param>
 		/// <param name="argumentNames">
 		/// The argument names. Pass the null string for positional arguments.
@@ -2448,16 +2185,16 @@ namespace VSC.TypeSystem.Resolver
 		/// </param>
 		/// <param name="initializerStatements">
 		/// Statements for Objects/Collections initializer.
-		/// <see cref="InvocationResolveResult.InitializerStatements"/>
+		/// <see cref="InvocationExpression.InitializerStatements"/>
 		/// </param>
 		/// <returns>InvocationResolveResult or ErrorResolveResult</returns>
-		public ResolveResult ResolveObjectCreation(IType type, ResolveResult[] arguments, string[] argumentNames = null, bool allowProtectedAccess = false, IList<ResolveResult> initializerStatements = null)
+		public Expression ResolveObjectCreation(IType type, Expression[] arguments, string[] argumentNames = null, bool allowProtectedAccess = false, IList<Expression> initializerStatements = null)
 		{
 			if (type.Kind == TypeKind.Delegate && arguments.Length == 1) {
-				ResolveResult input = arguments[0];
+				Expression input = arguments[0];
 				IMethod invoke = input.Type.GetDelegateInvokeMethod();
 				if (invoke != null) {
-					input = new MethodGroupResolveResult(
+					input = new MethodGroupExpression(
 						input, invoke.Name,
 						methods: new[] { new MethodListWithDeclaringType(input.Type) { invoke } },
 						typeArguments: EmptyList<IType>.Instance
@@ -2480,94 +2217,24 @@ namespace VSC.TypeSystem.Resolver
 
 			if (allApplicable != null && allApplicable.Count > 1) {
 				// If we have dynamic arguments, we need to represent the invocation as a dynamic invocation if there is more than one applicable constructor.
-				return new DynamicInvocationResolveResult(new MethodGroupResolveResult(null, allApplicable[0].Name, new[] { new MethodListWithDeclaringType(type, allApplicable) }, null), DynamicInvocationType.ObjectCreation, AddArgumentNamesIfNecessary(arguments, argumentNames), initializerStatements);
+                return new DynamicInvocationExpression(new MethodGroupExpression(null, allApplicable[0].Name, new[] { new MethodListWithDeclaringType(type, allApplicable) }, null), DynamicInvocationType.ObjectCreation, AddArgumentNamesIfNecessary(arguments, argumentNames), initializerStatements);
 			}
 
 			if (or.BestCandidate != null) {
-				return or.CreateResolveResult(null, initializerStatements);
+				return or.CreateInvocation(null, initializerStatements);
 			} else {
-				return new ErrorResolveResult(type);
+				return new ErrorExpression(type);
 			}
 		}
 		#endregion
 		
-		#region ResolveSizeOf
-		/// <summary>
-		/// Resolves 'sizeof(type)'.
-		/// </summary>
-		public ResolveResult ResolveSizeOf(IType type)
-		{
-			IType int32 = compilation.FindType(KnownTypeCode.Int32);
-			int? size = null;
-			var typeForConstant = (type.Kind == TypeKind.Enum) ? type.GetDefinition().EnumUnderlyingType : type;
-
-			switch (ReflectionHelper.GetTypeCode(typeForConstant)) {
-				case TypeCode.Boolean:
-				case TypeCode.SByte:
-				case TypeCode.Byte:
-					size = 1;
-					break;
-				case TypeCode.Char:
-				case TypeCode.Int16:
-				case TypeCode.UInt16:
-					size = 2;
-					break;
-				case TypeCode.Int32:
-				case TypeCode.UInt32:
-				case TypeCode.Single:
-					size = 4;
-					break;
-				case TypeCode.Int64:
-				case TypeCode.UInt64:
-				case TypeCode.Double:
-					size = 8;
-					break;
-			}
-			return new SizeOfResolveResult(int32, type, size);
-		}
-		#endregion
-		
-		#region ResolveScope This/Base Reference
-		/// <summary>
-		/// Resolves 'this'.
-		/// </summary>
-		public ResolveResult ResolveThisReference()
-		{
-			ITypeDefinition t = CurrentTypeDefinition;
-			if (t != null) {
-				if (t.TypeParameterCount != 0) {
-					// Self-parameterize the type
-                    return new ThisResolveResult(new ParameterizedTypeSpec(t, t.TypeParameters));
-				} else {
-					return new ThisResolveResult(t);
-				}
-			}
-			return ErrorResult;
-		}
-		
-		/// <summary>
-		/// Resolves 'base'.
-		/// </summary>
-		public ResolveResult ResolveBaseReference()
-		{
-			ITypeDefinition t = CurrentTypeDefinition;
-			if (t != null) {
-				foreach (IType baseType in t.DirectBaseTypes) {
-					if (baseType.Kind != TypeKind.Unknown && baseType.Kind != TypeKind.Interface) {
-						return new ThisResolveResult(baseType, causesNonVirtualInvocation: true);
-					}
-				}
-			}
-			return ErrorResult;
-		}
-		#endregion
 		
 		#region ResolveConditional
 		/// <summary>
 		/// Converts the input to <c>bool</c> using the rules for boolean expressions.
 		/// That is, <c>operator true</c> is used if a regular conversion to <c>bool</c> is not possible.
 		/// </summary>
-		public ResolveResult ResolveCondition(ResolveResult input)
+		public Expression ResolveCondition(Expression input)
 		{
 			if (input == null)
 				throw new ArgumentNullException("input");
@@ -2587,7 +2254,7 @@ namespace VSC.TypeSystem.Resolver
 		/// Computes <c>!(bool)input</c> if the implicit cast to bool is valid; otherwise
 		/// computes <c>input.operator false()</c>.
 		/// </summary>
-		public ResolveResult ResolveConditionFalse(ResolveResult input)
+		public Expression ResolveConditionFalse(Expression input)
 		{
 			if (input == null)
 				throw new ArgumentNullException("input");
@@ -2603,59 +2270,8 @@ namespace VSC.TypeSystem.Resolver
 			return ResolveUnaryOperator(UnaryOperatorType.LogicalNot, Convert(input, boolean, c));
 		}
 		
-		public ResolveResult ResolveConditional(ResolveResult condition, ResolveResult trueExpression, ResolveResult falseExpression)
-		{
-			// V# 4.0 spec §7.14: Conditional operator
-			
-			bool isValid;
-			IType resultType;
-			if (trueExpression.Type.Kind == TypeKind.Dynamic || falseExpression.Type.Kind == TypeKind.Dynamic) {
-				resultType = SpecialTypeSpec.Dynamic;
-				isValid = TryConvert(ref trueExpression, resultType) & TryConvert(ref falseExpression, resultType);
-			} else if (HasType(trueExpression) && HasType(falseExpression)) {
-				Conversion t2f = conversions.ImplicitConversion(trueExpression, falseExpression.Type);
-				Conversion f2t = conversions.ImplicitConversion(falseExpression, trueExpression.Type);
-				// The operator is valid:
-				// a) if there's a conversion in one direction but not the other
-				// b) if there are conversions in both directions, and the types are equivalent
-				if (IsBetterConditionalConversion(t2f, f2t)) {
-					resultType = falseExpression.Type;
-					isValid = true;
-					trueExpression = Convert(trueExpression, resultType, t2f);
-				} else if (IsBetterConditionalConversion(f2t, t2f)) {
-					resultType = trueExpression.Type;
-					isValid = true;
-					falseExpression = Convert(falseExpression, resultType, f2t);
-				} else {
-					resultType = trueExpression.Type;
-					isValid = trueExpression.Type.Equals(falseExpression.Type);
-				}
-			} else if (HasType(trueExpression)) {
-				resultType = trueExpression.Type;
-				isValid = TryConvert(ref falseExpression, resultType);
-			} else if (HasType(falseExpression)) {
-				resultType = falseExpression.Type;
-				isValid = TryConvert(ref trueExpression, resultType);
-			} else {
-				return ErrorResult;
-			}
-			condition = ResolveCondition(condition);
-			if (isValid) {
-				if (condition.IsCompileTimeConstant && trueExpression.IsCompileTimeConstant && falseExpression.IsCompileTimeConstant) {
-					bool? val = condition.ConstantValue as bool?;
-					if (val == true)
-						return trueExpression;
-					else if (val == false)
-						return falseExpression;
-				}
-				return new OperatorResolveResult(resultType, System.Linq.Expressions.ExpressionType.Conditional,
-				                                 condition, trueExpression, falseExpression);
-			} else {
-				return new ErrorResolveResult(resultType);
-			}
-		}
-		
-		bool IsBetterConditionalConversion(Conversion c1, Conversion c2)
+
+        internal bool IsBetterConditionalConversion(Conversion c1, Conversion c2)
 		{
 			// Valid is better than ImplicitConstantExpressionConversion is better than invalid
 			if (!c1.IsValid)
@@ -2665,31 +2281,16 @@ namespace VSC.TypeSystem.Resolver
 			return !c2.IsValid;
 		}
 		
-		bool HasType(ResolveResult r)
+	internal	bool HasType(Expression r)
 		{
 			return r.Type.Kind != TypeKind.Unknown && r.Type.Kind != TypeKind.Null;
 		}
 		#endregion
 		
-		#region ResolvePrimitive
-		public ResolveResult ResolvePrimitive(object value)
-		{
-			if (value == null) {
-				return new ResolveResult(SpecialTypeSpec.NullType);
-			} else {
-				TypeCode typeCode = Type.GetTypeCode(value.GetType());
-				IType type = compilation.FindType(typeCode);
-				return new ConstantResolveResult(type, value);
-			}
-		}
-		#endregion
+
 		
 		#region ResolveDefaultValue
-		public ResolveResult ResolveDefaultValue(IType type)
-		{
-			return new ConstantResolveResult(type, GetDefaultValue(type));
-		}
-		
+	
 		public static object GetDefaultValue(IType type)
 		{
 			ITypeDefinition typeDef = type.GetDefinition();
@@ -2748,16 +2349,16 @@ namespace VSC.TypeSystem.Resolver
 		/// </param>
 		/// <param name="initializerElements">
 		/// The initializer elements. May be null if no array initializer was specified.
-		/// The resolver may mutate this array to wrap elements in <see cref="ConversionResolveResult"/>s!
+		/// The resolver may mutate this array to wrap elements in <see cref="CastExpression"/>s!
 		/// </param>
-		public ArrayCreateResolveResult ResolveArrayCreation(IType elementType, int[] sizeArguments, ResolveResult[] initializerElements = null)
+		public ArrayCreateExpression ResolveArrayCreation(IType elementType, int[] sizeArguments, Expression[] initializerElements = null)
 		{
-			ResolveResult[] sizeArgResults = new ResolveResult[sizeArguments.Length];
+			Expression[] sizeArgResults = new Expression[sizeArguments.Length];
 			for (int i = 0; i < sizeArguments.Length; i++) {
 				if (sizeArguments[i] < 0)
-					sizeArgResults[i] = ErrorResolveResult.UnknownError;
+					sizeArgResults[i] = ErrorExpression.UnknownError;
 				else
-					sizeArgResults[i] = new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), sizeArguments[i]);
+					sizeArgResults[i] = new ConstantExpression(compilation.FindType(KnownTypeCode.Int32), sizeArguments[i]);
 			}
 			return ResolveArrayCreation(elementType, sizeArgResults, initializerElements);
 		}
@@ -2772,13 +2373,13 @@ namespace VSC.TypeSystem.Resolver
 		/// <param name="sizeArguments">
 		/// The size arguments.
 		/// The length of this array will be used as the number of dimensions of the array type.
-		/// The resolver may mutate this array to wrap elements in <see cref="ConversionResolveResult"/>s!
+		/// The resolver may mutate this array to wrap elements in <see cref="CastExpression"/>s!
 		/// </param>
 		/// <param name="initializerElements">
 		/// The initializer elements. May be null if no array initializer was specified.
-		/// The resolver may mutate this array to wrap elements in <see cref="ConversionResolveResult"/>s!
+		/// The resolver may mutate this array to wrap elements in <see cref="CastExpression"/>s!
 		/// </param>
-		public ArrayCreateResolveResult ResolveArrayCreation(IType elementType, ResolveResult[] sizeArguments, ResolveResult[] initializerElements = null)
+		public ArrayCreateExpression ResolveArrayCreation(IType elementType, Expression[] sizeArguments, Expression[] initializerElements = null)
 		{
 			int dimensions = sizeArguments.Length;
 			if (dimensions == 0)
@@ -2797,14 +2398,10 @@ namespace VSC.TypeSystem.Resolver
 					initializerElements[i] = Convert(initializerElements[i], elementType);
 				}
 			}
-			return new ArrayCreateResolveResult(arrayType, sizeArguments, initializerElements);
+			return new ArrayCreateExpression(arrayType, sizeArguments, initializerElements);
 		}
 		#endregion
 		
-		public ResolveResult ResolveTypeOf(IType referencedType)
-		{
-			return new TypeOfResolveResult(compilation.FindType(KnownTypeCode.Type), referencedType);
-		}
 		
 		#region ResolveAssignment
         /// <summary>
@@ -2846,18 +2443,18 @@ namespace VSC.TypeSystem.Resolver
                     throw new NotSupportedException("Invalid value for AssignmentOperatorType");
             }
         }
-		public ResolveResult ResolveAssignment(AssignmentOperatorType op, ResolveResult lhs, ResolveResult rhs)
+		public Expression ResolveAssignment(AssignmentOperatorType op, Expression lhs, Expression rhs)
 		{
 			var linqOp = GetLinqNodeType(op, this.CheckForOverflow);
 			var bop = GetCorrespondingBinaryOperator(op);
 			if (bop == null) {
-				return new OperatorResolveResult(lhs.Type, linqOp, lhs, this.Convert(rhs, lhs.Type));
+				return new OperatorExpression(lhs.Type, linqOp, lhs, this.Convert(rhs, lhs.Type));
 			}
-			ResolveResult bopResult = ResolveBinaryOperator(bop.Value, lhs, rhs);
-			OperatorResolveResult opResult = bopResult as OperatorResolveResult;
+			Expression bopResult = ResolveBinaryOperator(bop.Value, lhs, rhs);
+			OperatorExpression opResult = bopResult as OperatorExpression;
 			if (opResult == null || opResult.Operands.Count != 2)
 				return bopResult;
-			return new OperatorResolveResult(lhs.Type, linqOp, opResult.UserDefinedOperatorMethod, opResult.IsLiftedOperator,
+			return new OperatorExpression(lhs.Type, linqOp, opResult.UserDefinedOperatorMethod, opResult.IsLiftedOperator,
 			                                 new [] { lhs, opResult.Operands[1] });
 		}
 		#endregion

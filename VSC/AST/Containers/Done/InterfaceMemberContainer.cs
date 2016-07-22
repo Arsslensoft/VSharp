@@ -72,7 +72,29 @@ namespace VSC.AST
             IsInterfaceMember = parent.Kind == TypeKind.Interface;
         }
         protected InterfaceMemberContainer(){}
+        //
+        // Returns full metadata method name
+        //
+        public string GetFullName(MemberName name)
+        {
+            return GetFullName(name.Name);
+        }
 
+        public string GetFullName(string name)
+        {
+            if (!IsExplicitInterfaceImplementation)
+                return name;
+
+            //
+            // When dealing with explicit members a full interface type
+            // name is added to member name to avoid possible name conflicts
+            //
+            // We use CSharpName which gets us full name with benefit of
+            // replacing predefined names which saves some space and name
+            // is still unique
+            //
+            return MemberName.ExplicitInterface.GetSignatureForError() + "." + name;
+        }
         /// <summary>
         ///   Performs checks for an explicit interface implementation.  First it
         ///   checks whether the `interface_type' is a base inteface implementation.

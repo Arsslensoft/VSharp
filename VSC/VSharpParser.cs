@@ -2044,7 +2044,7 @@ case 122:
 	  	lexer.parsing_generic_declaration = false;
 
 		FullNamedExpression type = (FullNamedExpression) yyVals[-1+yyTop];
-		if (type.Type != null && type.Type == KnownTypeReference.Void)
+		if (type.UnresolvedTypeReference != null && type.UnresolvedTypeReference == KnownTypeReference.Void)
 			report.Error (54, GetLocation (yyVals[-1+yyTop]), "Fields cannot have void type");
 			
 		var lt = (LocatedToken) yyVals[0+yyTop];
@@ -2577,7 +2577,7 @@ case 184:
 		current_property = new PropertyDeclaration (current_type, type, (Modifiers) yyVals[-4+yyTop],
 			(MemberName) yyVals[-2+yyTop], (VSharpAttributes) yyVals[-5+yyTop]);
 			
-		if (type.Type != null && type.Type == KnownTypeReference.Void)
+		if (type.UnresolvedTypeReference != null && type.UnresolvedTypeReference == KnownTypeReference.Void)
 			report.Error (69, GetLocation (yyVals[-3+yyTop]), "`{0}': property or indexer cannot have void type", current_property.GetSignatureForError ());					
 			
 		current_type.AddMember (current_property);
@@ -2630,7 +2630,7 @@ case 189:
 			"`{0}': interface members cannot have a definition", property.GetSignatureForError ());
 		}
 
-		if (type.Type != null && type.Type == KnownTypeReference.Void)
+		if (type.UnresolvedTypeReference != null && type.UnresolvedTypeReference == KnownTypeReference.Void)
 			report.Error (71, GetLocation (yyVals[-3+yyTop]), "`{0}': property or indexer cannot have void type", property.GetSignatureForError ());
 
 		current_type.AddMember (property);
@@ -2673,7 +2673,7 @@ case 196:
 
   		current_type.AddMember (indexer);
 
-		if (type.Type != null && type.Type == KnownTypeReference.Void)
+		if (type.UnresolvedTypeReference != null && type.UnresolvedTypeReference == KnownTypeReference.Void)
 			report.Error (72, GetLocation (yyVals[-5+yyTop]), "`{0}': indexer return type cannot be `void'", indexer.GetSignatureForError ());  		
 
 		if (indexer.ParameterInfo.IsEmpty) {

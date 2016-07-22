@@ -13,7 +13,7 @@ namespace VSC.AST
    public interface IResolveExpression
     {
        Expression DoResolve(ResolveContext rc);
-       ResolveResult GetResolveResult(ResolveContext rc);
+   
     }
 
     public interface IResolve

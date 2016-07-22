@@ -1,4 +1,7 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using VSC.AST;
 using VSC.Base;
 
 namespace VSC.TypeSystem.Resolver
@@ -7,10 +10,13 @@ namespace VSC.TypeSystem.Resolver
 	/// Refers to the object that is currently being initialized.
 	/// Used within <see cref="InvocationResolveResult.InitializerStatements"/>.
 	/// </summary>
-	public class InitializedObjectResolveResult : ResolveResult
+	public class InitializedObjectExpression : Expression
 	{
-		public InitializedObjectResolveResult(IType type) : base(type)
+        public InitializedObjectExpression(IType type)
 		{
+            ResolvedType = type;
+            _resolved = true;
 		}
+
 	}
 }

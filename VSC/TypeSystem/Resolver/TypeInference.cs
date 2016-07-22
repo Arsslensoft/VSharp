@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using VSC.AST;
 using VSC.Base;
 using VSC.TypeSystem.Implementation;
 
@@ -59,7 +60,7 @@ namespace VSC.TypeSystem.Resolver
 		
 		TP[] typeParameters;
 		IType[] parameterTypes;
-		ResolveResult[] arguments;
+        AST.Expression[] arguments;
 		bool[,] dependencyMatrix;
 		IList<IType> classTypeArguments;
 		
@@ -76,7 +77,7 @@ namespace VSC.TypeSystem.Resolver
 		/// when inferring a method group or lambda.
 		/// </param>
 		/// <returns>The inferred type arguments.</returns>
-		public IType[] InferTypeArguments(IList<ITypeParameter> typeParameters, IList<ResolveResult> arguments, IList<IType> parameterTypes, out bool success, IList<IType> classTypeArguments = null)
+		public IType[] InferTypeArguments(IList<ITypeParameter> typeParameters, IList<AST.Expression> arguments, IList<IType> parameterTypes, out bool success, IList<IType> classTypeArguments = null)
 		{
 			if (typeParameters == null)
 				throw new ArgumentNullException("typeParameters");
@@ -94,7 +95,7 @@ namespace VSC.TypeSystem.Resolver
 					this.typeParameters[i] = new TP(typeParameters[i]);
 				}
 				this.parameterTypes = new IType[Math.Min(arguments.Count, parameterTypes.Count)];
-				this.arguments = new ResolveResult[this.parameterTypes.Length];
+				this.arguments = new Expression[this.parameterTypes.Length];
 				for (int i = 0; i < this.parameterTypes.Length; i++) {
 					if (arguments[i] == null || parameterTypes[i] == null)
 						throw new ArgumentNullException();
@@ -225,14 +226,14 @@ namespace VSC.TypeSystem.Resolver
 			// V# 4.0 spec: §7.5.2.1 The first phase
 		
 			for (int i = 0; i < arguments.Length; i++) {
-				ResolveResult Ei = arguments[i];
+				Expression Ei = arguments[i];
 				IType Ti = parameterTypes[i];
 				
-				LambdaResolveResult lrr = Ei as LambdaResolveResult;
+				LambdaExpression lrr = Ei as LambdaExpression;
 				if (lrr != null) {
 					MakeExplicitParameterTypeInference(lrr, Ti);
 				}
-				if (lrr != null || Ei is MethodGroupResolveResult) {
+				if (lrr != null || Ei is MethodGroupExpression) {
 					// this is not in the spec???
 					if (OutputTypeContainsUnfixed(Ei, Ti) && !InputTypesContainsUnfixed(Ei, Ti)) {
 						MakeOutputTypeInference(Ei, Ti);
@@ -296,7 +297,7 @@ namespace VSC.TypeSystem.Resolver
 			} else {
 				// Otherwise, for all arguments ei with corresponding parameter type Ti
 				for (int i = 0; i < arguments.Length; i++) {
-					ResolveResult Ei = arguments[i];
+					Expression Ei = arguments[i];
 					IType Ti = parameterTypes[i];
 					// where the output types (§7.4.2.4) contain unfixed type variables Xj
 					// but the input types (§7.4.2.3) do not
@@ -314,12 +315,12 @@ namespace VSC.TypeSystem.Resolver
 		
 		#region Input Types / Output Types (§7.5.2.3 + §7.5.2.4)
 		static readonly IType[] emptyTypeArray = new IType[0];
-		
-		IType[] InputTypes(ResolveResult e, IType t)
+
+        IType[] InputTypes(AST.Expression e, IType t)
 		{
 			// V# 4.0 spec: §7.5.2.3 Input types
-			LambdaResolveResult lrr = e as LambdaResolveResult;
-			if (lrr != null && lrr.IsImplicitlyTyped || e is MethodGroupResolveResult) {
+			LambdaExpression lrr = e as LambdaExpression;
+			if (lrr != null && lrr.IsImplicitlyTyped || e is MethodGroupExpression) {
 				IMethod m = GetDelegateOrExpressionTreeSignature(t);
 				if (m != null) {
 					IType[] inputTypes = new IType[m.Parameters.Count];
@@ -331,12 +332,13 @@ namespace VSC.TypeSystem.Resolver
 			}
 			return emptyTypeArray;
 		}
-		
-		IType[] OutputTypes(ResolveResult e, IType t)
+
+        IType[] OutputTypes(AST.Expression e, IType t)
 		{
 			// V# 4.0 spec: §7.5.2.4 Output types
-			LambdaResolveResult lrr = e as LambdaResolveResult;
-			if (lrr != null || e is MethodGroupResolveResult) {
+			LambdaExpression lrr = e as LambdaExpression;
+            if (lrr != null || e is MethodGroupExpression)
+            {
 				IMethod m = GetDelegateOrExpressionTreeSignature(t);
 				if (m != null) {
 					return new[] { m.ReturnType };
@@ -355,13 +357,13 @@ namespace VSC.TypeSystem.Resolver
 			}
 			return t.GetDelegateInvokeMethod();
 		}
-		
-		bool InputTypesContainsUnfixed(ResolveResult argument, IType parameterType)
+
+        bool InputTypesContainsUnfixed(AST.Expression argument, IType parameterType)
 		{
 			return AnyTypeContainsUnfixedParameter(InputTypes(argument, parameterType));
 		}
-		
-		bool OutputTypeContainsUnfixed(ResolveResult argument, IType parameterType)
+
+        bool OutputTypeContainsUnfixed(AST.Expression argument, IType parameterType)
 		{
 			return AnyTypeContainsUnfixedParameter(OutputTypes(argument, parameterType));
 		}
@@ -425,12 +427,12 @@ namespace VSC.TypeSystem.Resolver
 		#endregion
 		
 		#region MakeOutputTypeInference (§7.5.2.6)
-		void MakeOutputTypeInference(ResolveResult e, IType t)
+        void MakeOutputTypeInference(AST.Expression e, IType t)
 		{
 			
 			// If E is an anonymous function with inferred return type  U (§7.5.2.12) and T is a delegate type or expression
 			// tree type with return type Tb, then a lower-bound inference (§7.5.2.9) is made from U to Tb.
-			LambdaResolveResult lrr = e as LambdaResolveResult;
+			LambdaExpression lrr = e as LambdaExpression;
 			if (lrr != null) {
 				IMethod m = GetDelegateOrExpressionTreeSignature(t);
 				if (m != null) {
@@ -456,20 +458,20 @@ namespace VSC.TypeSystem.Resolver
 			// with parameter types T1…Tk and return type Tb, and overload resolution
 			// of E with the types T1…Tk yields a single method with return type U, then a lower­-bound
 			// inference is made from U to Tb.
-			MethodGroupResolveResult mgrr = e as MethodGroupResolveResult;
+            MethodGroupExpression mgrr = e as MethodGroupExpression;
 			if (mgrr != null) {
 				IMethod m = GetDelegateOrExpressionTreeSignature(t);
 				if (m != null) {
-					ResolveResult[] args = new ResolveResult[m.Parameters.Count];
+					Expression[] args = new Expression[m.Parameters.Count];
 					TypeParameterSubstitution substitution = GetSubstitutionForFixedTPs();
 					for (int i = 0; i < args.Length; i++) {
 						IParameter param = m.Parameters[i];
 						IType parameterType = param.Type.AcceptVisitor(substitution);
 						if ((param.IsRef || param.IsOut) && parameterType.Kind == TypeKind.ByReference) {
 							parameterType = ((ByReferenceType)parameterType).ElementType;
-							args[i] = new ByReferenceResolveResult(parameterType, param.IsOut);
+							args[i] = new ByReferenceExpression(parameterType, param.IsOut);
 						} else {
-							args[i] = new ResolveResult(parameterType);
+							args[i] = new Expression(parameterType);
 						}
 					}
 					var or = mgrr.PerformOverloadResolution(compilation,
@@ -499,7 +501,7 @@ namespace VSC.TypeSystem.Resolver
 		#endregion
 		
 		#region MakeExplicitParameterTypeInference (§7.5.2.7)
-		void MakeExplicitParameterTypeInference(LambdaResolveResult e, IType t)
+		void MakeExplicitParameterTypeInference(LambdaExpression e, IType t)
 		{
 			// V# 4.0 spec: §7.5.2.7 Explicit parameter type inferences
 			if (e.IsImplicitlyTyped || !e.HasParameterList)
@@ -743,7 +745,7 @@ namespace VSC.TypeSystem.Resolver
 		/// <summary>
 		/// Gets the best common type (V# 4.0 spec: §7.5.2.14) of a set of expressions.
 		/// </summary>
-		public IType GetBestCommonType(IList<ResolveResult> expressions, out bool success)
+        public IType GetBestCommonType(IList<AST.Expression> expressions, out bool success)
 		{
 			if (expressions == null)
 				throw new ArgumentNullException("expressions");
@@ -754,7 +756,7 @@ namespace VSC.TypeSystem.Resolver
 			try {
 				ITypeParameter tp = DummyTypeParameter.GetMethodTypeParameter(0);
 				this.typeParameters = new TP[1] { new TP(tp) };
-				foreach (ResolveResult r in expressions) {
+				foreach (Expression r in expressions) {
 					MakeOutputTypeInference(r, tp);
 				}
 				success = Fix(typeParameters[0]);

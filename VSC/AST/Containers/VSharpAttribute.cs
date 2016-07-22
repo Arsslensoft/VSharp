@@ -95,7 +95,7 @@ namespace VSC.AST
             readonly VSharpAttribute unresolved;
             readonly IType attributeType;
 
-            IList<KeyValuePair<IMember, ResolveResult>> namedArguments;
+            IList<KeyValuePair<IMember, AST.Expression>> namedArguments;
 
             public VSharpResolvedAttribute(ResolveContext context, VSharpAttribute unresolved)
             {
@@ -116,20 +116,20 @@ namespace VSC.AST
                 get { return attributeType; }
             }
 
-          public  ResolveResult ctorInvocation;
+          public  AST.Expression ctorInvocation;
 
-          public  InvocationResolveResult GetCtorInvocation()
+          public  Invocation GetCtorInvocation()
             {
-                ResolveResult rr = LazyInit.VolatileRead(ref this.ctorInvocation);
+                AST.Expression rr = LazyInit.VolatileRead(ref this.ctorInvocation);
                 if (rr != null)
                 {
-                    return rr as InvocationResolveResult;
+                    return rr as Invocation;
                 }
                 else
                 {
               
                     int totalArgumentCount = unresolved.positionalArguments.Count + unresolved.namedCtorArguments.Count;
-                    ResolveResult[] arguments = new ResolveResult[totalArgumentCount];
+                    AST.Expression[] arguments = new AST.Expression[totalArgumentCount];
                     string[] argumentNames = new string[totalArgumentCount];
                     int i = 0;
                     while (i < unresolved.positionalArguments.Count)
@@ -145,7 +145,7 @@ namespace VSC.AST
                         i++;
                     }
                     rr = context.ResolveObjectCreation(attributeType, arguments, argumentNames);
-                    return LazyInit.GetOrSet(ref this.ctorInvocation, rr) as InvocationResolveResult;
+                    return LazyInit.GetOrSet(ref this.ctorInvocation, rr) as Invocation;
                 }
             }
 
@@ -161,9 +161,9 @@ namespace VSC.AST
                 }
             }
 
-            IList<ResolveResult> positionalArguments;
+            IList<AST.Expression> positionalArguments;
 
-            IList<ResolveResult> IAttribute.PositionalArguments
+            IList<AST.Expression> IAttribute.PositionalArguments
             {
                 get
                 {
@@ -178,13 +178,13 @@ namespace VSC.AST
                         if (invocation != null)
                             result = invocation.GetArgumentsForCall();
                         else
-                            result = EmptyList<ResolveResult>.Instance;
+                            result = EmptyList<AST.Expression>.Instance;
                         return LazyInit.GetOrSet(ref this.positionalArguments, result);
                     }
                 }
             }
 
-            IList<KeyValuePair<IMember, ResolveResult>> IAttribute.NamedArguments
+            IList<KeyValuePair<IMember, AST.Expression>> IAttribute.NamedArguments
             {
                 get
                 {
@@ -195,14 +195,14 @@ namespace VSC.AST
                     }
                     else
                     {
-                        namedArgs = new List<KeyValuePair<IMember, ResolveResult>>();
+                        namedArgs = new List<KeyValuePair<IMember, AST.Expression>>();
                         foreach (var pair in unresolved.namedArguments)
                         {
                             IMember member = attributeType.GetMembers(m => (m.SymbolKind == SymbolKind.Field || m.SymbolKind == SymbolKind.Property) && m.Name == pair.Key).FirstOrDefault();
                             if (member != null)
                             {
-                                ResolveResult val = pair.Value.Resolve(context);
-                                namedArgs.Add(new KeyValuePair<IMember, ResolveResult>(member, val));
+                                AST.Expression val = pair.Value.Resolve(context);
+                                namedArgs.Add(new KeyValuePair<IMember, AST.Expression>(member, val));
                             }
                         }
                         return LazyInit.GetOrSet(ref this.namedArguments, namedArgs);

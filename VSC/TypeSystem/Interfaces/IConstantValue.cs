@@ -15,6 +15,6 @@ namespace VSC.TypeSystem
 		/// <param name="context">Context where the constant value will be used.</param>
 		/// <returns>ResolveScope result representing the constant value.
 		/// This method never returns null; in case of errors, an ErrorResolveResult will be returned.</returns>
-		ResolveResult Resolve(ITypeResolveContext context);
+		AST.Expression Resolve(ITypeResolveContext context);
 	}
 }

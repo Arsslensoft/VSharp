@@ -2,6 +2,7 @@ using VSC.TypeSystem;
 
 namespace VSC.AST
 {
+    
     /// <summary>
     ///   Expression that evaluates to a type
     /// </summary>
@@ -15,12 +16,12 @@ namespace VSC.AST
             if (tobj == null)
                 return false;
 
-            return Type == tobj.Type;
+            return UnresolvedTypeReference == tobj.UnresolvedTypeReference;
         }
 
         public override int GetHashCode()
         {
-            return Type.GetHashCode();
+            return UnresolvedTypeReference.GetHashCode();
         }
     }
 }

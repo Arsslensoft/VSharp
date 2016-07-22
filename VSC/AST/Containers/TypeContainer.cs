@@ -231,7 +231,7 @@ namespace VSC.AST
         {
             return new VSharpTypeResolveContext(parentContext.CurrentAssembly, usingScope.ResolveScope(parentContext.Compilation), parentContext.CurrentTypeDefinition);
         }
-        public ResolveResult ResolveTypeDefinition(string name, int typeParameterCount, ResolveContext rc)
+        public AST.Expression ResolveTypeDefinition(string name, int typeParameterCount, ResolveContext rc)
         {
             ResolveContext previousResolver = rc;
             try
@@ -259,7 +259,7 @@ namespace VSC.AST
                 // resolve children
                 ResolveWithCurrentContext(rc);
 
-                return newTypeDefinition != null ? new TypeResolveResult(newTypeDefinition) : (ResolveResult)ErrorResolveResult.UnknownError;
+                return newTypeDefinition != null ? new TypeExpression(newTypeDefinition) : (AST.Expression)ErrorExpression.UnknownError;
             }
             finally
             {
@@ -279,7 +279,7 @@ namespace VSC.AST
         {
 
             // DoResolve type definition
-            ResolveResult rr = ResolveTypeDefinition(name, typeParameters.Count, rc);
+            AST.Expression rr = ResolveTypeDefinition(name, typeParameters.Count, rc);
             if (rr.IsError)
             {
 

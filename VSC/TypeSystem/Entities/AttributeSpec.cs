@@ -11,33 +11,33 @@ namespace VSC.TypeSystem.Implementation
 	public class AttributeSpec : IAttribute
 	{
 		readonly IType attributeType;
-		readonly IList<ResolveResult> positionalArguments;
-		readonly IList<KeyValuePair<IMember, ResolveResult>> namedArguments;
+        readonly IList<AST.Expression> positionalArguments;
+        readonly IList<KeyValuePair<IMember, AST.Expression>> namedArguments;
 		readonly DomRegion region;
 		volatile IMethod constructor;
-		
-		public AttributeSpec(IType attributeType, IList<ResolveResult> positionalArguments = null,
-		                        IList<KeyValuePair<IMember, ResolveResult>> namedArguments = null,
+
+        public AttributeSpec(IType attributeType, IList<AST.Expression> positionalArguments = null,
+                                IList<KeyValuePair<IMember, AST.Expression>> namedArguments = null,
 		                        DomRegion region = default(DomRegion))
 		{
 			if (attributeType == null)
 				throw new ArgumentNullException("attributeType");
 			this.attributeType = attributeType;
-			this.positionalArguments = positionalArguments ?? EmptyList<ResolveResult>.Instance;
-			this.namedArguments = namedArguments ?? EmptyList<KeyValuePair<IMember, ResolveResult>>.Instance;
+            this.positionalArguments = positionalArguments ?? EmptyList<AST.Expression>.Instance;
+            this.namedArguments = namedArguments ?? EmptyList<KeyValuePair<IMember, AST.Expression>>.Instance;
 			this.region = region;
 		}
-		
-		public AttributeSpec(IMethod constructor, IList<ResolveResult> positionalArguments = null,
-		                        IList<KeyValuePair<IMember, ResolveResult>> namedArguments = null,
+
+        public AttributeSpec(IMethod constructor, IList<AST.Expression> positionalArguments = null,
+                                IList<KeyValuePair<IMember, AST.Expression>> namedArguments = null,
 		                        DomRegion region = default(DomRegion))
 		{
 			if (constructor == null)
 				throw new ArgumentNullException("constructor");
 			this.constructor = constructor;
 			this.attributeType = constructor.DeclaringType ?? SpecialTypeSpec.UnknownType;
-			this.positionalArguments = positionalArguments ?? EmptyList<ResolveResult>.Instance;
-			this.namedArguments = namedArguments ?? EmptyList<KeyValuePair<IMember, ResolveResult>>.Instance;
+            this.positionalArguments = positionalArguments ?? EmptyList<AST.Expression>.Instance;
+            this.namedArguments = namedArguments ?? EmptyList<KeyValuePair<IMember, AST.Expression>>.Instance;
 			this.region = region;
 			if (this.positionalArguments.Count != constructor.Parameters.Count) {
 				throw new ArgumentException("Positional argument count must match the constructor's parameter count");
@@ -67,12 +67,14 @@ namespace VSC.TypeSystem.Implementation
 				return ctor;
 			}
 		}
-		
-		public IList<ResolveResult> PositionalArguments {
+
+        public IList<AST.Expression> PositionalArguments
+        {
 			get { return positionalArguments; }
 		}
-		
-		public IList<KeyValuePair<IMember, ResolveResult>> NamedArguments {
+
+        public IList<KeyValuePair<IMember, AST.Expression>> NamedArguments
+        {
 			get { return namedArguments; }
 		}
 	}

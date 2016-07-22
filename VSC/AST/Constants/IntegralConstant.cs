@@ -4,10 +4,10 @@ namespace VSC.AST
 {
     public abstract class IntegralConstant : Constant
     {
-        protected IntegralConstant(ITypeReference type, Location loc)
+        protected IntegralConstant(ITypeReference UnresolvedTypeReference, Location loc)
             : base(loc)
         {
-            this.type = type;
+            this.type = UnresolvedTypeReference;
        
         }
 

@@ -63,6 +63,7 @@ namespace VSC.TypeSystem
 		Intersection,
 		/// <see cref="SpecialTypeSpec.ArgList"/>
 		ArgList,
+        Fake,
 
         Union
 	}

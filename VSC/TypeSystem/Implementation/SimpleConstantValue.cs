@@ -1,4 +1,5 @@
 using System;
+using VSC.AST;
 using VSC.Base;
 
 namespace VSC.TypeSystem.Implementation
@@ -20,7 +21,7 @@ namespace VSC.TypeSystem.Implementation
 			this.value = value;
 		}
 		
-		public ResolveResult Resolve(ITypeResolveContext context)
+		public Expression Resolve(ITypeResolveContext context)
 		{
 			//return new ConstantResolveResult(type.ResolveScope(context), value); //TODO:Fix this
             return null;

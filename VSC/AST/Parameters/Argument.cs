@@ -2,7 +2,7 @@ using VSC.TypeSystem;
 
 namespace VSC.AST
 {
-    public class Argument : IAstNode
+    public class Argument 
     {
 
         public IAstNode ParentNode { get; set; }
@@ -29,6 +29,7 @@ namespace VSC.AST
         {
             this.Expr = expr;
             this.ArgType = type;
+          
             this.loc = l;
         }
 
@@ -37,6 +38,25 @@ namespace VSC.AST
             this.Expr = expr; this.loc = l;
         }
 
+        public static explicit operator Expression(Argument a)
+        {
+            return a.Expr;
+        }
+        public void Resolve(VSC.TypeSystem.Resolver.ResolveContext rc)
+        {
+            // Verify that the argument is readable
+            if (ArgType != AType.Out)
+                Expr = Expr.DoResolve(rc);
+
+            // Verify that the argument is writeable
+            if (Expr != null && IsByRef)
+                Expr = Expr.DoResolveLeftValue(rc, EmptyExpression.OutAccess);
+
+            if (Expr == null)
+                Expr = Expression.ErrorResult;
+
+
+        }
         #region Properties
 
         public bool IsByRef

@@ -23,13 +23,13 @@ namespace VSC.AST
         {
             Expression tp = expr.DoResolve(rc);
 
-            if(   tp.Result.IsError)
+            if(   tp == null )
                 rc.Report.Error(150, Location,
                      "The imported package or type '{0}' does not exist in the current context",
                      expr.GetSignatureForError());
 
 
-            return !tp.Result.IsError;
+            return true;
         }
 
         public override void AcceptVisitor(IVisitor visitor)

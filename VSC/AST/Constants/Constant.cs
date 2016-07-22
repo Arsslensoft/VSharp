@@ -9,24 +9,25 @@ using VSC.Base;
 using VSC.Context;
 using VSC.TypeSystem;
 using VSC.TypeSystem.Resolver;
+using ConstantExpression = VSC.TypeSystem.Resolver.ConstantExpression;
 
 namespace VSC.AST
 {
     public abstract class Constant : Expression, IConstantValue
     {
 
-        public virtual ResolveResult Resolve(ResolveContext resolver)
+        public virtual AST.Expression Resolve(ResolveContext resolver)
         {
-            return new ConstantResolveResult(type.Resolve(resolver.CurrentTypeResolveContext), GetValue());
+            return new ConstantExpression(type.Resolve(resolver.CurrentTypeResolveContext), GetValue());
         }
 
-        public override IConstantValue BuilConstantValue(bool isAttributeConstant)
-        {
-            object val = GetValue();
-            return new PrimitiveConstantExpression(type, val);
-        }
+        //public override IConstantValue BuilConstantValue(bool isAttributeConstant)
+        //{
+        //    object val = GetValue();
+        //    return new PrimitiveConstantExpression(type, val);
+        //}
 
-        public ResolveResult Resolve(ITypeResolveContext context)
+        public AST.Expression Resolve(ITypeResolveContext context)
         {
             var csContext = (VSharpTypeResolveContext)context;
             if (context.CurrentAssembly != context.Compilation.MainAssembly)
@@ -39,7 +40,7 @@ namespace VSC.AST
                     if (nestedCompilation != null)
                     {
                         var nestedContext = MapToNestedCompilation(csContext, nestedCompilation);
-                        ResolveResult rr = Resolve(new ResolveContext(nestedContext, CompilerContext.report));
+                        AST.Expression rr = Resolve(new ResolveContext(nestedContext, CompilerContext.report));
                         return MapToNewContext(rr, context);
                     }
                 }
@@ -62,40 +63,40 @@ namespace VSC.AST
             return nestedContext;
         }
 
-        static ResolveResult MapToNewContext(ResolveResult rr, ITypeResolveContext newContext)
+        static AST.Expression MapToNewContext(AST.Expression rr, ITypeResolveContext newContext)
         {
-            if (rr is TypeOfResolveResult)
+            if (rr is TypeOfExpression)
             {
-                return new TypeOfResolveResult(
+                return new TypeOfExpression(
                     rr.Type.ToTypeReference().Resolve(newContext),
-                    ((TypeOfResolveResult)rr).ReferencedType.ToTypeReference().Resolve(newContext));
+                    ((TypeOfExpression)rr).TargetType.ToTypeReference().Resolve(newContext));
             }
-            else if (rr is ArrayCreateResolveResult)
+            else if (rr is ArrayCreateExpression)
             {
-                ArrayCreateResolveResult acrr = (ArrayCreateResolveResult)rr;
-                return new ArrayCreateResolveResult(
+                ArrayCreateExpression acrr = (ArrayCreateExpression)rr;
+                return new ArrayCreateExpression(
                     acrr.Type.ToTypeReference().Resolve(newContext),
                     MapToNewContext(acrr.SizeArguments, newContext),
                     MapToNewContext(acrr.InitializerElements, newContext));
             }
             else if (rr.IsCompileTimeConstant)
             {
-                return new ConstantResolveResult(
+                return new ConstantExpression(
                     rr.Type.ToTypeReference().Resolve(newContext),
                     rr.ConstantValue
                 );
             }
             else
             {
-                return new ErrorResolveResult(rr.Type.ToTypeReference().Resolve(newContext));
+                return new ErrorExpression(rr.Type.ToTypeReference().Resolve(newContext));
             }
         }
 
-        static ResolveResult[] MapToNewContext(IList<ResolveResult> input, ITypeResolveContext newContext)
+        static AST.Expression[] MapToNewContext(IList<AST.Expression> input, ITypeResolveContext newContext)
         {
             if (input == null)
                 return null;
-            ResolveResult[] output = new ResolveResult[input.Count];
+            AST.Expression[] output = new AST.Expression[input.Count];
             for (int i = 0; i < output.Length; i++)
             {
                 output[i] = MapToNewContext(input[i], newContext);
@@ -158,7 +159,72 @@ namespace VSC.AST
         {
             get { return false; }
         }
+        public override Expression DoResolve(ResolveContext rc)
+        {
+            if (_resolved)
+                return this;
 
+            ResolvedType = type.Resolve(rc);
+            _resolved = true;
+            return this;
+        }
+
+        public static Constant CreateConstantFromValue(ResolveContext rc,IType t, object v, Location loc)
+        {
+            Constant c = null;
+            switch ((t as ITypeDefinition).KnownTypeCode)
+            {
+                    
+                case KnownTypeCode.Int32:
+                    c=  new IntConstant( (int)v, loc);
+                    break;
+                case KnownTypeCode.String:
+                    c = new StringConstant((string)v, loc);   break;
+                case KnownTypeCode.UInt32:
+                    c = new UIntConstant((uint)v, loc);   break;
+                case KnownTypeCode.Int64:
+                    c = new LongConstant((long)v, loc);   break;
+                case KnownTypeCode.UInt64:
+                    c = new ULongConstant((ulong)v, loc);   break;
+                case KnownTypeCode.Single:
+                    c = new FloatConstant((float)v, loc);   break;
+                case KnownTypeCode.Double:
+                    c = new DoubleConstant((double)v, loc);   break;
+                case KnownTypeCode.Int16:
+                    c = new ShortConstant((short)v, loc);   break;
+                case KnownTypeCode.UInt16:
+                    c = new UShortConstant((ushort)v, loc);   break;
+                case KnownTypeCode.SByte:
+                    c = new SByteConstant((sbyte)v, loc);   break;
+                case KnownTypeCode.Byte:
+                    c = new ByteConstant((byte)v, loc);   break;
+                case KnownTypeCode.Char:
+                    c = new CharConstant((char)v, loc);   break;
+                case KnownTypeCode.Boolean:
+                    c = new BoolConstant((bool)v, loc);   break;
+            }
+       
+
+            if (t.Kind == TypeKind.Enum)
+            {
+                var real_type = rc.GetEnumUnderlyingType(t);
+                  return CreateConstantFromValue(rc,real_type, v, loc);
+            }
+
+            if (v == null)
+            {
+             // TODO:Support nullable constant ?
+
+                if (t.IsReferenceType.HasValue && t.IsReferenceType.Value)
+                    c= new NullConstant(t, loc);
+            }
+
+            if (c != null)
+                c = (Constant)c.DoResolve(rc);
+
+            return c;
+
+        }
     }
  
     [Serializable]
@@ -180,17 +246,18 @@ namespace VSC.AST
             this.allowNullableConstants = allowNullableConstants;
         }
 
-        public override ResolveResult Resolve(ResolveContext resolver)
+        public override AST.Expression Resolve(ResolveContext resolver)
         {
             var type = targetType.Resolve(resolver.CurrentTypeResolveContext);
             var resolveResult = expression.Resolve(resolver);
-            if (allowNullableConstants && NullableType.IsNullable(type))
-            {
-                resolveResult = resolver.ResolveCast(NullableType.GetUnderlyingType(type), resolveResult);
-                if (resolveResult.IsCompileTimeConstant)
-                    return new ConstantResolveResult(type, resolveResult.ConstantValue);
-            }
-            return resolver.ResolveCast(type, resolveResult);
+            //if (allowNullableConstants && NullableType.IsNullable(type))
+            //{
+            //    resolveResult = resolver.ResolveCast(NullableType.GetUnderlyingType(type), resolveResult);
+            //    if (resolveResult.IsCompileTimeConstant)
+            //        return new ConstantExpression(type, resolveResult.ConstantValue);
+            //}
+            //return resolver.ResolveCast(type, resolveResult);
+            return ErrorResult;
         }
 
         int ISupportsInterning.GetHashCodeForInterning()
@@ -259,9 +326,9 @@ namespace VSC.AST
             }
         }
 
-        public ResolveResult Resolve(ITypeResolveContext context)
+        public AST.Expression Resolve(ITypeResolveContext context)
         {
-            ResolveResult rr = baseValue.Resolve(context);
+            AST.Expression rr = baseValue.Resolve(context);
             if (rr.IsCompileTimeConstant && rr.ConstantValue != null)
             {
                 object val = rr.ConstantValue;
@@ -270,10 +337,10 @@ namespace VSC.AST
                 {
                     long intVal = (long)VSharpPrimitiveCast.Cast(TypeCode.Int64, val, false);
                     object newVal = VSharpPrimitiveCast.Cast(typeCode, unchecked(intVal + incrementAmount), false);
-                    return new ConstantResolveResult(rr.Type, newVal);
+                    return new ConstantExpression(rr.Type, newVal);
                 }
             }
-            return new ErrorResolveResult(rr.Type);
+            return new ErrorExpression(rr.Type);
         }
 
         int ISupportsInterning.GetHashCodeForInterning()
@@ -318,9 +385,9 @@ namespace VSC.AST
             this.value = value;
         }
 
-        public override ResolveResult Resolve(ResolveContext resolver)
+        public override AST.Expression Resolve(ResolveContext resolver)
         {
-            return new ConstantResolveResult(type.Resolve(resolver.CurrentTypeResolveContext), value);
+            return new ConstantExpression(type.Resolve(resolver.CurrentTypeResolveContext), value);
         }
 
         int ISupportsInterning.GetHashCodeForInterning()
@@ -360,509 +427,468 @@ namespace VSC.AST
         }
     }
 
-    [Serializable]
-    public sealed class TypeOfConstantExpression : Constant
-    {
-        readonly ITypeReference type;
-
-        public ITypeReference Type
-        {
-            get { return type; }
-        }
-
-        public TypeOfConstantExpression(ITypeReference type)
-        {
-            this.type = type;
-        }
-
-        public override ResolveResult Resolve(ResolveContext resolver)
-        {
-            return resolver.ResolveTypeOf(type.Resolve(resolver.CurrentTypeResolveContext));
-        }
-
-        public override object GetValue()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override long GetValueAsLong()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override string GetValueAsLiteral()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override bool IsDefaultValue
-        {
-            get { throw new NotImplementedException(); }
-        }
-
-        public override bool IsNegative
-        {
-            get { throw new NotImplementedException(); }
-        }
-    }
-    [Serializable]
-    public sealed class ConstantIdentifierReference : Constant
-    {
-        readonly string identifier;
-        readonly IList<ITypeReference> typeArguments;
-
-        public ConstantIdentifierReference(string identifier, IList<ITypeReference> typeArguments = null)
-        {
-            if (identifier == null)
-                throw new ArgumentNullException("identifier");
-            this.identifier = identifier;
-            this.typeArguments = typeArguments ?? EmptyList<ITypeReference>.Instance;
-        }
-
-        public override ResolveResult Resolve(ResolveContext resolver)
-        {
-            return resolver.ResolveSimpleName(identifier, typeArguments.Resolve(resolver.CurrentTypeResolveContext));
-        }
-
-        public override object GetValue()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override long GetValueAsLong()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override string GetValueAsLiteral()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override bool IsDefaultValue
-        {
-            get { throw new NotImplementedException(); }
-        }
-
-        public override bool IsNegative
-        {
-            get { throw new NotImplementedException(); }
-        }
-    }
-    [Serializable]
-    public sealed class ConstantMemberReference : Constant
-    {
-        readonly ITypeReference targetType;
-        readonly Constant targetExpression;
-        readonly string memberName;
-        readonly IList<ITypeReference> typeArguments;
-
-        public ConstantMemberReference(ITypeReference targetType, string memberName, IList<ITypeReference> typeArguments = null)
-        {
-            if (targetType == null)
-                throw new ArgumentNullException("targetType");
-            if (memberName == null)
-                throw new ArgumentNullException("memberName");
-            this.targetType = targetType;
-            this.memberName = memberName;
-            this.typeArguments = typeArguments ?? EmptyList<ITypeReference>.Instance;
-        }
-
-        public ConstantMemberReference(Constant targetExpression, string memberName, IList<ITypeReference> typeArguments = null)
-        {
-            if (targetExpression == null)
-                throw new ArgumentNullException("targetExpression");
-            if (memberName == null)
-                throw new ArgumentNullException("memberName");
-            this.targetExpression = targetExpression;
-            this.memberName = memberName;
-            this.typeArguments = typeArguments ?? EmptyList<ITypeReference>.Instance;
-        }
-
-        public override ResolveResult Resolve(ResolveContext resolver)
-        {
-            ResolveResult rr;
-            if (targetType != null)
-                rr = new TypeResolveResult(targetType.Resolve(resolver.CurrentTypeResolveContext));
-            else
-                rr = targetExpression.Resolve(resolver);
-            return resolver.ResolveMemberAccess(rr, memberName, typeArguments.Resolve(resolver.CurrentTypeResolveContext));
-        }
-
-        public override object GetValue()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override long GetValueAsLong()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override string GetValueAsLiteral()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override bool IsDefaultValue
-        {
-            get { throw new NotImplementedException(); }
-        }
-
-        public override bool IsNegative
-        {
-            get { throw new NotImplementedException(); }
-        }
-    }
-    [Serializable]
-    public sealed class ConstantCheckedExpression : Constant
-    {
-        readonly bool checkForOverflow;
-        readonly Constant expression;
-
-        public ConstantCheckedExpression(bool checkForOverflow, Constant expression)
-        {
-            if (expression == null)
-                throw new ArgumentNullException("expression");
-            this.checkForOverflow = checkForOverflow;
-            this.expression = expression;
-        }
-
-        public override ResolveResult Resolve(ResolveContext resolver)
-        {
-            return expression.Resolve(resolver.WithCheckForOverflow(checkForOverflow));
-        }
-
-        public override object GetValue()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override long GetValueAsLong()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override string GetValueAsLiteral()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override bool IsDefaultValue
-        {
-            get { throw new NotImplementedException(); }
-        }
-
-        public override bool IsNegative
-        {
-            get { throw new NotImplementedException(); }
-        }
-    }
-    [Serializable]
-    public sealed class ConstantDefaultValue : Constant, ISupportsInterning
-    {
-        readonly ITypeReference type;
-
-        public ConstantDefaultValue(ITypeReference type)
-        {
-            if (type == null)
-                throw new ArgumentNullException("type");
-            this.type = type;
-        }
-
-        public override ResolveResult Resolve(ResolveContext resolver)
-        {
-            return resolver.ResolveDefaultValue(type.Resolve(resolver.CurrentTypeResolveContext));
-        }
-
-        int ISupportsInterning.GetHashCodeForInterning()
-        {
-            return type.GetHashCode();
-        }
-
-        bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
-        {
-            ConstantDefaultValue o = other as ConstantDefaultValue;
-            return o != null && this.type == o.type;
-        }
-
-        public override object GetValue()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override long GetValueAsLong()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override string GetValueAsLiteral()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override bool IsDefaultValue
-        {
-            get { throw new NotImplementedException(); }
-        }
-
-        public override bool IsNegative
-        {
-            get { throw new NotImplementedException(); }
-        }
-    }
-    [Serializable]
-    public sealed class ConstantUnaryOperator : Constant
-    {
-        readonly UnaryOperatorType operatorType;
-        readonly Constant expression;
-
-        public ConstantUnaryOperator(UnaryOperatorType operatorType, Constant expression)
-        {
-            if (expression == null)
-                throw new ArgumentNullException("expression");
-            this.operatorType = operatorType;
-            this.expression = expression;
-        }
-
-        public override ResolveResult Resolve(ResolveContext resolver)
-        {
-            return resolver.ResolveUnaryOperator(operatorType, expression.Resolve(resolver));
-        }
-
-        public override object GetValue()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override long GetValueAsLong()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override string GetValueAsLiteral()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override bool IsDefaultValue
-        {
-            get { throw new NotImplementedException(); }
-        }
-
-        public override bool IsNegative
-        {
-            get { throw new NotImplementedException(); }
-        }
-    }
-    [Serializable]
-    public sealed class ConstantBinaryOperator : Constant
-    {
-        readonly Constant left;
-        readonly BinaryOperatorType operatorType;
-        readonly Constant right;
-
-        public ConstantBinaryOperator(Constant left, BinaryOperatorType operatorType, Constant right)
-        {
-            if (left == null)
-                throw new ArgumentNullException("left");
-            if (right == null)
-                throw new ArgumentNullException("right");
-            this.left = left;
-            this.operatorType = operatorType;
-            this.right = right;
-        }
-
-        public override ResolveResult Resolve(ResolveContext resolver)
-        {
-            ResolveResult lhs = left.Resolve(resolver);
-            ResolveResult rhs = right.Resolve(resolver);
-            return resolver.ResolveBinaryOperator(operatorType, lhs, rhs);
-        }
-
-        public override object GetValue()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override long GetValueAsLong()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override string GetValueAsLiteral()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override bool IsDefaultValue
-        {
-            get { throw new NotImplementedException(); }
-        }
-
-        public override bool IsNegative
-        {
-            get { throw new NotImplementedException(); }
-        }
-    }
-    [Serializable]
-    public sealed class ConstantConditionalOperator : Constant
-    {
-        readonly Constant condition, trueExpr, falseExpr;
-
-        public ConstantConditionalOperator(Constant condition, Constant trueExpr, Constant falseExpr)
-        {
-            if (condition == null)
-                throw new ArgumentNullException("condition");
-            if (trueExpr == null)
-                throw new ArgumentNullException("trueExpr");
-            if (falseExpr == null)
-                throw new ArgumentNullException("falseExpr");
-            this.condition = condition;
-            this.trueExpr = trueExpr;
-            this.falseExpr = falseExpr;
-        }
-
-        public override ResolveResult Resolve(ResolveContext resolver)
-        {
-            return resolver.ResolveConditional(
-                condition.Resolve(resolver),
-                trueExpr.Resolve(resolver),
-                falseExpr.Resolve(resolver)
-            );
-        }
-
-        public override object GetValue()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override long GetValueAsLong()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override string GetValueAsLiteral()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override bool IsDefaultValue
-        {
-            get { throw new NotImplementedException(); }
-        }
-
-        public override bool IsNegative
-        {
-            get { throw new NotImplementedException(); }
-        }
-    }
-    /// <summary>
-    /// Represents an array creation (as used within an attribute argument)
-    /// </summary>
-    [Serializable]
-    public sealed class ConstantArrayCreation : Constant
-    {
-        // type may be null when the element is being inferred
-        readonly ITypeReference elementType;
-        readonly IList<Constant> arrayElements;
-
-        public ConstantArrayCreation(ITypeReference type, IList<Constant> arrayElements)
-        {
-            if (arrayElements == null)
-                throw new ArgumentNullException("arrayElements");
-            this.elementType = type;
-            this.arrayElements = arrayElements;
-        }
-
-        public override ResolveResult Resolve(ResolveContext resolver)
-        {
-            ResolveResult[] elements = new ResolveResult[arrayElements.Count];
-            for (int i = 0; i < elements.Length; i++)
-            {
-                elements[i] = arrayElements[i].Resolve(resolver);
-            }
-            int[] sizeArguments = { elements.Length };
-            if (elementType != null)
-            {
-                return resolver.ResolveArrayCreation(elementType.Resolve(resolver.CurrentTypeResolveContext), sizeArguments, elements);
-            }
-            else
-            {
-                return resolver.ResolveArrayCreation(null, sizeArguments, elements);
-            }
-        }
-
-        public override object GetValue()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override long GetValueAsLong()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override string GetValueAsLiteral()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override bool IsDefaultValue
-        {
-            get { throw new NotImplementedException(); }
-        }
-
-        public override bool IsNegative
-        {
-            get { throw new NotImplementedException(); }
-        }
-    }
-
-    /// <summary>
-    /// Used for sizeof() expressions in constants.
-    /// </summary>
-    [Serializable]
-    public sealed class SizeOfConstantValue : Constant
-    {
-        readonly ITypeReference type;
-
-        public SizeOfConstantValue(ITypeReference type)
-        {
-            if (type == null)
-                throw new ArgumentNullException("type");
-            this.type = type;
-        }
-
-        public override ResolveResult Resolve(ResolveContext resolver)
-        {
-            return resolver.ResolveSizeOf(type.Resolve(resolver.CurrentTypeResolveContext));
-        }
-
-        public override object GetValue()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override long GetValueAsLong()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override string GetValueAsLiteral()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override bool IsDefaultValue
-        {
-            get { throw new NotImplementedException(); }
-        }
-
-        public override bool IsNegative
-        {
-            get { throw new NotImplementedException(); }
-        }
-    }
+    //[Serializable]
+    //public sealed class TypeOfConstantExpression : Constant
+    //{
+    //    readonly ITypeReference type;
+
+    //    public ITypeReference Type
+    //    {
+    //        get { return type; }
+    //    }
+
+    //    public TypeOfConstantExpression(ITypeReference type)
+    //    {
+    //        this.type = type;
+    //    }
+
+    //    public override AST.Expression Resolve(ResolveContext resolver)
+    //    {
+    //        return resolver.ResolveTypeOf(type.Resolve(resolver.CurrentTypeResolveContext));
+    //    }
+
+    //    public override object GetValue()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override long GetValueAsLong()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override string GetValueAsLiteral()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override bool IsDefaultValue
+    //    {
+    //        get { throw new NotImplementedException(); }
+    //    }
+
+    //    public override bool IsNegative
+    //    {
+    //        get { throw new NotImplementedException(); }
+    //    }
+    //}
+    //[Serializable]
+    //public sealed class ConstantIdentifierReference : Constant
+    //{
+    //    readonly string identifier;
+    //    readonly IList<ITypeReference> typeArguments;
+
+    //    public ConstantIdentifierReference(string identifier, IList<ITypeReference> typeArguments = null)
+    //    {
+    //        if (identifier == null)
+    //            throw new ArgumentNullException("identifier");
+    //        this.identifier = identifier;
+    //        this.typeArguments = typeArguments ?? EmptyList<ITypeReference>.Instance;
+    //    }
+
+    //    public override AST.Expression Resolve(ResolveContext resolver)
+    //    {
+          
+    //        return resolver.ResolveSimpleName(identifier, typeArguments.Resolve(resolver.CurrentTypeResolveContext));
+    //    }
+
+    //    public override object GetValue()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override long GetValueAsLong()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override string GetValueAsLiteral()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override bool IsDefaultValue
+    //    {
+    //        get { throw new NotImplementedException(); }
+    //    }
+
+    //    public override bool IsNegative
+    //    {
+    //        get { throw new NotImplementedException(); }
+    //    }
+    //}
+    //[Serializable]
+    //public sealed class ConstantMemberReference : Constant
+    //{
+    //    readonly ITypeReference targetType;
+    //    readonly Constant targetExpression;
+    //    readonly string memberName;
+    //    readonly IList<ITypeReference> typeArguments;
+
+    //    public ConstantMemberReference(ITypeReference targetType, string memberName, IList<ITypeReference> typeArguments = null)
+    //    {
+    //        List<int> l = new List<int>() {1,2,3,4,5};
+    //        if (targetType == null)
+    //            throw new ArgumentNullException("targetType");
+    //        if (memberName == null)
+    //            throw new ArgumentNullException("memberName");
+    //        this.targetType = targetType;
+    //        this.memberName = memberName;
+    //        this.typeArguments = typeArguments ?? EmptyList<ITypeReference>.Instance;
+    //    }
+
+    //    public ConstantMemberReference(Constant targetExpression, string memberName, IList<ITypeReference> typeArguments = null)
+    //    {
+    //        if (targetExpression == null)
+    //            throw new ArgumentNullException("targetExpression");
+    //        if (memberName == null)
+    //            throw new ArgumentNullException("memberName");
+    //        this.targetExpression = targetExpression;
+    //        this.memberName = memberName;
+    //        this.typeArguments = typeArguments ?? EmptyList<ITypeReference>.Instance;
+    //    }
+
+    //    public override AST.Expression Resolve(ResolveContext resolver)
+    //    {
+    //        AST.Expression rr;
+    //        if (targetType != null)
+    //            rr = new TypeExpression(targetType.Resolve(resolver.CurrentTypeResolveContext));
+    //        else
+    //            rr = targetExpression.Resolve(resolver);
+    //        return resolver.ResolveMemberAccess(rr, memberName, typeArguments.Resolve(resolver.CurrentTypeResolveContext));
+    //    }
+
+    //    public override object GetValue()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override long GetValueAsLong()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override string GetValueAsLiteral()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override bool IsDefaultValue
+    //    {
+    //        get { throw new NotImplementedException(); }
+    //    }
+
+    //    public override bool IsNegative
+    //    {
+    //        get { throw new NotImplementedException(); }
+    //    }
+    //}
+    //[Serializable]
+    //public sealed class ConstantCheckedExpression : Constant
+    //{
+    //    readonly bool checkForOverflow;
+    //    readonly Constant expression;
+
+    //    public ConstantCheckedExpression(bool checkForOverflow, Constant expression)
+    //    {
+    //        if (expression == null)
+    //            throw new ArgumentNullException("expression");
+    //        this.checkForOverflow = checkForOverflow;
+    //        this.expression = expression;
+    //    }
+
+    //    public override AST.Expression Resolve(ResolveContext resolver)
+    //    {
+    //        return expression.Resolve(resolver.WithCheckForOverflow(checkForOverflow));
+    //    }
+
+    //    public override object GetValue()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override long GetValueAsLong()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override string GetValueAsLiteral()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override bool IsDefaultValue
+    //    {
+    //        get { throw new NotImplementedException(); }
+    //    }
+
+    //    public override bool IsNegative
+    //    {
+    //        get { throw new NotImplementedException(); }
+    //    }
+    //}
+    //[Serializable]
+    //public sealed class ConstantDefaultValue : Constant, ISupportsInterning
+    //{
+    //    readonly ITypeReference type;
+
+    //    public ConstantDefaultValue(ITypeReference type)
+    //    {
+    //        if (type == null)
+    //            throw new ArgumentNullException("type");
+    //        this.type = type;
+    //    }
+
+    //    public override AST.Expression Resolve(ResolveContext resolver)
+    //    {
+    //        return resolver.ResolveDefaultValue(type.Resolve(resolver.CurrentTypeResolveContext));
+    //    }
+
+    //    int ISupportsInterning.GetHashCodeForInterning()
+    //    {
+    //        return type.GetHashCode();
+    //    }
+
+    //    bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
+    //    {
+    //        ConstantDefaultValue o = other as ConstantDefaultValue;
+    //        return o != null && this.type == o.type;
+    //    }
+
+    //    public override object GetValue()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override long GetValueAsLong()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override string GetValueAsLiteral()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override bool IsDefaultValue
+    //    {
+    //        get { throw new NotImplementedException(); }
+    //    }
+
+    //    public override bool IsNegative
+    //    {
+    //        get { throw new NotImplementedException(); }
+    //    }
+    //}
+    //[Serializable]
+    //public sealed class ConstantUnaryOperator : Constant
+    //{
+    //    readonly UnaryOperatorType operatorType;
+    //    readonly Constant expression;
+
+    //    public ConstantUnaryOperator(UnaryOperatorType operatorType, Constant expression)
+    //    {
+    //        if (expression == null)
+    //            throw new ArgumentNullException("expression");
+    //        this.operatorType = operatorType;
+    //        this.expression = expression;
+    //    }
+
+    //    public override AST.Expression Resolve(ResolveContext resolver)
+    //    {
+    //        return resolver.ResolveUnaryOperator(operatorType, expression.Resolve(resolver));
+    //    }
+
+    //    public override object GetValue()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override long GetValueAsLong()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override string GetValueAsLiteral()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override bool IsDefaultValue
+    //    {
+    //        get { throw new NotImplementedException(); }
+    //    }
+
+    //    public override bool IsNegative
+    //    {
+    //        get { throw new NotImplementedException(); }
+    //    }
+    //}
+    //[Serializable]
+    //public sealed class ConstantBinaryOperator : Constant
+    //{
+    //    readonly Constant left;
+    //    readonly BinaryOperatorType operatorType;
+    //    readonly Constant right;
+
+    //    public ConstantBinaryOperator(Constant left, BinaryOperatorType operatorType, Constant right)
+    //    {
+    //        if (left == null)
+    //            throw new ArgumentNullException("left");
+    //        if (right == null)
+    //            throw new ArgumentNullException("right");
+    //        this.left = left;
+    //        this.operatorType = operatorType;
+    //        this.right = right;
+    //    }
+
+    //    public override AST.Expression Resolve(ResolveContext resolver)
+    //    {
+    //        AST.Expression lhs = left.Resolve(resolver);
+    //        AST.Expression rhs = right.Resolve(resolver);
+    //        return resolver.ResolveBinaryOperator(operatorType, lhs, rhs);
+    //    }
+
+    //    public override object GetValue()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override long GetValueAsLong()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override string GetValueAsLiteral()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override bool IsDefaultValue
+    //    {
+    //        get { throw new NotImplementedException(); }
+    //    }
+
+    //    public override bool IsNegative
+    //    {
+    //        get { throw new NotImplementedException(); }
+    //    }
+    //}
+    //[Serializable]
+    //public sealed class ConstantConditionalOperator : Constant
+    //{
+    //    readonly Constant condition, trueExpr, falseExpr;
+
+    //    public ConstantConditionalOperator(Constant condition, Constant trueExpr, Constant falseExpr)
+    //    {
+    //        if (condition == null)
+    //            throw new ArgumentNullException("condition");
+    //        if (trueExpr == null)
+    //            throw new ArgumentNullException("trueExpr");
+    //        if (falseExpr == null)
+    //            throw new ArgumentNullException("falseExpr");
+    //        this.condition = condition;
+    //        this.trueExpr = trueExpr;
+    //        this.falseExpr = falseExpr;
+    //    }
+
+    //    public override AST.Expression Resolve(ResolveContext resolver)
+    //    {
+           
+    //        return resolver.ResolveConditional(
+    //            condition.Resolve(resolver),
+    //            trueExpr.Resolve(resolver),
+    //            falseExpr.Resolve(resolver)
+    //        );
+    //    }
+
+    //    public override object GetValue()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override long GetValueAsLong()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override string GetValueAsLiteral()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override bool IsDefaultValue
+    //    {
+    //        get { throw new NotImplementedException(); }
+    //    }
+
+    //    public override bool IsNegative
+    //    {
+    //        get { throw new NotImplementedException(); }
+    //    }
+    //}
+    ///// <summary>
+    ///// Represents an array creation (as used within an attribute argument)
+    ///// </summary>
+    //[Serializable]
+    //public sealed class ConstantArrayCreation : Constant
+    //{
+    //    // type may be null when the element is being inferred
+    //    readonly ITypeReference elementType;
+    //    readonly IList<Constant> arrayElements;
+
+    //    public ConstantArrayCreation(ITypeReference type, IList<Constant> arrayElements)
+    //    {
+    //        if (arrayElements == null)
+    //            throw new ArgumentNullException("arrayElements");
+    //        this.elementType = type;
+    //        this.arrayElements = arrayElements;
+    //    }
+
+    //    public override AST.Expression Resolve(ResolveContext resolver)
+    //    {
+    //        AST.Expression[] elements = new AST.Expression[arrayElements.Count];
+    //        for (int i = 0; i < elements.Length; i++)
+    //        {
+    //            elements[i] = arrayElements[i].Resolve(resolver);
+    //        }
+    //        int[] sizeArguments = { elements.Length };
+    //        if (elementType != null)
+    //        {
+    //            return resolver.ResolveArrayCreation(elementType.Resolve(resolver.CurrentTypeResolveContext), sizeArguments, elements);
+    //        }
+    //        else
+    //        {
+    //            return resolver.ResolveArrayCreation(null, sizeArguments, elements);
+    //        }
+    //    }
+
+    //    public override object GetValue()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override long GetValueAsLong()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override string GetValueAsLiteral()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+
+    //    public override bool IsDefaultValue
+    //    {
+    //        get { throw new NotImplementedException(); }
+    //    }
+
+    //    public override bool IsNegative
+    //    {
+    //        get { throw new NotImplementedException(); }
+    //    }
+    //}
+
+  
 
 }

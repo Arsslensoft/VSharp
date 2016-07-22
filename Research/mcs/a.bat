@@ -1,0 +1,1 @@
+D:\Projects\Rava\mono\mcs\mcs\\jay -ctv < D:\Projects\Rava\mono\mcs\mcs\\skeleton.cs D:\Projects\Rava\mono\mcs\mcs\\cs-parser.jay > D:\Projects\Rava\mono\mcs\mcs\\cs-parser.cs

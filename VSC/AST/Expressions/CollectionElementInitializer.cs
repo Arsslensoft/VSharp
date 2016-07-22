@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using VSC.Base;
+using VSC.TypeSystem.Resolver;
 
 namespace VSC.AST
 {
@@ -32,6 +34,27 @@ namespace VSC.AST
         {
             this.loc = loc;
         }
+
+        public override Expression DoResolve(TypeSystem.Resolver.ResolveContext rc)
+        {
+            //// constructor argument list in collection initializer
+            //Expression[] addArguments = new Expression[arguments.Count];
+            //int i = 0;
+            //foreach (var addArgument in arguments.FilterArgs)
+            //    addArguments[i++] = addArgument.DoResolve(rc);
+
+            //MemberLookup memberLookup = rc.CreateMemberLookup();
+            //var addRR = memberLookup.Lookup(initializedObject, "Add", EmptyList<IType>.Instance, true);
+            //var mgrr = addRR as MethodGroupExpression;
+            //if (mgrr != null)
+            //{
+            //    OverloadResolution or = mgrr.PerformOverloadResolution(rc.Compilation, addArguments, null, false, false, false, resolver.CheckForOverflow, resolver.conversions);
+            //    var invocationRR = or.CreateInvocation(initializedObject);
+            //    initializerStatements.Add(invocationRR);
+            //}
+            return this;
+        }
+      
 
     }
 }

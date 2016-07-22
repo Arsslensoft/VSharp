@@ -18,7 +18,7 @@ namespace VSC.Context
 
     public class ModuleContext
     {
-       
+        public int CounterAnonymousTypes { get; set; }
         public CompilerContext Compiler { get; set; }
       
         public ModuleContext(CompilerContext compiler)

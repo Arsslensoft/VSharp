@@ -31,7 +31,7 @@ namespace VSC.AST
         /// <summary>
         /// Resolves the reference and returns the ResolveResult.
         /// </summary>
-        public abstract ResolveResult Resolve(ResolveContext resolver);
+        public abstract Expression Resolve(ResolveContext resolver);
 
         /// <summary>
         /// Returns the type that is referenced; or an <c>UnknownType</c> if the type isn't found.
@@ -43,7 +43,7 @@ namespace VSC.AST
         /// </summary>
         public INamespace ResolveNamespace(ResolveContext resolver)
         {
-            NamespaceResolveResult nrr = Resolve(resolver) as NamespaceResolveResult;
+            AliasNamespace nrr = Resolve(resolver) as AliasNamespace;
             return nrr != null ? nrr.Namespace : null;
         }
 

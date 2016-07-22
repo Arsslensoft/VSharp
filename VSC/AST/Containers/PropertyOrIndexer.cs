@@ -158,7 +158,7 @@ namespace VSC.AST
         {
             base.CheckTypeDependency(rc);
 
-            if (ResolvedMemberType is ResolvedTypeDefinitionSpec && (ResolvedMemberType as ResolvedTypeDefinitionSpec).IsStatic)
+            if (rc.IsStaticType(ResolvedMemberType))
                 rc.Report.Error(722, Location,
                    "`{0}': static types cannot be used as return types",
                    ResolvedMemberType.ToString());

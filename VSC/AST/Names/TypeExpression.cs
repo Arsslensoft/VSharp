@@ -8,23 +8,42 @@ namespace VSC.AST
     /// </summary>
     public class TypeExpression : TypeExpr
     {
+     
         public override IType Resolve(ITypeResolveContext ctx)
         {
-            return type.Resolve(ctx);
+            if (!_resolved)
+                return type.Resolve(ctx);
+            else return ResolvedType;
         }
-
         public override Expression DoResolve(ResolveContext rc)
         {
-            Result = new TypeResolveResult(Resolve(rc));
+            if (!_resolved)
+                ResolvedType = Resolve(rc);
+
+
             return this;
         }
 
         public TypeExpression(ITypeReference t, Location l)
         {
          
-            Type = t;
+            type = t;
             loc = l;
         }
+        public TypeExpression(IType type, Location l)
+        {
+            ResolvedType = type;
+            loc = l;
+            _resolved = true;
+        }
+        public TypeExpression(IType type)
+        {
+            ResolvedType = type;
+           
+            _resolved = true;
+        }
+
+
         public override void AcceptVisitor(IVisitor vis)
         {
             vis.Visit(this);

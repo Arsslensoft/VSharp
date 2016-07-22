@@ -57,5 +57,19 @@ namespace VSC.AST
             }
         }
 
+        public int TemporaryLocalsCount { get; set; }
+        //
+        // The parameters for the block.
+        //
+        public ParametersCompiled Parameters
+        {
+            get
+            {
+                return parameters;
+            }
+        }
+
+      
+
     }
 }

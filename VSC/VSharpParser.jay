@@ -1038,7 +1038,7 @@ field_declaration
 	  	lexer.parsing_generic_declaration = false;
 
 		FullNamedExpression type = (FullNamedExpression) $3;
-		if (type.Type != null && type.Type == KnownTypeReference.Void)
+		if (type.UnresolvedTypeReference != null && type.UnresolvedTypeReference == KnownTypeReference.Void)
 			report.Error (54, GetLocation ($3), "Fields cannot have void type");
 			
 		var lt = (LocatedToken) $4;
@@ -1573,7 +1573,7 @@ property_declaration
 		current_property = new PropertyDeclaration (current_type, type, (Modifiers) $2,
 			(MemberName) $4, (VSharpAttributes) $1);
 			
-		if (type.Type != null && type.Type == KnownTypeReference.Void)
+		if (type.UnresolvedTypeReference != null && type.UnresolvedTypeReference == KnownTypeReference.Void)
 			report.Error (69, GetLocation ($3), "`{0}': property or indexer cannot have void type", current_property.GetSignatureForError ());					
 			
 		current_type.AddMember (current_property);
@@ -1619,7 +1619,7 @@ property_declaration
 			"`{0}': interface members cannot have a definition", property.GetSignatureForError ());
 		}
 
-		if (type.Type != null && type.Type == KnownTypeReference.Void)
+		if (type.UnresolvedTypeReference != null && type.UnresolvedTypeReference == KnownTypeReference.Void)
 			report.Error (71, GetLocation ($3), "`{0}': property or indexer cannot have void type", property.GetSignatureForError ());
 
 		current_type.AddMember (property);
@@ -1667,7 +1667,7 @@ indexer_declaration
 
   		current_type.AddMember (indexer);
 
-		if (type.Type != null && type.Type == KnownTypeReference.Void)
+		if (type.UnresolvedTypeReference != null && type.UnresolvedTypeReference == KnownTypeReference.Void)
 			report.Error (72, GetLocation ($3), "`{0}': indexer return type cannot be `void'", indexer.GetSignatureForError ());  		
 
 		if (indexer.ParameterInfo.IsEmpty) {

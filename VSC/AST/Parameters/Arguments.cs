@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using VSC.Context;
 using VSC.TypeSystem;
+using VSC.TypeSystem.Resolver;
 
 namespace VSC.AST
 {
@@ -48,6 +49,45 @@ namespace VSC.AST
             args.Add(arg);
         }
 
+        public void Resolve(ResolveContext rc, out bool dynamic)
+        {
+            dynamic = false;
+            foreach (Argument a in args)
+            {
+                a.Resolve(rc);
+                if (a.Expr.Type.Kind == TypeKind.Dynamic && !a.IsByRef)
+                    dynamic = true;
+            }
+        }
+   
+       public Expression[] GetArguments(out string[] argumentNames)
+        {
+            argumentNames = null;
+            Expression[] arguments = new Expression[args.Count()];
+            int i = 0;
+            foreach (Argument argument in args)
+            {
+                NamedArgument nae = argument as NamedArgument;
+                Expression argumentValue;
+                if (nae != null)
+                {
+                    if (argumentNames == null)
+                        argumentNames = new string[arguments.Length];
+                    argumentNames[i] = nae.Name;
+                    argumentValue = nae.Expr;
+                }
+                else
+                    argumentValue = argument.Expr;
+                
+                arguments[i++] = argumentValue;
+            }
+            return arguments;
+        }
+        public static implicit operator List<Expression>(Arguments a)
+        {
+            return a.args.Cast<Expression>().ToList();
+        }
+      
         public void AddRange(Arguments args)
         {
             this.args.AddRange(args.args);

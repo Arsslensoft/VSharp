@@ -485,15 +485,15 @@ namespace VSC.TypeSystem
 		
 		// There is intentionally no ResolveScope() overload for IList<IMemberReference>: the resulting IList<Member> would
 		// contains nulls when there are resolve errors.
-		
-		public static IList<ResolveResult> Resolve(this IList<IConstantValue> constantValues, ITypeResolveContext context)
+
+        public static IList<AST.Expression> Resolve(this IList<IConstantValue> constantValues, ITypeResolveContext context)
 		{
 			if (constantValues == null)
 				throw new ArgumentNullException("constantValues");
 			if (constantValues.Count == 0)
-				return EmptyList<ResolveResult>.Instance;
+                return EmptyList<AST.Expression>.Instance;
 			else
-				return new ProjectedList<ITypeResolveContext, IConstantValue, ResolveResult>(context, constantValues, (c, t) => t.Resolve(c));
+                return new ProjectedList<ITypeResolveContext, IConstantValue, AST.Expression>(context, constantValues, (c, t) => t.Resolve(c));
 		}
 		#endregion
 		

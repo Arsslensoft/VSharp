@@ -15,21 +15,21 @@ namespace VSC.AST
             this.loc = loc;
         }
 
-        public override IConstantValue BuilConstantValue( bool isAttributeConstant)
-        {
-            Constant v = Expr.BuilConstantValue(isAttributeConstant) as Constant;
-            if (v == null)
-                return null;
-            switch (Oper)
-            {
-                case UnaryOperatorType.LogicalNot:
-                case UnaryOperatorType.OnesComplement:
-                case UnaryOperatorType.UnaryNegation:
-                case UnaryOperatorType.UnaryPlus:
-                    return new ConstantUnaryOperator(Oper, v);
-                default:
-                    return null;
-            }
-        }
+        //public override IConstantValue BuilConstantValue( bool isAttributeConstant)
+        //{
+        //    Constant v = Expr.BuilConstantValue(isAttributeConstant) as Constant;
+        //    if (v == null)
+        //        return null;
+        //    switch (Oper)
+        //    {
+        //        case UnaryOperatorType.LogicalNot:
+        //        case UnaryOperatorType.OnesComplement:
+        //        case UnaryOperatorType.UnaryNegation:
+        //        case UnaryOperatorType.UnaryPlus:
+        //            return new ConstantUnaryOperator(Oper, v);
+        //        default:
+        //            return null;
+        //    }
+        //}
     }
 }

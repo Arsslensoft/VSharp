@@ -29,11 +29,15 @@ namespace VSC.TypeSystem
 		/// Type representing the result of the V# '__arglist()' expression.
 		/// </summary>
 		public readonly static SpecialTypeSpec ArgList = new SpecialTypeSpec(TypeKind.ArgList, "__arglist", isReferenceType: null);
-		
-		/// <summary>
-		/// A type used for unbound type arguments in partially parameterized types.
-		/// </summary>
-		public readonly static SpecialTypeSpec UnboundTypeArgument = new SpecialTypeSpec(TypeKind.UnboundTypeArgument, "", isReferenceType: null);
+
+        /// <summary>
+        /// Type representing the result of the V# 'fake' expression.
+        /// </summary>
+        public readonly static SpecialTypeSpec FakeType = new SpecialTypeSpec(TypeKind.Fake, "fake", isReferenceType: null);
+        /// <summary>
+        /// A type used for unbound type arguments in partially parameterized types.
+        /// </summary>
+        public readonly static SpecialTypeSpec UnboundTypeArgument = new SpecialTypeSpec(TypeKind.UnboundTypeArgument, "", isReferenceType: null);
 		
 		readonly TypeKind kind;
 		readonly string name;

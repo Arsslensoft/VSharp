@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using VSC.Base;
 using VSC.Context;
@@ -56,12 +57,9 @@ namespace VSC.AST
 
         public override Expression DoResolve(ResolveContext rc)
         {
-            if (Result != null && !Result.IsError)
-                return this;
+      
+           return Resolve(rc);
 
-            Result = Resolve(rc);
-   
-            return this;
         }
 
         public override string GetSignatureForError()
@@ -95,38 +93,28 @@ namespace VSC.AST
         {
             return new MemberAccess(expr, name + suffix, targs, Location, lookupMode);
         }
-		
-        public override ResolveResult Resolve(ResolveContext rc)
+
+        public override Expression Resolve(ResolveContext rc)
         {
-           
-            if (Result == null || Result.IsError)
+            if (_resolved)
+                return this;
+            else
             {
-
-                TypeNameExpression target = expr.DoResolve(rc) as TypeNameExpression;               
-                ResolveResult targetRR = target.Resolve(rc);
-                if (targetRR.IsError)
-                    return targetRR;
-
-
+                TypeNameExpression target = expr.DoResolve(rc) as TypeNameExpression;
+                Expression targetRR = target.Resolve(rc);
                 IList<IType> typeArgs = typeArgumentsrefs.Resolve(rc.CurrentTypeResolveContext);
-                Result = LookForAttribute
-                    ? rc.ResolveMemberAccess(targetRR, name + "Attribute", typeArgs, lookupMode)
-                    : rc.ResolveMemberAccess(targetRR, name, typeArgs, lookupMode);
-
-                if ((Result == null || Result.IsError) && LookForAttribute)
-                    Result = rc.ResolveMemberAccess(targetRR, name, typeArgs, lookupMode);
-
+                return ResolveMemberAccess(rc,targetRR, name, typeArgs, lookupMode);
             }
-            if (Result.IsError)
-               rc.Report.Error(148, loc, "Type `{0}' does not contain a definition for `{1}' and no extension method `{1}' of type `{0}' could be found.", expr.GetSignatureForError(), GetSignatureForError());           
+            
+          
+          //     rc.Report.Error(148, loc, "Type `{0}' does not contain a definition for `{1}' and no extension method `{1}' of type `{0}' could be found.", expr.GetSignatureForError(), GetSignatureForError());           
            
-            LookForAttribute = false;
-            return Result;
+   
         }
 		
         public override IType ResolveType(ResolveContext resolver)
         {
-            TypeResolveResult trr = Resolve(resolver) as TypeResolveResult;
+            Expression trr = Resolve(resolver) as Expression;
             return trr != null ? trr.Type : new UnknownTypeSpec(null, name, typeArgumentsrefs.Count);
         }
 		
@@ -159,25 +147,101 @@ namespace VSC.AST
         }
 
         #endregion
-
-        public override IConstantValue BuilConstantValue(bool isAttributeConstant)
+        public Expression ResolveMemberAccess(ResolveContext rc,VSC.AST.Expression target, string identifier, IList<IType> typeArguments, NameLookupMode lookupMode = NameLookupMode.Expression)
         {
-            string memberName = Name;
-            if (LeftExpression is ITypeReference)
-            {
-                // handle "int.MaxValue"
-                return new ConstantMemberReference(
-                    LeftExpression as ITypeReference, 
-                    memberName,
-                   TypeArgumentsReferences);
-            }
-            Constant v =LeftExpression.BuilConstantValue(isAttributeConstant) as Constant;
+            // V# 4.0 spec: §7.6.4
+
+            bool parameterizeResultType = !(typeArguments.Count != 0 && typeArguments.All(t => t.Kind == TypeKind.UnboundTypeArgument));
+            AliasNamespace nrr = target as AliasNamespace;
+            if (nrr != null)
+                return ResolveMemberAccessOnNamespace(nrr, identifier, typeArguments, parameterizeResultType);
             
-            if (v == null)
-                return null;
-            return new ConstantMemberReference(
-                v, memberName,
-               TypeArgumentsReferences);
+            // TODO:Dynamic Resolution
+            //if (target.Type.Kind == TypeKind.Dynamic)
+            //    return new DynamicMemberResolveResult(target, identifier);
+
+            MemberLookup lookup = rc.CreateMemberLookup(lookupMode);
+            Expression result;
+            switch (lookupMode)
+            {
+                case NameLookupMode.Expression:
+                    result = lookup.Lookup(target, identifier, typeArguments, isInvocation: false);
+                    break;
+                case NameLookupMode.InvocationTarget:
+                    result = lookup.Lookup(target, identifier, typeArguments, isInvocation: true);
+                    break;
+                case NameLookupMode.Type:
+                case NameLookupMode.TypeInUsingDeclaration:
+                case NameLookupMode.BaseTypeReference:
+                    // Don't do the UnknownMemberResolveResult/MethodGroupResolveResult processing,
+                    // it's only relevant for expressions.
+                    return lookup.LookupType(target.Type, identifier, typeArguments, parameterizeResultType);
+                default:
+                    throw new NotSupportedException("Invalid value for NameLookupMode");
+            }
+            if (result is UnknownMemberExpression)
+            {
+                // We intentionally use all extension methods here, not just the eligible ones.
+                // Proper eligibility checking is only possible for the full invocation
+                // (after we know the remaining arguments).
+                // The eligibility check in GetExtensionMethods is only intended for code completion.
+                var extensionMethods = rc.GetExtensionMethods(identifier, typeArguments);
+                if (extensionMethods.Count > 0)
+                {
+                    return new MethodGroupExpression(target, identifier, EmptyList<MethodListWithDeclaringType>.Instance, typeArguments)
+                    {
+                        extensionMethods = extensionMethods
+                    };
+                }
+            }
+            else
+            {
+                MethodGroupExpression mgrr = result as MethodGroupExpression;
+                if (mgrr != null)
+                {
+                    Debug.Assert(mgrr.extensionMethods == null);
+                    // set the values that are necessary to make MethodGroupResolveResult.GetExtensionMethods() work
+                    mgrr.resolver = rc;
+                }
+            }
+            return result;
         }
+        Expression ResolveMemberAccessOnNamespace(AliasNamespace nrr, string identifier, IList<IType> typeArguments, bool parameterizeResultType)
+        {
+            if (typeArguments.Count == 0)
+            {
+                INamespace childNamespace = nrr.Namespace.GetChildNamespace(identifier);
+                if (childNamespace != null)
+                    return new AliasNamespace(childNamespace, Location);
+            }
+            ITypeDefinition def = nrr.Namespace.GetTypeDefinition(identifier, typeArguments.Count);
+            if (def != null)
+            {
+                if (parameterizeResultType && typeArguments.Count > 0)
+                    return new TypeExpression(new ParameterizedTypeSpec(def, typeArguments),loc);
+                else
+                    return new TypeExpression(def, loc);
+            }
+            return ErrorResult;
+        }
+        //public override IConstantValue BuilConstantValue(bool isAttributeConstant)
+        //{
+        //    string memberName = Name;
+        //    if (LeftExpression is ITypeReference)
+        //    {
+        //        // handle "int.MaxValue"
+        //        return new ConstantMemberReference(
+        //            LeftExpression as ITypeReference, 
+        //            memberName,
+        //           TypeArgumentsReferences);
+        //    }
+        //    Constant v =LeftExpression.BuilConstantValue(isAttributeConstant) as Constant;
+            
+        //    if (v == null)
+        //        return null;
+        //    return new ConstantMemberReference(
+        //        v, memberName,
+        //       TypeArgumentsReferences);
+        //}
     }
 }
