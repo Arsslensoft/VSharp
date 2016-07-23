@@ -6,10 +6,10 @@ namespace VSC.AST
 {
     public class ArrayInitializer : Expression
     {
-        List<Expression> elements;
+        IList<Expression> elements;
         BlockVariable variable;
 
-        public ArrayInitializer(List<Expression> init, Location loc)
+        public ArrayInitializer(IList<Expression> init, Location loc)
         {
             elements = init;
             this.loc = loc;
@@ -32,7 +32,7 @@ namespace VSC.AST
             get { return elements.Count; }
         }
 
-        public List<Expression> Elements
+        public IList<Expression> Elements
         {
             get
             {

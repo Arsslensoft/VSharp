@@ -2,7 +2,7 @@ using System;
 using System.Linq.Expressions;
 using VSC.TypeSystem;
 using VSC.TypeSystem.Resolver;
-using ConstantExpression = VSC.TypeSystem.Resolver.ConstantExpression;
+
 
 namespace VSC.AST
 {
@@ -129,7 +129,7 @@ namespace VSC.AST
                         {
                             // evaluate as (E)(~(U)x);
                             var U = rc.compilation.FindType(expression.ConstantValue.GetType());
-                            var unpackedEnum = new ConstantExpression(U, expression.ConstantValue);
+                            var unpackedEnum =Constant.CreateConstantFromValue(rc, U, expression.ConstantValue, loc);
                             var rr = ResolveUnaryOperator(rc, op, unpackedEnum);
                             ResolveContext ovfrc = rc.WithCheckForOverflow(false);
                             rr = new CastExpression(type, rr).DoResolve(ovfrc);
@@ -183,7 +183,7 @@ namespace VSC.AST
                 {
                     return new ErrorExpression(resultType);
                 }
-                return new ConstantExpression(resultType, val);
+                return Constant.CreateConstantFromValue(rc, resultType, val,loc);
             }
             else
             {

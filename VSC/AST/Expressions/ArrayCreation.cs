@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using VSC.TypeSystem;
 using VSC.TypeSystem.Resolver;
@@ -17,12 +18,12 @@ namespace VSC.AST
     public class ArrayCreation : Expression
     {
         FullNamedExpression requested_base_type;
-        ArrayInitializer initializers;
+        public ArrayInitializer initializers;
         //
         // The list of Argument types.
         // This is used to construct the `newarray' or constructor signature
         //
-        protected List<Expression> arguments;
+        public List<Expression> arguments;
 
         int num_arguments;
         protected int dimensions;
@@ -50,7 +51,20 @@ namespace VSC.AST
             if (rank != null)
                 num_arguments = rank.Dimension;
         }
-
+        //
+        // For compiler generated single dimensional arrays only
+        //
+        public ArrayCreation(IType arrayType, IList<Expression> sizeArguments, IList<Expression> initializerElements)
+			: base(arrayType)
+		{
+			if (sizeArguments == null)
+				throw new ArgumentNullException("sizeArguments");
+            arguments = new List<Expression>(sizeArguments);
+            num_arguments = arguments.Count;
+            this.initializers = new ArrayInitializer( initializerElements, Location.Null);
+            ResolvedType = arrayType;
+            _resolved = true;
+		}
         //
         // For compiler generated single dimensional arrays only
         //
@@ -335,6 +349,10 @@ namespace VSC.AST
 
         public override Expression DoResolve(ResolveContext ec)
         {
+            if (_resolved)
+                return this;
+
+
             if (type != null)
                 return this;
 
@@ -347,6 +365,7 @@ namespace VSC.AST
             if (!ResolveInitializers(ec))
                 return null;
 
+            _resolved = true;
             eclass = ExprClass.Value;
             return this;
         }

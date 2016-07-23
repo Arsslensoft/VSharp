@@ -9,7 +9,6 @@ using VSC.Base;
 using VSC.Context;
 using VSC.TypeSystem;
 using VSC.TypeSystem.Resolver;
-using ConstantExpression = VSC.TypeSystem.Resolver.ConstantExpression;
 
 namespace VSC.AST
 {
@@ -24,7 +23,7 @@ namespace VSC.AST
         }
         public virtual AST.Expression Resolve(ResolveContext resolver)
         {
-            return new ConstantExpression(type.Resolve(resolver.CurrentTypeResolveContext), GetValue());
+            return Constant.CreateConstantFromValue(resolver, type.Resolve(resolver.CurrentTypeResolveContext), GetValue() , loc);
         }
 
         //public override IConstantValue BuilConstantValue(bool isAttributeConstant)
@@ -77,20 +76,19 @@ namespace VSC.AST
                     rr.Type.ToTypeReference().Resolve(newContext),
                     ((TypeOfExpression)rr).TargetType.ToTypeReference().Resolve(newContext));
             }
-            else if (rr is ArrayCreateExpression)
+            else if (rr is ArrayCreation)
             {
-                ArrayCreateExpression acrr = (ArrayCreateExpression)rr;
-                return new ArrayCreateExpression(
+                ArrayCreation acrr = (ArrayCreation)rr;
+                return new ArrayCreation(
                     acrr.Type.ToTypeReference().Resolve(newContext),
-                    MapToNewContext(acrr.SizeArguments, newContext),
-                    MapToNewContext(acrr.InitializerElements, newContext));
+                    MapToNewContext(acrr.arguments, newContext),
+                    MapToNewContext(acrr.initializers != null ? acrr.initializers.Elements : null, newContext));
             }
             else if (rr.IsCompileTimeConstant)
             {
-                return new ConstantExpression(
-                    rr.Type.ToTypeReference().Resolve(newContext),
-                    rr.ConstantValue
-                );
+                return Constant.CreateConstantFromValue(newContext.Compilation, rr.Type.ToTypeReference().Resolve(newContext),
+                    rr.ConstantValue, rr.Location);
+    
             }
             else
             {
@@ -398,7 +396,7 @@ namespace VSC.AST
                 {
                     long intVal = (long)VSharpPrimitiveCast.Cast(TypeCode.Int64, val, false);
                     object newVal = VSharpPrimitiveCast.Cast(typeCode, unchecked(intVal + incrementAmount), false);
-                    return new ConstantExpression(rr.Type, newVal);
+                    return Constant.CreateConstantFromValue(context.Compilation, rr.Type, newVal,rr.Location);
                 }
             }
             return new ErrorExpression(rr.Type);
@@ -448,7 +446,7 @@ namespace VSC.AST
 
         public override AST.Expression Resolve(ResolveContext resolver)
         {
-            return new ConstantExpression(type.Resolve(resolver.CurrentTypeResolveContext), value);
+            return Constant.CreateConstantFromValue(resolver, type.Resolve(resolver.CurrentTypeResolveContext), value,loc);
         }
 
         int ISupportsInterning.GetHashCodeForInterning()

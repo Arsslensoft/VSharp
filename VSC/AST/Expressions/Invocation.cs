@@ -247,7 +247,9 @@ namespace VSC.AST
                 IType arrayType = Member.Parameters.Last().Type;
                 IType int32 = Member.Compilation.FindType(KnownTypeCode.Int32);
                 Expression[] sizeArguments = {Constant.CreateConstantFromValue(Member.Compilation,int32, paramsArguments.Count, Location.Null) };
-                results[results.Length - 1] = new ArrayCreateExpression(arrayType, sizeArguments, paramsArguments);
+                results[results.Length - 1] = new ArrayCreation(arrayType, sizeArguments, paramsArguments);
+               
+               
             }
 
             for (int i = 0; i < results.Length; i++)

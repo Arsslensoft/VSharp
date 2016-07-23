@@ -443,7 +443,7 @@ namespace VSC.AST
                 {
                     return new ErrorExpression(resultType);
                 }
-                return new ConstantExpression(resultType, val);
+                return Constant.CreateConstantFromValue(rc,resultType, val, loc);
             }
             else
             {
@@ -783,12 +783,12 @@ namespace VSC.AST
             if (allowNullableConstants && expression.IsCompileTimeConstant)
             {
                 if (expression.ConstantValue == null)
-                    return new ConstantExpression(nullableType, null);
+                    return Constant.CreateConstantFromValue(rc, nullableType, null, loc);
                 Expression rr = new CastExpression(elementType, expression).DoResolve(rc);
                 if (rr.IsError)
                     return rr;
                 Debug.Assert(rr.IsCompileTimeConstant);
-                return new ConstantExpression(nullableType, rr.ConstantValue);
+                return Constant.CreateConstantFromValue(rc, nullableType, rr.ConstantValue,loc);
             }
             else
             {

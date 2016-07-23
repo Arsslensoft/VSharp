@@ -740,7 +740,9 @@ namespace VSC.TypeSystem.Resolver
 
             if (lookupGroups.Count > 1)
             {
-                return new AmbiguousMemberExpression(targetExpression, resultGroup.NonMethod);
+                throw new ArgumentException(string.Format("Ambigious member {1} found on target {0}",
+                    targetExpression.GetSignatureForError(), resultGroup.NonMethod));
+                
             }
             else
             {
