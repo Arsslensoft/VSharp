@@ -21,7 +21,7 @@ namespace VSC.TypeSystem.Implementation
 			this.value = value;
 		}
 		
-		public Expression Resolve(ITypeResolveContext context)
+		public Expression ResolveConstant(ITypeResolveContext context)
 		{
 			//return new ConstantResolveResult(type.ResolveScope(context), value); //TODO:Fix this
             return null;

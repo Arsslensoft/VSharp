@@ -8,7 +8,7 @@ namespace VSC.AST
     /// <summary>
     ///   Implements the sizeof expression
     /// </summary>
-    public class SizeOfExpression : Expression
+    public class SizeOfExpression : Expression, IConstantValue
     {
         readonly Expression texpr;
         IType referencedType;
@@ -100,16 +100,18 @@ namespace VSC.AST
 
             int size_of = ResolveSizeOfBuiltin(rc, referencedType);
             if (size_of > 0)
-                return new IntConstant(size_of, loc);
+                return new IntConstant(size_of, loc).DoResolve(rc);
 
             _resolved = true;
             eclass = ExprClass.Value;
             return this;
 
         }
-        //public override IConstantValue BuilConstantValue(bool isAttributeConstant)
-        //{
-        //    return new SizeOfConstantValue(TypeExpression as ITypeReference);
-        //}
+
+
+        public override VSC.AST.Expression Constantify(VSC.TypeSystem.Resolver.ResolveContext resolver)
+        {
+            return DoResolve(resolver) as Constant;
+        }
     }
 }

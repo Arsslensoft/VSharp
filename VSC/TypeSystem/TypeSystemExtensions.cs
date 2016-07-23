@@ -497,7 +497,7 @@ namespace VSC.TypeSystem
 			if (constantValues.Count == 0)
                 return EmptyList<AST.Expression>.Instance;
 			else
-                return new ProjectedList<ITypeResolveContext, IConstantValue, AST.Expression>(context, constantValues, (c, t) => t.Resolve(c));
+                return new ProjectedList<ITypeResolveContext, IConstantValue, AST.Expression>(context, constantValues, (c, t) => t.ResolveConstant(c));
 		}
 		#endregion
 		

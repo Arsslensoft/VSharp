@@ -135,13 +135,13 @@ namespace VSC.AST
                     while (i < unresolved.positionalArguments.Count)
                     {
                         IConstantValue cv = unresolved.positionalArguments[i];
-                        arguments[i] = cv.Resolve(context);
+                        arguments[i] = cv.ResolveConstant(context);
                         i++;
                     }
                     foreach (var pair in unresolved.namedCtorArguments)
                     {
                         argumentNames[i] = pair.Key;
-                        arguments[i] = pair.Value.Resolve(context);
+                        arguments[i] = pair.Value.ResolveConstant(context);
                         i++;
                     }
 
@@ -202,7 +202,7 @@ namespace VSC.AST
                             IMember member = attributeType.GetMembers(m => (m.SymbolKind == SymbolKind.Field || m.SymbolKind == SymbolKind.Property) && m.Name == pair.Key).FirstOrDefault();
                             if (member != null)
                             {
-                                AST.Expression val = pair.Value.Resolve(context);
+                                AST.Expression val = pair.Value.ResolveConstant(context);
                                 namedArgs.Add(new KeyValuePair<IMember, AST.Expression>(member, val));
                             }
                         }

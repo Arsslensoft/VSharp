@@ -35,13 +35,13 @@ namespace VSC
 
 
             //// ResolveScope
-            //IProjectContent pc = new VSharpProjectContent();
-            //pc = pc.AddOrUpdateFiles(csf);
-            //pc = pc.AddAssemblyReferences(MinimalCorlib.Instance);
-            //var c = pc.CreateCompilation();
-            
-            //ResolveContext rc = new ResolveContext(c,csf.Compiler.Report);
-            //csf.DoResolve(rc);
+            IProjectContent pc = new VSharpProjectContent();
+            pc = pc.AddOrUpdateFiles(csf);
+            pc = pc.AddAssemblyReferences(MinimalCorlib.Instance);
+            var c = pc.CreateCompilation();
+
+            ResolveContext rc = new ResolveContext(c, csf.Compiler.Report);
+            csf.DoResolve(rc);
             st.Stop();
             Console.WriteLine(st.Elapsed);
         }

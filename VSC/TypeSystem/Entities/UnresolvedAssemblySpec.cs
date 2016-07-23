@@ -156,7 +156,7 @@ namespace VSC.TypeSystem.Implementation
 				this.typeRef = typeRef;
 			}
 
-            public AST.Expression Resolve(ITypeResolveContext context)
+            public AST.Expression ResolveConstant(ITypeResolveContext context)
 			{
                 //return new TypeOfResolveResult(context.Compilation.FindType(KnownTypeCode.Type), typeRef.ResolveScope(context)); //TODO:Fix this
                 return null;

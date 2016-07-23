@@ -21,94 +21,12 @@ namespace VSC.AST
             this.ResolvedType = c.FindType((this.type as KnownTypeReference).KnownTypeCode);
             return this;
         }
-        public virtual AST.Expression Resolve(ResolveContext resolver)
+        public override AST.Expression Constantify(ResolveContext resolver)
         {
             return Constant.CreateConstantFromValue(resolver, type.Resolve(resolver.CurrentTypeResolveContext), GetValue() , loc);
         }
 
-        //public override IConstantValue BuilConstantValue(bool isAttributeConstant)
-        //{
-        //    object val = GetValue();
-        //    return new PrimitiveConstantExpression(type, val);
-        //}
-
-        public AST.Expression Resolve(ITypeResolveContext context)
-        {
-            var csContext = (VSharpTypeResolveContext)context;
-            if (context.CurrentAssembly != context.Compilation.MainAssembly)
-            {
-                // The constant needs to be resolved in a different compilation.
-                IProjectContent pc = context.CurrentAssembly as IProjectContent;
-                if (pc != null)
-                {
-                    ICompilation nestedCompilation = context.Compilation.SolutionSnapshot.GetCompilation(pc);
-                    if (nestedCompilation != null)
-                    {
-                        var nestedContext = MapToNestedCompilation(csContext, nestedCompilation);
-                        AST.Expression rr = Resolve(new ResolveContext(nestedContext, CompilerContext.report));
-                        return MapToNewContext(rr, context);
-                    }
-                }
-            }
-            // Resolve in current context.
-            return Resolve(new ResolveContext(csContext, CompilerContext.report));
-        }
-
-        VSharpTypeResolveContext MapToNestedCompilation(VSharpTypeResolveContext context, ICompilation nestedCompilation)
-        {
-            var nestedContext = new VSharpTypeResolveContext(nestedCompilation.MainAssembly);
-            if (context.CurrentUsingScope != null)
-            {
-                nestedContext = nestedContext.WithUsingScope(context.CurrentUsingScope.UnresolvedUsingScope.ResolveScope(nestedCompilation));
-            }
-            if (context.CurrentTypeDefinition != null)
-            {
-                nestedContext = nestedContext.WithCurrentTypeDefinition(nestedCompilation.Import(context.CurrentTypeDefinition));
-            }
-            return nestedContext;
-        }
-
-        static AST.Expression MapToNewContext(AST.Expression rr, ITypeResolveContext newContext)
-        {
-            if (rr is TypeOfExpression)
-            {
-                return new TypeOfExpression(
-                    rr.Type.ToTypeReference().Resolve(newContext),
-                    ((TypeOfExpression)rr).TargetType.ToTypeReference().Resolve(newContext));
-            }
-            else if (rr is ArrayCreation)
-            {
-                ArrayCreation acrr = (ArrayCreation)rr;
-                return new ArrayCreation(
-                    acrr.Type.ToTypeReference().Resolve(newContext),
-                    MapToNewContext(acrr.arguments, newContext),
-                    MapToNewContext(acrr.initializers != null ? acrr.initializers.Elements : null, newContext));
-            }
-            else if (rr.IsCompileTimeConstant)
-            {
-                return Constant.CreateConstantFromValue(newContext.Compilation, rr.Type.ToTypeReference().Resolve(newContext),
-                    rr.ConstantValue, rr.Location);
-    
-            }
-            else
-            {
-                return new ErrorExpression(rr.Type.ToTypeReference().Resolve(newContext));
-            }
-        }
-
-        static AST.Expression[] MapToNewContext(IList<AST.Expression> input, ITypeResolveContext newContext)
-        {
-            if (input == null)
-                return null;
-            AST.Expression[] output = new AST.Expression[input.Count];
-            for (int i = 0; i < output.Length; i++)
-            {
-                output[i] = MapToNewContext(input[i], newContext);
-            }
-            return output;
-        }
-
-
+     
         static readonly NumberFormatInfo nfi = CultureInfo.InvariantCulture.NumberFormat;
 
         protected Constant(Location loc)
@@ -171,6 +89,17 @@ namespace VSC.AST
             ResolvedType = type.Resolve(rc);
             _resolved = true;
             return this;
+        }
+        public override bool IsCompileTimeConstant
+        {
+            get
+            {
+                return true;
+            }
+        }
+        public override object ConstantValue
+        {
+            get { return GetValue(); }
         }
         public static Constant CreateConstantFromValue(ResolveContext rc,IType t, object v, Location loc)
         {
@@ -286,205 +215,205 @@ namespace VSC.AST
         }
     }
  
-    [Serializable]
-    public sealed class ConstantCast : Constant, ISupportsInterning
-    {
-        readonly ITypeReference targetType;
-        readonly Constant expression;
-        readonly bool allowNullableConstants;
+    //[Serializable]
+    //public sealed class ConstantCast : Constant, ISupportsInterning
+    //{
+    //    readonly ITypeReference targetType;
+    //    readonly Constant expression;
+    //    readonly bool allowNullableConstants;
 
-        public ConstantCast(ITypeReference targetType, Constant expression, bool allowNullableConstants)
-            :base(expression.Location)
-        {
-            if (targetType == null)
-                throw new ArgumentNullException("targetType");
-            if (expression == null)
-                throw new ArgumentNullException("expression");
-            this.targetType = targetType;
-            this.expression = expression;
-            this.allowNullableConstants = allowNullableConstants;
-        }
+    //    public ConstantCast(ITypeReference targetType, Constant expression, bool allowNullableConstants)
+    //        :base(expression.Location)
+    //    {
+    //        if (targetType == null)
+    //            throw new ArgumentNullException("targetType");
+    //        if (expression == null)
+    //            throw new ArgumentNullException("expression");
+    //        this.targetType = targetType;
+    //        this.expression = expression;
+    //        this.allowNullableConstants = allowNullableConstants;
+    //    }
 
-        public override AST.Expression Resolve(ResolveContext resolver)
-        {
-            var type = targetType.Resolve(resolver.CurrentTypeResolveContext);
-            var resolveResult = expression.Resolve(resolver);
-            //if (allowNullableConstants && NullableType.IsNullable(type))
-            //{
-            //    resolveResult = resolver.ResolveCast(NullableType.GetUnderlyingType(type), resolveResult);
-            //    if (resolveResult.IsCompileTimeConstant)
-            //        return new ConstantExpression(type, resolveResult.ConstantValue);
-            //}
-            //return resolver.ResolveCast(type, resolveResult);
-            return ErrorResult;
-        }
+    //    public override AST.Expression Resolve(ResolveContext resolver)
+    //    {
+    //        var type = targetType.Resolve(resolver.CurrentTypeResolveContext);
+    //        var resolveResult = expression.Resolve(resolver);
+    //        //if (allowNullableConstants && NullableType.IsNullable(type))
+    //        //{
+    //        //    resolveResult = resolver.ResolveCast(NullableType.GetUnderlyingType(type), resolveResult);
+    //        //    if (resolveResult.IsCompileTimeConstant)
+    //        //        return new ConstantExpression(type, resolveResult.ConstantValue);
+    //        //}
+    //        //return resolver.ResolveCast(type, resolveResult);
+    //        return ErrorResult;
+    //    }
 
-        int ISupportsInterning.GetHashCodeForInterning()
-        {
-            unchecked
-            {
-                return targetType.GetHashCode() + expression.GetHashCode() * 1018829;
-            }
-        }
+    //    int ISupportsInterning.GetHashCodeForInterning()
+    //    {
+    //        unchecked
+    //        {
+    //            return targetType.GetHashCode() + expression.GetHashCode() * 1018829;
+    //        }
+    //    }
 
-        bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
-        {
-            ConstantCast cast = other as ConstantCast;
-            return cast != null
-                && this.targetType == cast.targetType && this.expression == cast.expression && this.allowNullableConstants == cast.allowNullableConstants;
-        }
+    //    bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
+    //    {
+    //        ConstantCast cast = other as ConstantCast;
+    //        return cast != null
+    //            && this.targetType == cast.targetType && this.expression == cast.expression && this.allowNullableConstants == cast.allowNullableConstants;
+    //    }
 
-        public override object GetValue()
-        {
-            throw new NotImplementedException();
-        }
+    //    public override object GetValue()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
 
-        public override long GetValueAsLong()
-        {
-            throw new NotImplementedException();
-        }
+    //    public override long GetValueAsLong()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
 
-        public override string GetValueAsLiteral()
-        {
-            throw new NotImplementedException();
-        }
+    //    public override string GetValueAsLiteral()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
 
-        public override bool IsDefaultValue
-        {
-            get { throw new NotImplementedException(); }
-        }
+    //    public override bool IsDefaultValue
+    //    {
+    //        get { throw new NotImplementedException(); }
+    //    }
 
-        public override bool IsNegative
-        {
-            get { throw new NotImplementedException(); }
-        }
-    }
-    /// <summary>
-    /// Increments an integer <see cref="IConstantValue"/> by a fixed amount without changing the type.
-    /// </summary>
-    [Serializable]
-    public sealed class IncrementConstantValue : IConstantValue, ISupportsInterning
-    {
-        readonly IConstantValue baseValue;
-        readonly int incrementAmount;
+    //    public override bool IsNegative
+    //    {
+    //        get { throw new NotImplementedException(); }
+    //    }
+    //}
+    ///// <summary>
+    ///// Increments an integer <see cref="IConstantValue"/> by a fixed amount without changing the type.
+    ///// </summary>
+    //[Serializable]
+    //public sealed class IncrementConstantValue : IConstantValue, ISupportsInterning
+    //{
+    //    readonly IConstantValue baseValue;
+    //    readonly int incrementAmount;
 
-        public IncrementConstantValue(IConstantValue baseValue, int incrementAmount = 1)
-        {
-            if (baseValue == null)
-                throw new ArgumentNullException("baseValue");
-            IncrementConstantValue icv = baseValue as IncrementConstantValue;
-            if (icv != null)
-            {
-                this.baseValue = icv.baseValue;
-                this.incrementAmount = icv.incrementAmount + incrementAmount;
-            }
-            else
-            {
-                this.baseValue = baseValue;
-                this.incrementAmount = incrementAmount;
-            }
-        }
+    //    public IncrementConstantValue(IConstantValue baseValue, int incrementAmount = 1)
+    //    {
+    //        if (baseValue == null)
+    //            throw new ArgumentNullException("baseValue");
+    //        IncrementConstantValue icv = baseValue as IncrementConstantValue;
+    //        if (icv != null)
+    //        {
+    //            this.baseValue = icv.baseValue;
+    //            this.incrementAmount = icv.incrementAmount + incrementAmount;
+    //        }
+    //        else
+    //        {
+    //            this.baseValue = baseValue;
+    //            this.incrementAmount = incrementAmount;
+    //        }
+    //    }
 
-        public AST.Expression Resolve(ITypeResolveContext context)
-        {
-            AST.Expression rr = baseValue.Resolve(context);
-            if (rr.IsCompileTimeConstant && rr.ConstantValue != null)
-            {
-                object val = rr.ConstantValue;
-                TypeCode typeCode = Type.GetTypeCode(val.GetType());
-                if (typeCode >= TypeCode.SByte && typeCode <= TypeCode.UInt64)
-                {
-                    long intVal = (long)VSharpPrimitiveCast.Cast(TypeCode.Int64, val, false);
-                    object newVal = VSharpPrimitiveCast.Cast(typeCode, unchecked(intVal + incrementAmount), false);
-                    return Constant.CreateConstantFromValue(context.Compilation, rr.Type, newVal,rr.Location);
-                }
-            }
-            return new ErrorExpression(rr.Type);
-        }
+    //    public AST.Expression ResolveConstant(ITypeResolveContext context)
+    //    {
+    //        AST.Expression rr = baseValue.ResolveConstant(context);
+    //        if (rr.IsCompileTimeConstant && rr.ConstantValue != null)
+    //        {
+    //            object val = rr.ConstantValue;
+    //            TypeCode typeCode = Type.GetTypeCode(val.GetType());
+    //            if (typeCode >= TypeCode.SByte && typeCode <= TypeCode.UInt64)
+    //            {
+    //                long intVal = (long)VSharpPrimitiveCast.Cast(TypeCode.Int64, val, false);
+    //                object newVal = VSharpPrimitiveCast.Cast(typeCode, unchecked(intVal + incrementAmount), false);
+    //                return Constant.CreateConstantFromValue(context.Compilation, rr.Type, newVal,rr.Location);
+    //            }
+    //        }
+    //        return new ErrorExpression(rr.Type);
+    //    }
 
-        int ISupportsInterning.GetHashCodeForInterning()
-        {
-            unchecked
-            {
-                return baseValue.GetHashCode() * 33 ^ incrementAmount;
-            }
-        }
+    //    int ISupportsInterning.GetHashCodeForInterning()
+    //    {
+    //        unchecked
+    //        {
+    //            return baseValue.GetHashCode() * 33 ^ incrementAmount;
+    //        }
+    //    }
 
-        bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
-        {
-            IncrementConstantValue o = other as IncrementConstantValue;
-            return o != null && baseValue == o.baseValue && incrementAmount == o.incrementAmount;
-        }
-    }
+    //    bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
+    //    {
+    //        IncrementConstantValue o = other as IncrementConstantValue;
+    //        return o != null && baseValue == o.baseValue && incrementAmount == o.incrementAmount;
+    //    }
+    //}
 
-    /// <summary>
-    /// V#'s equivalent to the SimpleConstantValue.
-    /// </summary>
-    [Serializable]
-    public sealed class PrimitiveConstantExpression : Constant, ISupportsInterning
-    {
-        readonly ITypeReference type;
-        readonly object value;
+    ///// <summary>
+    ///// V#'s equivalent to the SimpleConstantValue.
+    ///// </summary>
+    //[Serializable]
+    //public sealed class PrimitiveConstantExpression : Constant, ISupportsInterning
+    //{
+    //    readonly ITypeReference type;
+    //    readonly object value;
 
-        public ITypeReference Type
-        {
-            get { return type; }
-        }
+    //    public ITypeReference Type
+    //    {
+    //        get { return type; }
+    //    }
 
-        public object Value
-        {
-            get { return value; }
-        }
+    //    public object Value
+    //    {
+    //        get { return value; }
+    //    }
 
-        public PrimitiveConstantExpression(ITypeReference type, object value)
-        {
-            if (type == null)
-                throw new ArgumentNullException("type");
-            this.type = type;
-            this.value = value;
-        }
+    //    public PrimitiveConstantExpression(ITypeReference type, object value)
+    //    {
+    //        if (type == null)
+    //            throw new ArgumentNullException("type");
+    //        this.type = type;
+    //        this.value = value;
+    //    }
 
-        public override AST.Expression Resolve(ResolveContext resolver)
-        {
-            return Constant.CreateConstantFromValue(resolver, type.Resolve(resolver.CurrentTypeResolveContext), value,loc);
-        }
+    //    public override AST.Expression Resolve(ResolveContext resolver)
+    //    {
+    //        return Constant.CreateConstantFromValue(resolver, type.Resolve(resolver.CurrentTypeResolveContext), value,loc);
+    //    }
 
-        int ISupportsInterning.GetHashCodeForInterning()
-        {
-            return type.GetHashCode() ^ (value != null ? value.GetHashCode() : 0);
-        }
+    //    int ISupportsInterning.GetHashCodeForInterning()
+    //    {
+    //        return type.GetHashCode() ^ (value != null ? value.GetHashCode() : 0);
+    //    }
 
-        bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
-        {
-            PrimitiveConstantExpression scv = other as PrimitiveConstantExpression;
-            return scv != null && type == scv.type && value == scv.value;
-        }
+    //    bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
+    //    {
+    //        PrimitiveConstantExpression scv = other as PrimitiveConstantExpression;
+    //        return scv != null && type == scv.type && value == scv.value;
+    //    }
 
-        public override object GetValue()
-        {
-            throw new NotImplementedException();
-        }
+    //    public override object GetValue()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
 
-        public override long GetValueAsLong()
-        {
-            throw new NotImplementedException();
-        }
+    //    public override long GetValueAsLong()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
 
-        public override string GetValueAsLiteral()
-        {
-            throw new NotImplementedException();
-        }
+    //    public override string GetValueAsLiteral()
+    //    {
+    //        throw new NotImplementedException();
+    //    }
 
-        public override bool IsDefaultValue
-        {
-            get { throw new NotImplementedException(); }
-        }
+    //    public override bool IsDefaultValue
+    //    {
+    //        get { throw new NotImplementedException(); }
+    //    }
 
-        public override bool IsNegative
-        {
-            get { throw new NotImplementedException(); }
-        }
-    }
+    //    public override bool IsNegative
+    //    {
+    //        get { throw new NotImplementedException(); }
+    //    }
+    //}
 
     //[Serializable]
     //public sealed class TypeOfConstantExpression : Constant

@@ -277,7 +277,7 @@ namespace VSC.AST
             Freeze();
 
             if (DefaultExpression != null)
-                defaultValue = DefaultExpression.ConvertConstantValue(type);
+                defaultValue = new CastExpression(this.type as Expression, DefaultExpression, DefaultExpression.Location); 
 
 
             if (defaultValue != null)
@@ -335,7 +335,7 @@ namespace VSC.AST
                     AST.Expression rr = LazyInit.VolatileRead(ref this.resolvedDefaultValue);
                     if (rr == null)
                     {
-                        rr = defaultValue.Resolve(context);
+                        rr = defaultValue.ResolveConstant(context);
                         LazyInit.GetOrSet(ref this.resolvedDefaultValue, rr);
                     }
                     return rr.ConstantValue;

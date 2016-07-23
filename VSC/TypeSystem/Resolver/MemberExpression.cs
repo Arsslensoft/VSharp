@@ -24,7 +24,7 @@ namespace VSC.TypeSystem.Resolver
             this.type = type;
         }
 
-        public Expression Resolve(ITypeResolveContext context)
+        public Expression ResolveConstant(ITypeResolveContext context)
         {
             return new ErrorExpression(type.Resolve(context));
         }

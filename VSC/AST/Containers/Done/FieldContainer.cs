@@ -49,18 +49,18 @@ namespace VSC.AST
             set
             {
                 init = value;
-                //if (ConstantValue == null && init != null)
-                //{
-                //    ConstantValue = (init.BuilConstantValue(false) as Constant);
-                //    if (ConstantValue != null)
-                //        ConstantValue = (ConstantValue as Constant).ConvertConstantValue(returnType);
-                //}
-                //else if (ConstantValue != null)
-                //{
-                //    ConstantValue = (ConstantValue as Constant);
-                //    if (ConstantValue != null)
-                //        ConstantValue = (ConstantValue as Constant).ConvertConstantValue(returnType);
-                //}
+                if (ConstantValue == null && init != null)
+                {
+                    ConstantValue = init as IConstantValue;
+                    if (ConstantValue != null)
+                        ConstantValue = new CastExpression(type_expr, ConstantValue as Expression,init.Location);
+                }
+                else if (ConstantValue != null)
+                {
+                    ConstantValue = (ConstantValue as IConstantValue);
+                    if (ConstantValue != null)
+                        ConstantValue = new CastExpression(type_expr, ConstantValue as Expression, init.Location);
+                }
             }
         }
         IConstantValue constantValue;

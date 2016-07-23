@@ -516,28 +516,84 @@ namespace VSC.AST
             throw new NotImplementedException();
         }
 
-        public  IConstantValue ConvertConstantValue(ITypeReference targetType)
+         // Constant folding
+        public virtual AST.Expression Constantify(ResolveContext resolver)
         {
-            return ConvertConstantValue(targetType, this, CompilerContext.InternProvider);
+            return this;
+        }
+        public AST.Expression ResolveConstant(ITypeResolveContext context)
+        {
+            var csContext = (VSharpTypeResolveContext)context;
+            if (context.CurrentAssembly != context.Compilation.MainAssembly)
+            {
+                // The constant needs to be resolved in a different compilation.
+                IProjectContent pc = context.CurrentAssembly as IProjectContent;
+                if (pc != null)
+                {
+                    ICompilation nestedCompilation = context.Compilation.SolutionSnapshot.GetCompilation(pc);
+                    if (nestedCompilation != null)
+                    {
+                        var nestedContext = MapToNestedCompilation(csContext, nestedCompilation);
+                        AST.Expression rr = Constantify(new ResolveContext(nestedContext, CompilerContext.report));
+                        return MapToNewContext(rr, context);
+                    }
+                }
+            }
+            // Resolve in current context.
+            return Constantify(new ResolveContext(csContext, CompilerContext.report));
+        }
+        VSharpTypeResolveContext MapToNestedCompilation(VSharpTypeResolveContext context, ICompilation nestedCompilation)
+        {
+            var nestedContext = new VSharpTypeResolveContext(nestedCompilation.MainAssembly);
+            if (context.CurrentUsingScope != null)
+            {
+                nestedContext = nestedContext.WithUsingScope(context.CurrentUsingScope.UnresolvedUsingScope.ResolveScope(nestedCompilation));
+            }
+            if (context.CurrentTypeDefinition != null)
+            {
+                nestedContext = nestedContext.WithCurrentTypeDefinition(nestedCompilation.Import(context.CurrentTypeDefinition));
+            }
+            return nestedContext;
+        }
+        static AST.Expression MapToNewContext(AST.Expression rr, ITypeResolveContext newContext)
+        {
+            if (rr is TypeOfExpression)
+            {
+                return new TypeOfExpression(
+                    rr.Type.ToTypeReference().Resolve(newContext),
+                    ((TypeOfExpression)rr).TargetType.ToTypeReference().Resolve(newContext));
+            }
+            else if (rr is ArrayCreation)
+            {
+                ArrayCreation acrr = (ArrayCreation)rr;
+                return new ArrayCreation(
+                    acrr.Type.ToTypeReference().Resolve(newContext),
+                    MapToNewContext(acrr.arguments, newContext),
+                    MapToNewContext(acrr.initializers != null ? acrr.initializers.Elements : null, newContext));
+            }
+            else if (rr.IsCompileTimeConstant)
+            {
+                return Constant.CreateConstantFromValue(newContext.Compilation, rr.Type.ToTypeReference().Resolve(newContext),
+                    rr.ConstantValue, rr.Location);
+
+            }
+            else
+            {
+                return new ErrorExpression(rr.Type.ToTypeReference().Resolve(newContext));
+            }
+        }
+        static AST.Expression[] MapToNewContext(IList<AST.Expression> input, ITypeResolveContext newContext)
+        {
+            if (input == null)
+                return null;
+            AST.Expression[] output = new AST.Expression[input.Count];
+            for (int i = 0; i < output.Length; i++)
+            {
+                output[i] = MapToNewContext(input[i], newContext);
+            }
+            return output;
         }
 
-        protected IConstantValue ConvertConstantValue(
-             ITypeReference targetType, Expression expression,
-             InterningProvider interningProvider)
-        {
-
-            Constant c = expression as Constant;
-            if (c == null)
-                return new ErrorConstantValue(targetType);
-
-            // cast to the desired type
-            return interningProvider.Intern(new ConstantCast(targetType, c, true));
-        }
-         //public virtual IConstantValue BuilConstantValue(bool isAttributeConstant)
-         //{
-         //    return this as IConstantValue;
-             
-         //}
          public virtual bool HasConditionalAccess()
          {
              return false;

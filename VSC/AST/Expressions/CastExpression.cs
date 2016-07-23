@@ -8,7 +8,7 @@ namespace VSC.AST
     /// <summary>
     /// A cast expression that represents a type conversion
     /// </summary>
-    public class CastExpression : ShimExpression
+    public class CastExpression : ShimExpression, IConstantValue
     {
         Expression target_type;
 
@@ -76,9 +76,9 @@ namespace VSC.AST
             expr = expr.DoResolve(rc);
             if (expr == null)
                 return null;
-
+ 
             eclass = ExprClass.Value;
-            if (ResolvedType != null)
+            if (ResolvedType == null)
             {
                 ResolvedType = target_type.ResolveAsType(rc);
 
@@ -152,5 +152,11 @@ namespace VSC.AST
         //    var typeReference = TargetType as ITypeReference;
         //    return new ConstantCast(typeReference, v, false);
         //}
+        public override VSC.AST.Expression Constantify(VSC.TypeSystem.Resolver.ResolveContext resolver)
+        {
+            return DoResolve(resolver) as Constant;
+        }
+        
+
     }
 }

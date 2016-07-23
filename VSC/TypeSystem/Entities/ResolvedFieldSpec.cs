@@ -55,7 +55,7 @@ namespace VSC.TypeSystem.Implementation
 
 						IConstantValue unresolvedCV = ((IUnresolvedField)unresolved).ConstantValue;
                         if (unresolvedCV != null)
-                            rr = unresolvedCV.Resolve(context);
+                            rr = unresolvedCV.ResolveConstant(context);
                         else
                             rr = ErrorExpression.UnknownError; //TODO:Fix this
                             //rr = null;
