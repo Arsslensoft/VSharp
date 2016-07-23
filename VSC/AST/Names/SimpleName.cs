@@ -92,23 +92,39 @@ namespace VSC.AST
         //TODO:Resolve
         public override Expression Resolve(ResolveContext rc)
         {
-            //if (Result != null && !Result.IsError) return Result;
-            //var typeArgs = typeArgumentsrefs.Resolve(rc.CurrentTypeResolveContext);
-            //Result = LookForAttribute ? LookupSimpleNameOrTypeName(rc,name + "Attribute", typeArgs, lookupMode) : rc.LookupSimpleNameOrTypeName(name, typeArgs, lookupMode);
-            //if ((Result == null || Result.IsError) && LookForAttribute)
-            //    Result = LookupSimpleNameOrTypeName(rc,name, typeArgs, lookupMode);
+            if (_resolved)
+                return this;
+
+            var typeArgs = typeArgumentsrefs.Resolve(rc.CurrentTypeResolveContext);
+            if (LookForAttribute)
+            {
+                var wa = LookupSimpleNameOrTypeName(rc, name + "Attribute", typeArgs, lookupMode);
+                if (wa == null || wa.IsError)
+                {
+                     wa  = LookupSimpleNameOrTypeName(rc,name, typeArgs, lookupMode);
+                      if (wa == null || wa.IsError)
+                          rc.Report.Error(6, loc, "This name `{0}' does not exist in the current context", name);
+                }
+                        LookForAttribute = false;
 
 
-            //if (Result.IsError)
-            //{
-            //    if (Result is AmbiguousTypeResolveResult)
-            //        rc.Report.Error(7, loc, "The name `{0}' is ambigious", name);
-            //    else rc.Report.Error(6, loc, "This name `{0}' does not exist in the current context", name);
-            //}
-            //else if (Result is LocalResolveResult && typeArgumentsrefs.Count > 0)
-            //    rc.Report.Error(8, loc, "The name `{0}' does not need type arguments because it's a local name", name);
+                        if (wa is LocalVariableExpression && typeArgumentsrefs.Count > 0)
+                            rc.Report.Error(8, loc, "The name `{0}' does not need type arguments because it's a local name", name);
+                return wa;
 
-            //LookForAttribute = false;
+               
+             }
+            else
+            {   
+                var wa  = LookupSimpleNameOrTypeName(rc,name, typeArgs, lookupMode);
+                      if (wa == null || wa.IsError)
+                          rc.Report.Error(6, loc, "This name `{0}' does not exist in the current context", name);
+
+                      if (wa is LocalVariableExpression && typeArgumentsrefs.Count > 0)
+                          rc.Report.Error(8, loc, "The name `{0}' does not need type arguments because it's a local name", name);
+                    return wa;
+            }
+          
             return this;
         }
 
@@ -265,10 +281,8 @@ namespace VSC.AST
             if (typeArguments.Count == 0 && identifier == "dynamic")
                 return new TypeExpression(SpecialTypeSpec.Dynamic as IType, Location);
             else
-            {
-                rc.Report.Error(6, loc, "This name `{0}' does not exist in the current context", name);
                 return ErrorResult;
-            }
+         
           
         }
         Expression LookInCurrentType(ResolveContext rc,string identifier, IList<IType> typeArguments, NameLookupMode lookupMode, bool parameterizeResultType)

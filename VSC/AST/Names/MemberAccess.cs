@@ -103,13 +103,27 @@ namespace VSC.AST
                 TypeNameExpression target = expr.DoResolve(rc) as TypeNameExpression;
                 Expression targetRR = target.Resolve(rc);
                 IList<IType> typeArgs = typeArgumentsrefs.Resolve(rc.CurrentTypeResolveContext);
-                return ResolveMemberAccess(rc,targetRR, name, typeArgs, lookupMode);
+                if (LookForAttribute)
+                {
+                    var wa = ResolveMemberAccess(rc, targetRR, name + "Attribute", typeArgs, lookupMode);
+                    if (wa == null || wa.IsError)
+                    {
+                        wa = ResolveMemberAccess(rc, targetRR, name, typeArgs, lookupMode);
+                        if (wa == null || wa.IsError)
+                            rc.Report.Error(148, loc, "Type `{0}' does not contain a definition for `{1}' and no extension method `{1}' of type `{0}' could be found.", expr.GetSignatureForError(), GetSignatureForError());
+                    }
+                    LookForAttribute = false;
+                    return wa;
+                }
+                else
+                {
+                    var wa = ResolveMemberAccess(rc, targetRR, name, typeArgs, lookupMode);
+                    if (wa == null || wa.IsError)
+                        rc.Report.Error(148, loc, "Type `{0}' does not contain a definition for `{1}' and no extension method `{1}' of type `{0}' could be found.", expr.GetSignatureForError(), GetSignatureForError());
+
+                    return wa;
+                }
             }
-            
-          
-          //     rc.Report.Error(148, loc, "Type `{0}' does not contain a definition for `{1}' and no extension method `{1}' of type `{0}' could be found.", expr.GetSignatureForError(), GetSignatureForError());           
-           
-   
         }
 		
         public override IType ResolveType(ResolveContext resolver)

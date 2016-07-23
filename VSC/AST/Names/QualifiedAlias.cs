@@ -63,23 +63,36 @@ namespace VSC.AST
         #region ITypeReference
         public override Expression Resolve(ResolveContext resolver)
         {
-            return this;
-            //if (Result == null || Result.IsError)
-            //{
-            //    AliasNamespace target = new AliasNamespace(alias, Location);
-            //    AST.Expression targetRR = target.Resolve(resolver);
-            //    if (targetRR.IsError)
-            //        return targetRR;
-            //    IList<IType> typeArgs = typeArgumentsrefs.Resolve(resolver.CurrentTypeResolveContext);
-            //    Result = LookForAttribute ? resolver.ResolveMemberAccess(targetRR, name + "Attribute", typeArgs, lookupMode) : resolver.ResolveMemberAccess(targetRR, name, typeArgs, lookupMode);
-            //    if ((Result == null || Result.IsError) && LookForAttribute)
-            //        Result = resolver.ResolveMemberAccess(targetRR, name, typeArgs, lookupMode);
-            //}
 
-            //if (Result.IsError)
-            //    resolver.Report.Error(148, loc, "Type `{0}' does not contain a definition for `{1}' and no extension method `{1}' of type `{0}' could be found.", expr.GetSignatureForError(), GetSignatureForError());           
+     
+                AliasNamespace target = new AliasNamespace(alias, Location);
+                AST.Expression targetRR = target.Resolve(resolver);
+                if (targetRR.IsError)
+                    return targetRR;
+                IList<IType> typeArgs = typeArgumentsrefs.Resolve(resolver.CurrentTypeResolveContext);
+                if (LookForAttribute)
+                {
+                    var wa = ResolveMemberAccess(resolver, targetRR, name+"Attribute", typeArgs, lookupMode);
+                    if (wa == null || wa.IsError)
+                    {
+                        wa = ResolveMemberAccess(resolver, targetRR, name, typeArgs, lookupMode);
+                        if (wa == null || wa.IsError)
+                            resolver.Report.Error(6, loc, "This name `{0}' does not exist in the current context", name);
+                    }
+                    LookForAttribute = false;
+                    return wa;
+                }
+                else
+                {
+                    var wa = ResolveMemberAccess(resolver, targetRR, name, typeArgs, lookupMode);
+                    if (wa == null || wa.IsError)
+                        resolver.Report.Error(6, loc, "This name `{0}' does not exist in the current context", name);
 
-            //return Result;
+                    return wa;
+                }
+           
+            
+
         }
         public override string ToString()
         {

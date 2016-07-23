@@ -165,7 +165,7 @@
     <Compile Include="AST\Literals\NullLiteral.cs" />
     <Compile Include="AST\Constants\LongConstant.cs" />
     <Compile Include="AST\Literals\LongLiteral.cs" />
-    <Compile Include="AST\Names\Done\AliasNamespace.cs" />
+    <Compile Include="AST\Names\AliasNamespace.cs" />
     <Compile Include="AST\Names\ComposedType.cs" />
     <Compile Include="AST\Names\ComposedTypeSpecifier.cs" />
     <Compile Include="AST\Names\MemberAccess.cs" />
