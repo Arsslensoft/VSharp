@@ -124,7 +124,7 @@ namespace VSC.AST
                 }
                 else if (ResolvedType.Kind == TypeKind.Enum)
                 {
-                    code = ReflectionHelper.GetTypeCode(rc.GetEnumUnderlyingType(ResolvedType));
+                    code = ReflectionHelper.GetTypeCode(ResolveContext.GetEnumUnderlyingType(ResolvedType));
                     if (code >= TypeCode.SByte && code <= TypeCode.UInt64 && expr.ConstantValue != null)
                     {
                         try

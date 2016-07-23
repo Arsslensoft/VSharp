@@ -98,20 +98,19 @@ namespace VSC.AST
             //}
             return null;
         }
-       
-        public override Expression DoResolve(ResolveContext rc)
+
+        public bool ResolveCommon(ResolveContext rc)
         {
             ResolvedType = RequestedType.ResolveAsType(rc);
             if (ResolvedType == null)
-                return null;
+                return false;
 
             eclass = ExprClass.Value;
 
-            //if (ResolvedType.Kind == TypeKind.Delegate)
-            //{
-            //    return (new NewDelegate(type, arguments, loc)).Resolve(rc);
-            //}
-
+            //args
+            if (arguments != null)
+                arguments.Resolve(rc);
+    
             var tparam = ResolvedType as TypeParameterSpec;
             if (tparam != null)
             {
@@ -133,51 +132,98 @@ namespace VSC.AST
                         ResolvedType.ToString());
                 }
 
-                return this;
+                return false;
             }
 
             if ((ResolvedType as ITypeDefinition).IsStatic)
             {
                 rc.Report.Error(712, loc, "Cannot create an instance of the static class `{0}'", ResolvedType.ToString());
-                return null;
+                return false;
             }
 
             if (ResolvedType.Kind == TypeKind.Interface || (ResolvedType as ITypeDefinition).IsAbstract)
             {
                 rc.Report.Error(144, loc, "Cannot create an instance of the abstract class or interface `{0}'", ResolvedType.ToString());
-                return null;
+                return false;
             }
-
-            //args
-            bool dynamic;
-            if (arguments != null)
-                arguments.Resolve(rc, out dynamic);
-            else
-                dynamic = false;
-
-
-           // //Resolve Object Initializer
-           // List<Expression> initializerStatements = ResolveObjectInitializer(rc, new InitializedObjectExpression(ResolvedType), initializer);
-
-
-           // string[] argumentNames;
-           //Expression[]  rarguments = Arguments.GetArguments(out argumentNames);
-
-           //Expression rr = rc.ResolveObjectCreation(ResolvedType, rarguments, argumentNames, false, initializerStatements);
-          
-            // constructor lookup
-            //method = ConstructorLookup(ec, type, ref arguments, loc);
-
-            // TODO:Support dynamics
-            //if (dynamic)
-            //{
-            //    arguments.Insert(0, new Argument(new TypeOf(type, loc).Resolve(ec), Argument.AType.DynamicTypeName));
-            //    return new DynamicConstructorBinder(type, arguments, loc).Resolve(ec);
-            //}
-
-            return this;
+            return true;
         }
+        public override Expression DoResolve(ResolveContext rc)
+        {
+            if (_resolved)
+                return this;
 
+            if (!ResolveCommon(rc))
+                return null;
+      
+            string[] argumentNames;
+            Expression[]  rarguments = Arguments.GetArguments(out argumentNames);
+
+            return ResolveObjectCreation(rc,loc,ResolvedType, rarguments, argumentNames);;
+        }
+        #region ResolveObjectCreation
+        /// <summary>
+        /// Resolves an object creation.
+        /// </summary>
+        /// <param name="type">Type of the object to create.</param>
+        /// <param name="arguments">
+        /// Arguments passed to the constructor.
+        /// The resolver may mutate this array to wrap elements in <see cref="CastExpression"/>s!
+        /// </param>
+        /// <param name="argumentNames">
+        /// The argument names. Pass the null string for positional arguments.
+        /// </param>
+        /// <param name="allowProtectedAccess">
+        /// Whether to allow calling protected constructors.
+        /// This should be false except when resolving constructor initializers.
+        /// </param>
+        /// <param name="initializerStatements">
+        /// Statements for Objects/Collections initializer.
+        /// <see cref="InvocationExpression.InitializerStatements"/>
+        /// </param>
+        /// <returns>InvocationResolveResult or ErrorResolveResult</returns>
+        public static Expression ResolveObjectCreation(ResolveContext rc, Location l,IType type, Expression[] arguments, string[] argumentNames = null, bool allowProtectedAccess = false, IList<Expression> initializerStatements = null)
+        {
+            if (type.Kind == TypeKind.Delegate)
+            {
+                if (arguments == null || arguments.Length != 1)
+                {
+                    rc.Report.Error(0, l, "Method name expected");
+                    return null;
+                }
+                Expression input = arguments[0];
+                IMethod invoke = input.Type.GetDelegateInvokeMethod();
+                if (invoke != null)
+                {
+                    input = new MethodGroupExpression(
+                        input, invoke.Name,
+                        methods: new[] { new MethodListWithDeclaringType(input.Type) { invoke } },
+                        typeArguments: EmptyList<IType>.Instance
+                    );
+                }
+                return rc.Convert(input, type);
+            }
+            OverloadResolution or = rc.CreateOverloadResolution(arguments, argumentNames);
+            MemberLookup lookup = rc.CreateMemberLookup();
+            List<IMethod> allApplicable = null;
+            foreach (IMethod ctor in type.GetConstructors())
+            {
+                if (lookup.IsAccessible(ctor, allowProtectedAccess))
+                    or.AddCandidate(ctor);
+                else
+                    or.AddCandidate(ctor, OverloadResolutionErrors.Inaccessible);
+            }
+            if (or.BestCandidate != null)
+                return or.CreateInvocation(null, initializerStatements);
+            else
+            {
+                rc.Report.Error(0, l,
+                "The type `{0}' does not contain a constructor that takes `{1}' arguments",
+                type.ToString(), arguments != null ? arguments.Length.ToString() : "0");
+                return ErrorResult;
+            }
+        }
+        #endregion
     
         //public override IConstantValue BuilConstantValue( bool isAttributeConstant)
         //{

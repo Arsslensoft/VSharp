@@ -52,10 +52,10 @@ namespace VSC.AST
 
             if (source is CollectionOrObjectInitializers)
             {
-                Expression previous = rc.CurrentInitializerVariable;
-                rc.CurrentInitializerVariable = target;
+                
+                rc = rc.PushObjectInitializer(target);
                 source = source.DoResolve(rc);
-                rc.CurrentInitializerVariable = previous;
+                rc = rc.PopObjectInitializer();
            
                 if (source == null)
                     return null;
@@ -71,7 +71,7 @@ namespace VSC.AST
 
         protected virtual bool ResolveElement(ResolveContext rc)
         {
-            var t = rc.CurrentInitializerVariable.Type;
+            var t = rc.CurrentObjectInitializerType;
 
 
             Expression lhsRR = rc.ResolveIdentifierInObjectInitializer(Name);

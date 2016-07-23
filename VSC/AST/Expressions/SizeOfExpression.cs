@@ -96,7 +96,7 @@ namespace VSC.AST
                 return null;
 
             if (referencedType.Kind == TypeKind.Enum)
-                referencedType = rc.GetEnumUnderlyingType(referencedType);
+                referencedType = ResolveContext.GetEnumUnderlyingType(referencedType);
 
             int size_of = ResolveSizeOfBuiltin(rc, referencedType);
             if (size_of > 0)

@@ -996,6 +996,7 @@ namespace VSC.TypeSystem.Resolver
             return new TypeParameterSubstitution(candidate.Member.Substitution.ClassTypeArguments, candidate.InferredTypes);
         }
 
+
         /// <summary>
         /// Creates a ResolveResult representing the result of overload resolution.
         /// </summary>
@@ -1008,14 +1009,13 @@ namespace VSC.TypeSystem.Resolver
         /// <param name="returnTypeOverride">
         /// If not null, use this instead of the ReturnType of the member as the type of the created resolve result.
         /// </param>
-        public VSharpInvocationExpression CreateInvocation(Expression targetExpression, IList<Expression> initializerStatements = null, IType returnTypeOverride = null)
+        public Invocation CreateInvocation(Expression targetExpression, IList<Expression> initializerStatements = null, IType returnTypeOverride = null)
         {
             IParameterizedMember member = GetBestCandidateWithSubstitutedTypeArguments();
             if (member == null)
                 throw new InvalidOperationException();
 
-            return new VSharpInvocationExpression(
-                this.IsExtensionMethodInvocation ? new TypeExpression(member.DeclaringType ?? SpecialTypeSpec.UnknownType) : targetExpression,
+            return new Invocation(targetExpression,
                 member,
                 GetArgumentsWithConversions(targetExpression, member),
                 this.BestCandidateErrors,
@@ -1025,6 +1025,7 @@ namespace VSC.TypeSystem.Resolver
                 argumentToParameterMap: this.GetArgumentToParameterMap(),
                 initializerStatements: initializerStatements,
                 returnTypeOverride: returnTypeOverride);
+
         }
         #endregion
     }

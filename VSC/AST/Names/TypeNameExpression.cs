@@ -10,7 +10,7 @@ namespace VSC.AST
         public bool LookForAttribute = false;
         protected  string name;
         protected TypeArguments targs;
-        public NameLookupMode lookupMode;
+    
         protected TypeNameExpression(string name, Location l)
         {
             this.name = name;

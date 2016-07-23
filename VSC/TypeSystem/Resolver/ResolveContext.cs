@@ -21,10 +21,7 @@ namespace VSC.TypeSystem.Resolver
 	/// </remarks>
 	public partial class ResolveContext : ICodeContext
 	{
-        //
-        // Holds a varible used during collection or object initialization.
-        //
-        public Expression CurrentInitializerVariable;
+  
         [Flags]
         public enum Options
         {
@@ -479,7 +476,7 @@ namespace VSC.TypeSystem.Resolver
 		#region Object Initializer Context
 		sealed class ObjectInitializerContext
 		{
-			internal readonly Expression initializedObject;
+            internal readonly Expression initializedObject;
 			internal readonly ObjectInitializerContext prev;
 			
 			public ObjectInitializerContext(Expression initializedObject, ResolveContext.ObjectInitializerContext prev)
@@ -551,10 +548,7 @@ namespace VSC.TypeSystem.Resolver
 			return this;
 		}
 		#endregion
-		
-		#region ResolveUnaryOperator
-		#region ResolveUnaryOperator method
-
+    
         public static ExpressionType GetLinqNodeType(BinaryOperatorType op, bool checkForOverflow)
         {
             switch (op)
@@ -596,7 +590,7 @@ namespace VSC.TypeSystem.Resolver
                 case BinaryOperatorType.RightShift:
                     return ExpressionType.RightShift;
 
-                    // special implementation
+                // special implementation
                 case BinaryOperatorType.RotateLeft:
                     return ExpressionType.LeftShift;
                 case BinaryOperatorType.RotateRight:
@@ -662,717 +656,26 @@ namespace VSC.TypeSystem.Resolver
                     return ExpressionType.PostDecrementAssign;
                 case UnaryOperatorType.Dereference:
                 case UnaryOperatorType.AddressOf:
-              //  case UnaryOperatorType.UnaryOperator:
+                    //  case UnaryOperatorType.UnaryOperator:
                     return ExpressionType.Extension;
                 default:
                     throw new NotSupportedException("Invalid value for UnaryOperatorType");
             }
         }
-		public Expression ResolveUnaryOperator(UnaryOperatorType op, Expression expression)
-		{
-			if (expression.Type.Kind == TypeKind.Dynamic) 
-					return UnaryOperatorResolveResult(SpecialTypeSpec.Dynamic, op, expression);
-			
-			
-			
-			// V# 4.0 spec: §7.3.3 Unary operator overload resolution
-			string overloadableOperatorName = GetOverloadableOperatorName(op);
-			if (overloadableOperatorName == null) {
-				switch (op) {
-					case UnaryOperatorType.Dereference:
-                        PointerTypeSpec p = expression.Type as PointerTypeSpec;
-						if (p != null)
-							return UnaryOperatorResolveResult(p.ElementType, op, expression);
-						else
-							return ErrorResult;
-					case UnaryOperatorType.AddressOf:
-                        return UnaryOperatorResolveResult(new PointerTypeSpec(expression.Type), op, expression);
-				
 
-					default:
-						return ErrorExpression.UnknownError;
-				}
-			}
-			// If the type is nullable, get the underlying type:
-			IType type = NullableType.GetUnderlyingType(expression.Type);
-			bool isNullable = NullableType.IsNullable(expression.Type);
-			
-			// the operator is overloadable:
-			OverloadResolution userDefinedOperatorOR = CreateOverloadResolution(new[] { expression });
-			foreach (var candidate in GetUserDefinedOperatorCandidates(type, overloadableOperatorName)) {
-				userDefinedOperatorOR.AddCandidate(candidate);
-			}
-			if (userDefinedOperatorOR.FoundApplicableCandidate) {
-				return CreateResolveResultForUserDefinedOperator(userDefinedOperatorOR, GetLinqNodeType(op, this.CheckForOverflow));
-			}
-			
-			expression = UnaryNumericPromotion(op, ref type, isNullable, expression);
-			VSharpOperators.OperatorMethod[] methodGroup;
-			VSharpOperators operators = VSharpOperators.Get(compilation);
-			switch (op) {
-				case UnaryOperatorType.PreIncrement:
-				case UnaryOperatorType.Decrement:
-				case UnaryOperatorType.PostIncrement:
-				case UnaryOperatorType.PostDecrement:
-					// V# 4.0 spec: §7.6.9 Postfix increment and decrement operators
-					// V# 4.0 spec: §7.7.5 Prefix increment and decrement operators
-					TypeCode code = ReflectionHelper.GetTypeCode(type);
-					if ((code >= TypeCode.Char && code <= TypeCode.Decimal) || type.Kind == TypeKind.Enum || type.Kind == TypeKind.Pointer)
-						return UnaryOperatorResolveResult(expression.Type, op, expression, isNullable);
-					else
-						return new ErrorExpression(expression.Type);
-				case UnaryOperatorType.UnaryPlus:
-					methodGroup = operators.UnaryPlusOperators;
-					break;
-				case UnaryOperatorType.UnaryNegation:
-					methodGroup = CheckForOverflow ? operators.CheckedUnaryMinusOperators : operators.UncheckedUnaryMinusOperators;
-					break;
-				case UnaryOperatorType.LogicalNot:
-					methodGroup = operators.LogicalNegationOperators;
-					break;
-				case UnaryOperatorType.OnesComplement:
-					if (type.Kind == TypeKind.Enum) {
-						if (expression.IsCompileTimeConstant && !isNullable && expression.ConstantValue != null) {
-							// evaluate as (E)(~(U)x);
-							var U = compilation.FindType(expression.ConstantValue.GetType());
-							var unpackedEnum = new ConstantExpression(U, expression.ConstantValue);
-							var rr = ResolveUnaryOperator(op, unpackedEnum);
-						    ResolveContext ovfrc = WithCheckForOverflow(false);
-						    rr = new CastExpression(type, rr).DoResolve(ovfrc);
-							if (rr.IsCompileTimeConstant)
-								return rr;
-						} 
-						return UnaryOperatorResolveResult(expression.Type, op, expression, isNullable);
-					} else {
-						methodGroup = operators.BitwiseComplementOperators;
-						break;
-					}
-				default:
-					throw new InvalidOperationException();
-			}
-			OverloadResolution builtinOperatorOR = CreateOverloadResolution(new[] { expression });
-			foreach (var candidate in methodGroup) {
-				builtinOperatorOR.AddCandidate(candidate);
-			}
-			VSharpOperators.UnaryOperatorMethod m = (VSharpOperators.UnaryOperatorMethod)builtinOperatorOR.BestCandidate;
-			IType resultType = m.ReturnType;
-			if (builtinOperatorOR.BestCandidateErrors != OverloadResolutionErrors.None) {
-				if (userDefinedOperatorOR.BestCandidate != null) {
-					// If there are any user-defined operators, prefer those over the built-in operators.
-					// It'll be a more informative error.
-					return CreateResolveResultForUserDefinedOperator(userDefinedOperatorOR, GetLinqNodeType(op, this.CheckForOverflow));
-				} else if (builtinOperatorOR.BestCandidateAmbiguousWith != null) {
-					// If the best candidate is ambiguous, just use the input type instead
-					// of picking one of the ambiguous overloads.
-					return new ErrorExpression(expression.Type);
-				} else {
-					return new ErrorExpression(resultType);
-				}
-			} else if (expression.IsCompileTimeConstant && m.CanEvaluateAtCompileTime) {
-				object val;
-				try {
-					val = m.Invoke(this, expression.ConstantValue);
-				} catch (ArithmeticException) {
-					return new ErrorExpression(resultType);
-				}
-				return new ConstantExpression(resultType, val);
-			} else {
-				expression = Convert(expression, m.Parameters[0].Type, builtinOperatorOR.ArgumentConversions[0]);
-				return UnaryOperatorResolveResult(resultType, op, expression,
-				                                  builtinOperatorOR.BestCandidate is OverloadResolution.ILiftedOperator);
-			}
-		}
 		
-		OperatorExpression UnaryOperatorResolveResult(IType resultType, UnaryOperatorType op, Expression expression, bool isLifted = false)
-		{
-			return new OperatorExpression(
-				resultType, GetLinqNodeType(op, this.CheckForOverflow),
-				null, isLifted, new[] { expression });
-		}
-		#endregion
 		
-		#region UnaryNumericPromotion
-		Expression UnaryNumericPromotion(UnaryOperatorType op, ref IType type, bool isNullable, Expression expression)
-		{
-			// V# 4.0 spec: §7.3.6.1
-			TypeCode code = ReflectionHelper.GetTypeCode(type);
-			if (isNullable && type.Kind == TypeKind.Null)
-				code = TypeCode.SByte; // cause promotion of null to int32
-			switch (op) {
-				case UnaryOperatorType.UnaryNegation:
-					if (code == TypeCode.UInt32) {
-						type = compilation.FindType(KnownTypeCode.Int64);
-						return Convert(expression, MakeNullable(type, isNullable),
-						               isNullable ? Conversion.ImplicitNullableConversion : Conversion.ImplicitNumericConversion);
-					}
-					goto case UnaryOperatorType.UnaryPlus;
-				case UnaryOperatorType.UnaryPlus:
-				case UnaryOperatorType.OnesComplement:
-					if (code >= TypeCode.Char && code <= TypeCode.UInt16) {
-						type = compilation.FindType(KnownTypeCode.Int32);
-						return Convert(expression, MakeNullable(type, isNullable),
-						               isNullable ? Conversion.ImplicitNullableConversion : Conversion.ImplicitNumericConversion);
-					}
-					break;
-			}
-			return expression;
-		}
-		#endregion
 		
-		#region GetOverloadableOperatorName
-		static string GetOverloadableOperatorName(UnaryOperatorType op)
-		{
-			switch (op) {
-				case UnaryOperatorType.LogicalNot:
-					return "op_LogicalNot";
-				case UnaryOperatorType.OnesComplement:
-					return "op_OnesComplement";
-				case UnaryOperatorType.UnaryNegation:
-					return "op_UnaryNegation";
-				case UnaryOperatorType.UnaryPlus:
-					return "op_UnaryPlus";
-				case UnaryOperatorType.PreIncrement:
-				case UnaryOperatorType.PostIncrement:
-					return "op_Increment";
-				case UnaryOperatorType.Decrement:
-				case UnaryOperatorType.PostDecrement:
-					return "op_Decrement";
-                //case UnaryOperatorType.UnaryOperator:
-                //    return "op_U_";
-				default:
-					return null;
-			}
-		}
-		#endregion
-		#endregion
-		
-		#region ResolveBinaryOperator
-		#region ResolveBinaryOperator method
-		public Expression ResolveBinaryOperator(BinaryOperatorType op, Expression lhs, Expression rhs)
-		{
-			if (lhs.Type.Kind == TypeKind.Dynamic || rhs.Type.Kind == TypeKind.Dynamic) {
-				lhs = Convert(lhs, SpecialTypeSpec.Dynamic);
-				rhs = Convert(rhs, SpecialTypeSpec.Dynamic);
-				return BinaryOperatorResolveResult(SpecialTypeSpec.Dynamic, lhs, op, rhs);
-			}
-			
-			// V# 4.0 spec: §7.3.4 Binary operator overload resolution
-			string overloadableOperatorName = GetOverloadableOperatorName(op);
-			if (overloadableOperatorName == null) {
-				
-				// Handle logical and/or exactly as bitwise and/or:
-				// - If the user overloads a bitwise operator, that implicitly creates the corresponding logical operator.
-				// - If both inputs are compile-time constants, it doesn't matter that we don't short-circuit.
-				// - If inputs aren't compile-time constants, we don't evaluate anything, so again it doesn't matter that we don't short-circuit
-				if (op == BinaryOperatorType.LogicalAnd) {
-					overloadableOperatorName = GetOverloadableOperatorName(BinaryOperatorType.BitwiseAnd);
-				} else if (op == BinaryOperatorType.LogicalOr) {
-					overloadableOperatorName = GetOverloadableOperatorName(BinaryOperatorType.BitwiseOr);
-				} else if (op == BinaryOperatorType.NullCoalescing) {
-					// null coalescing operator is not overloadable and needs to be handled separately
-					return ResolveNullCoalescingOperator(lhs, rhs);
-				} else {
-					return ErrorExpression.UnknownError;
-				}
-			}
-			
-			// If the type is nullable, get the underlying type:
-			bool isNullable = NullableType.IsNullable(lhs.Type) || NullableType.IsNullable(rhs.Type);
-			IType lhsType = NullableType.GetUnderlyingType(lhs.Type);
-			IType rhsType = NullableType.GetUnderlyingType(rhs.Type);
-			
-			// the operator is overloadable:
-			OverloadResolution userDefinedOperatorOR = CreateOverloadResolution(new[] { lhs, rhs });
-			HashSet<IParameterizedMember> userOperatorCandidates = new HashSet<IParameterizedMember>();
-			userOperatorCandidates.UnionWith(GetUserDefinedOperatorCandidates(lhsType, overloadableOperatorName));
-			userOperatorCandidates.UnionWith(GetUserDefinedOperatorCandidates(rhsType, overloadableOperatorName));
-			foreach (var candidate in userOperatorCandidates) {
-				userDefinedOperatorOR.AddCandidate(candidate);
-			}
-			if (userDefinedOperatorOR.FoundApplicableCandidate) {
-				return CreateResolveResultForUserDefinedOperator(userDefinedOperatorOR, GetLinqNodeType(op, this.CheckForOverflow));
-			}
-			
-			if (lhsType.Kind == TypeKind.Null && rhsType.IsReferenceType == false
-			    || lhsType.IsReferenceType == false && rhsType.Kind == TypeKind.Null)
-			{
-				isNullable = true;
-			}
-			if (op == BinaryOperatorType.LeftShift || op == BinaryOperatorType.RightShift) {
-				// special case: the shift operators allow "var x = null << null", producing int?.
-				if (lhsType.Kind == TypeKind.Null && rhsType.Kind == TypeKind.Null)
-					isNullable = true;
-				// for shift operators, do unary promotion independently on both arguments
-				lhs = UnaryNumericPromotion(UnaryOperatorType.UnaryPlus, ref lhsType, isNullable, lhs);
-				rhs = UnaryNumericPromotion(UnaryOperatorType.UnaryPlus, ref rhsType, isNullable, rhs);
-			} else {
-				bool allowNullableConstants = op == BinaryOperatorType.Equality || op == BinaryOperatorType.Inequality;
-				if (!BinaryNumericPromotion(isNullable, ref lhs, ref rhs, allowNullableConstants))
-					return new ErrorExpression(lhs.Type);
-			}
-			// re-read underlying types after numeric promotion
-			lhsType = NullableType.GetUnderlyingType(lhs.Type);
-			rhsType = NullableType.GetUnderlyingType(rhs.Type);
-			
-			IEnumerable<VSharpOperators.OperatorMethod> methodGroup;
-			VSharpOperators operators = VSharpOperators.Get(compilation);
-			switch (op) {
-				case BinaryOperatorType.Multiply:
-					methodGroup = operators.MultiplicationOperators;
-					break;
-				case BinaryOperatorType.Division:
-					methodGroup = operators.DivisionOperators;
-					break;
-				case BinaryOperatorType.Modulus:
-					methodGroup = operators.RemainderOperators;
-					break;
-				case BinaryOperatorType.Addition:
-					methodGroup = operators.AdditionOperators;
-					{
-						if (lhsType.Kind == TypeKind.Enum) {
-							// E operator +(E x, U y);
-							IType underlyingType = MakeNullable(GetEnumUnderlyingType(lhsType), isNullable);
-							if (TryConvertEnum(ref rhs, underlyingType, ref isNullable, ref lhs)) {
-								return HandleEnumOperator(isNullable, lhsType, op, lhs, rhs);
-							}
-						}
-						if (rhsType.Kind == TypeKind.Enum) {
-							// E operator +(U x, E y);
-							IType underlyingType = MakeNullable(GetEnumUnderlyingType(rhsType), isNullable);
-							if (TryConvertEnum(ref lhs, underlyingType, ref isNullable, ref rhs)) {
-								return HandleEnumOperator(isNullable, rhsType, op, lhs, rhs);
-							}
-						}
-						
-						if (lhsType.Kind == TypeKind.Delegate && TryConvert(ref rhs, lhsType)) {
-							return BinaryOperatorResolveResult(lhsType, lhs, op, rhs);
-						} else if (rhsType.Kind == TypeKind.Delegate && TryConvert(ref lhs, rhsType)) {
-							return BinaryOperatorResolveResult(rhsType, lhs, op, rhs);
-						}
-
-                        if (lhsType is PointerTypeSpec)
-                        {
-							methodGroup = new [] {
-								PointerArithmeticOperator(lhsType, lhsType, KnownTypeCode.Int32),
-								PointerArithmeticOperator(lhsType, lhsType, KnownTypeCode.UInt32),
-								PointerArithmeticOperator(lhsType, lhsType, KnownTypeCode.Int64),
-								PointerArithmeticOperator(lhsType, lhsType, KnownTypeCode.UInt64)
-							};
-                        }
-                        else if (rhsType is PointerTypeSpec)
-                        {
-							methodGroup = new [] {
-								PointerArithmeticOperator(rhsType, KnownTypeCode.Int32, rhsType),
-								PointerArithmeticOperator(rhsType, KnownTypeCode.UInt32, rhsType),
-								PointerArithmeticOperator(rhsType, KnownTypeCode.Int64, rhsType),
-								PointerArithmeticOperator(rhsType, KnownTypeCode.UInt64, rhsType)
-							};
-						}
-						if (lhsType.Kind == TypeKind.Null && rhsType.Kind == TypeKind.Null)
-							return new ErrorExpression(SpecialTypeSpec.NullType);
-					}
-					break;
-				case BinaryOperatorType.Subtraction:
-					methodGroup = operators.SubtractionOperators;
-					{
-						if (lhsType.Kind == TypeKind.Enum) {
-							// U operator –(E x, E y);
-							if (TryConvertEnum(ref rhs, lhs.Type, ref isNullable, ref lhs, allowConversionFromConstantZero: false)) {
-								return HandleEnumSubtraction(isNullable, lhsType, lhs, rhs);
-							}
-
-							// E operator –(E x, U y);
-							IType underlyingType = MakeNullable(GetEnumUnderlyingType(lhsType), isNullable);
-							if (TryConvertEnum(ref rhs, underlyingType, ref isNullable, ref lhs)) {
-								return HandleEnumOperator(isNullable, lhsType, op, lhs, rhs);
-							}
-						}
-						if (rhsType.Kind == TypeKind.Enum) {
-							// U operator –(E x, E y);
-							if (TryConvertEnum(ref lhs, rhs.Type, ref isNullable, ref rhs, allowConversionFromConstantZero: false)) {
-								return HandleEnumSubtraction(isNullable, rhsType, lhs, rhs);
-							}
-
-							// E operator -(U x, E y);
-							IType underlyingType = MakeNullable(GetEnumUnderlyingType(rhsType), isNullable);
-							if (TryConvertEnum(ref lhs, underlyingType, ref isNullable, ref rhs)) {
-								return HandleEnumOperator(isNullable, rhsType, op, lhs, rhs);
-							}
-						}
-						
-						if (lhsType.Kind == TypeKind.Delegate && TryConvert(ref rhs, lhsType)) {
-							return BinaryOperatorResolveResult(lhsType, lhs, op, rhs);
-						} else if (rhsType.Kind == TypeKind.Delegate && TryConvert(ref lhs, rhsType)) {
-							return BinaryOperatorResolveResult(rhsType, lhs, op, rhs);
-						}
-
-                        if (lhsType is PointerTypeSpec)
-                        {
-                            if (rhsType is PointerTypeSpec)
-                            {
-								IType int64 = compilation.FindType(KnownTypeCode.Int64);
-								if (lhsType.Equals(rhsType)) {
-									return BinaryOperatorResolveResult(int64, lhs, op, rhs);
-								} else {
-									return new ErrorExpression(int64);
-								}
-							}
-							methodGroup = new [] {
-								PointerArithmeticOperator(lhsType, lhsType, KnownTypeCode.Int32),
-								PointerArithmeticOperator(lhsType, lhsType, KnownTypeCode.UInt32),
-								PointerArithmeticOperator(lhsType, lhsType, KnownTypeCode.Int64),
-								PointerArithmeticOperator(lhsType, lhsType, KnownTypeCode.UInt64)
-							};
-						}
-						
-						if (lhsType.Kind == TypeKind.Null && rhsType.Kind == TypeKind.Null)
-							return new ErrorExpression(SpecialTypeSpec.NullType);
-					}
-					break;
-				case BinaryOperatorType.LeftShift:
-					methodGroup = operators.ShiftLeftOperators;
-					break;
-				case BinaryOperatorType.RightShift:
-					methodGroup = operators.ShiftRightOperators;
-					break;
-                case BinaryOperatorType.RotateRight:
-                    methodGroup = operators.RotateRightOperators;
-                    break;
-                case BinaryOperatorType.RotateLeft:
-                    methodGroup = operators.RotateLeftOperators;
-                    break;
-
-
-				case BinaryOperatorType.Equality:
-				case BinaryOperatorType.Inequality:
-				case BinaryOperatorType.LessThan:
-				case BinaryOperatorType.GreaterThan:
-				case BinaryOperatorType.LessThanOrEqual:
-				case BinaryOperatorType.GreaterThanOrEqual:
-					{
-						if (lhsType.Kind == TypeKind.Enum && TryConvert(ref rhs, lhs.Type)) {
-							// bool operator op(E x, E y);
-							return HandleEnumComparison(op, lhsType, isNullable, lhs, rhs);
-						} else if (rhsType.Kind == TypeKind.Enum && TryConvert(ref lhs, rhs.Type)) {
-							// bool operator op(E x, E y);
-							return HandleEnumComparison(op, rhsType, isNullable, lhs, rhs);
-                        }
-                        else if (lhsType is PointerTypeSpec && rhsType is PointerTypeSpec)
-                        {
-							return BinaryOperatorResolveResult(compilation.FindType(KnownTypeCode.Boolean), lhs, op, rhs);
-						}
-						if (op == BinaryOperatorType.Equality || op == BinaryOperatorType.Inequality) {
-							if (lhsType.IsReferenceType == true && rhsType.IsReferenceType == true) {
-								// If it's a reference comparison
-								if (op == BinaryOperatorType.Equality)
-									methodGroup = operators.ReferenceEqualityOperators;
-								else
-									methodGroup = operators.ReferenceInequalityOperators;
-								break;
-							} else if (lhsType.Kind == TypeKind.Null && IsNullableTypeOrNonValueType(rhs.Type)
-							           || IsNullableTypeOrNonValueType(lhs.Type) && rhsType.Kind == TypeKind.Null) {
-								// compare type parameter or nullable type with the null literal
-								return BinaryOperatorResolveResult(compilation.FindType(KnownTypeCode.Boolean), lhs, op, rhs);
-							}
-						}
-						switch (op) {
-							case BinaryOperatorType.Equality:
-								methodGroup = operators.ValueEqualityOperators;
-								break;
-							case BinaryOperatorType.Inequality:
-								methodGroup = operators.ValueInequalityOperators;
-								break;
-							case BinaryOperatorType.LessThan:
-								methodGroup = operators.LessThanOperators;
-								break;
-							case BinaryOperatorType.GreaterThan:
-								methodGroup = operators.GreaterThanOperators;
-								break;
-							case BinaryOperatorType.LessThanOrEqual:
-								methodGroup = operators.LessThanOrEqualOperators;
-								break;
-							case BinaryOperatorType.GreaterThanOrEqual:
-								methodGroup = operators.GreaterThanOrEqualOperators;
-								break;
-							default:
-								throw new InvalidOperationException();
-						}
-					}
-					break;
-				case BinaryOperatorType.BitwiseAnd:
-				case BinaryOperatorType.BitwiseOr:
-				case BinaryOperatorType.ExclusiveOr:
-					{
-						if (lhsType.Kind == TypeKind.Enum) {
-							// bool operator op(E x, E y);
-							if (TryConvertEnum(ref rhs, lhs.Type, ref isNullable, ref lhs)) {
-								return HandleEnumOperator(isNullable, lhsType, op, lhs, rhs);
-							}
-						}
-
-						if (rhsType.Kind == TypeKind.Enum) {
-							// bool operator op(E x, E y);
-							if (TryConvertEnum (ref lhs, rhs.Type, ref isNullable, ref rhs)) {
-								return HandleEnumOperator(isNullable, rhsType, op, lhs, rhs);
-							}
-						}
-						
-						switch (op) {
-							case BinaryOperatorType.BitwiseAnd:
-								methodGroup = operators.BitwiseAndOperators;
-								break;
-							case BinaryOperatorType.BitwiseOr:
-								methodGroup = operators.BitwiseOrOperators;
-								break;
-							case BinaryOperatorType.ExclusiveOr:
-								methodGroup = operators.BitwiseXorOperators;
-								break;
-							default:
-								throw new InvalidOperationException();
-						}
-					}
-					break;
-				case BinaryOperatorType.LogicalAnd:
-					methodGroup = operators.LogicalAndOperators;
-					break;
-				case BinaryOperatorType.LogicalOr:
-					methodGroup = operators.LogicalOrOperators;
-					break;
-				default:
-					throw new InvalidOperationException();
-			}
-			OverloadResolution builtinOperatorOR = CreateOverloadResolution(new[] { lhs, rhs });
-			foreach (var candidate in methodGroup) {
-				builtinOperatorOR.AddCandidate(candidate);
-			}
-			VSharpOperators.BinaryOperatorMethod m = (VSharpOperators.BinaryOperatorMethod)builtinOperatorOR.BestCandidate;
-			IType resultType = m.ReturnType;
-			if (builtinOperatorOR.BestCandidateErrors != OverloadResolutionErrors.None) {
-				// If there are any user-defined operators, prefer those over the built-in operators.
-				// It'll be a more informative error.
-				if (userDefinedOperatorOR.BestCandidate != null)
-					return CreateResolveResultForUserDefinedOperator(userDefinedOperatorOR, GetLinqNodeType(op, this.CheckForOverflow));
-				else
-					return new ErrorExpression(resultType);
-			} else if (lhs.IsCompileTimeConstant && rhs.IsCompileTimeConstant && m.CanEvaluateAtCompileTime) {
-				object val;
-				try {
-					val = m.Invoke(this, lhs.ConstantValue, rhs.ConstantValue);
-				} catch (ArithmeticException) {
-					return new ErrorExpression(resultType);
-				}
-				return new ConstantExpression(resultType, val);
-			} else {
-				lhs = Convert(lhs, m.Parameters[0].Type, builtinOperatorOR.ArgumentConversions[0]);
-				rhs = Convert(rhs, m.Parameters[1].Type, builtinOperatorOR.ArgumentConversions[1]);
-				return BinaryOperatorResolveResult(resultType, lhs, op, rhs,
-				                                   builtinOperatorOR.BestCandidate is OverloadResolution.ILiftedOperator);
-			}
-		}
-		
-		bool IsNullableTypeOrNonValueType(IType type)
-		{
-			return NullableType.IsNullable(type) || type.IsReferenceType != false;
-		}
-		
-		Expression BinaryOperatorResolveResult(IType resultType, Expression lhs, BinaryOperatorType op, Expression rhs, bool isLifted = false)
-		{
-			return new OperatorExpression(
-				resultType, GetLinqNodeType(op, this.CheckForOverflow),
-				null, isLifted, new[] { lhs, rhs });
-		}
-		#endregion
-		
-		#region Pointer arithmetic
-		VSharpOperators.BinaryOperatorMethod PointerArithmeticOperator(IType resultType, IType inputType1, KnownTypeCode inputType2)
-		{
-			return PointerArithmeticOperator(resultType, inputType1, compilation.FindType(inputType2));
-		}
-		
-		VSharpOperators.BinaryOperatorMethod PointerArithmeticOperator(IType resultType, KnownTypeCode inputType1, IType inputType2)
-		{
-			return PointerArithmeticOperator(resultType, compilation.FindType(inputType1), inputType2);
-		}
-		
-		VSharpOperators.BinaryOperatorMethod PointerArithmeticOperator(IType resultType, IType inputType1, IType inputType2)
-		{
-			return new VSharpOperators.BinaryOperatorMethod(compilation) {
-				ReturnType = resultType,
-				Parameters = {
-					new ParameterSpec(inputType1, string.Empty),
-					new ParameterSpec(inputType2, string.Empty)
-				}
-			};
-		}
-		#endregion
 		
 		#region Enum helper methods
-	public	IType GetEnumUnderlyingType(IType enumType)
+	public static	IType GetEnumUnderlyingType(IType enumType)
 		{
 			ITypeDefinition def = enumType.GetDefinition();
 			return def != null ? def.EnumUnderlyingType : SpecialTypeSpec.UnknownType;
 		}
 		
-		/// <summary>
-		/// Handle the case where an enum value is compared with another enum value
-		/// bool operator op(E x, E y);
-		/// </summary>
-		Expression HandleEnumComparison(BinaryOperatorType op, IType enumType, bool isNullable, Expression lhs, Expression rhs)
-		{
-			// evaluate as ((U)x op (U)y)
-			IType elementType = GetEnumUnderlyingType(enumType);
-			if (lhs.IsCompileTimeConstant && rhs.IsCompileTimeConstant && !isNullable && elementType.Kind != TypeKind.Enum) {
-                var rr = ResolveBinaryOperator(op, new CastExpression(elementType, lhs).DoResolve(this), new CastExpression(elementType, rhs).DoResolve(this));
-				if (rr.IsCompileTimeConstant)
-					return rr;
-			}
-			IType resultType = compilation.FindType(KnownTypeCode.Boolean);
-			return BinaryOperatorResolveResult(resultType, lhs, op, rhs, isNullable);
-		}
-		
-		/// <summary>
-		/// Handle the case where an enum value is subtracted from another enum value
-		/// U operator –(E x, E y);
-		/// </summary>
-		Expression HandleEnumSubtraction(bool isNullable, IType enumType, Expression lhs, Expression rhs)
-		{
-			// evaluate as (U)((U)x – (U)y)
-			IType elementType = GetEnumUnderlyingType(enumType);
-			if (lhs.IsCompileTimeConstant && rhs.IsCompileTimeConstant && !isNullable && elementType.Kind != TypeKind.Enum) {
-                var rr = ResolveBinaryOperator(BinaryOperatorType.Subtraction, new CastExpression(elementType, lhs).DoResolve(this), new CastExpression(elementType, rhs).DoResolve(this));
-				rr = new CastExpression(elementType, rr).DoResolve(  WithCheckForOverflow(false));
-				if (rr.IsCompileTimeConstant)
-					return rr;
-			}
-			IType resultType = MakeNullable(elementType, isNullable);
-			return BinaryOperatorResolveResult(resultType, lhs, BinaryOperatorType.Subtraction, rhs, isNullable);
-		}
-		
-		/// <summary>
-		/// Handle the following enum operators:
-		/// E operator +(E x, U y);
-		/// E operator +(U x, E y);
-		/// E operator –(E x, U y);
-		/// E operator &amp;(E x, E y);
-		/// E operator |(E x, E y);
-		/// E operator ^(E x, E y);
-		/// </summary>
-		Expression HandleEnumOperator(bool isNullable, IType enumType, BinaryOperatorType op, Expression lhs, Expression rhs)
-		{
-			// evaluate as (E)((U)x op (U)y)
-			if (lhs.IsCompileTimeConstant && rhs.IsCompileTimeConstant && !isNullable) {
-				IType elementType = GetEnumUnderlyingType(enumType);
-				if (elementType.Kind != TypeKind.Enum) {
-                    var rr = ResolveBinaryOperator(op, new CastExpression(elementType, lhs).DoResolve(this), new CastExpression(elementType, rhs).DoResolve(this));
-					rr =new CastExpression(enumType, rr).DoResolve(WithCheckForOverflow(false));
-					if (rr.IsCompileTimeConstant) // only report result if it's a constant; use the regular OperatorResolveResult codepath otherwise
-						return rr;
-				}
-			}
-			IType resultType = MakeNullable(enumType, isNullable);
-			return BinaryOperatorResolveResult(resultType, lhs, op, rhs, isNullable);
-		}
-		
-		IType MakeNullable(IType type, bool isNullable)
-		{
-			if (isNullable)
-				return NullableType.Create(compilation, type);
-			else
-				return type;
-		}
-		#endregion
-		
-		#region BinaryNumericPromotion
-		bool BinaryNumericPromotion(bool isNullable, ref Expression lhs, ref Expression rhs, bool allowNullableConstants)
-		{
-			// V# 4.0 spec: §7.3.6.2
-			TypeCode lhsCode = ReflectionHelper.GetTypeCode(NullableType.GetUnderlyingType(lhs.Type));
-			TypeCode rhsCode = ReflectionHelper.GetTypeCode(NullableType.GetUnderlyingType(rhs.Type));
-			// if one of the inputs is the null literal, promote that to the type of the other operand
-			if (isNullable && lhs.Type.Kind == TypeKind.Null && rhsCode >= TypeCode.Boolean && rhsCode <= TypeCode.Decimal) {
-				lhs = CastTo(rhsCode, isNullable, lhs, allowNullableConstants);
-				lhsCode = rhsCode;
-			} else if (isNullable && rhs.Type.Kind == TypeKind.Null && lhsCode >= TypeCode.Boolean && lhsCode <= TypeCode.Decimal) {
-				rhs = CastTo(lhsCode, isNullable, rhs, allowNullableConstants);
-				rhsCode = lhsCode;
-			}
-			bool bindingError = false;
-			if (lhsCode >= TypeCode.Char && lhsCode <= TypeCode.Decimal
-			    && rhsCode >= TypeCode.Char && rhsCode <= TypeCode.Decimal)
-			{
-				TypeCode targetType;
-				if (lhsCode == TypeCode.Decimal || rhsCode == TypeCode.Decimal) {
-					targetType = TypeCode.Decimal;
-					bindingError = (lhsCode == TypeCode.Single || lhsCode == TypeCode.Double
-					                || rhsCode == TypeCode.Single || rhsCode == TypeCode.Double);
-				} else if (lhsCode == TypeCode.Double || rhsCode == TypeCode.Double) {
-					targetType = TypeCode.Double;
-				} else if (lhsCode == TypeCode.Single || rhsCode == TypeCode.Single) {
-					targetType = TypeCode.Single;
-				} else if (lhsCode == TypeCode.UInt64 || rhsCode == TypeCode.UInt64) {
-					targetType = TypeCode.UInt64;
-					bindingError = IsSigned(lhsCode, lhs) || IsSigned(rhsCode, rhs);
-				} else if (lhsCode == TypeCode.Int64 || rhsCode == TypeCode.Int64) {
-					targetType = TypeCode.Int64;
-				} else if (lhsCode == TypeCode.UInt32 || rhsCode == TypeCode.UInt32) {
-					targetType = (IsSigned(lhsCode, lhs) || IsSigned(rhsCode, rhs)) ? TypeCode.Int64 : TypeCode.UInt32;
-				} else {
-					targetType = TypeCode.Int32;
-				}
-				lhs = CastTo(targetType, isNullable, lhs, allowNullableConstants);
-				rhs = CastTo(targetType, isNullable, rhs, allowNullableConstants);
-			}
-			return !bindingError;
-		}
-		
-		bool IsSigned(TypeCode code, Expression rr)
-		{
-			// Determine whether the rr with code==ReflectionHelper.GetTypeCode(NullableType.GetUnderlyingType(rr.Type))
-			// is a signed primitive type.
-			switch (code) {
-				case TypeCode.SByte:
-				case TypeCode.Int16:
-					return true;
-				case TypeCode.Int32:
-					// for int, consider implicit constant expression conversion
-					if (rr.IsCompileTimeConstant && rr.ConstantValue != null && (int)rr.ConstantValue >= 0)
-						return false;
-					else
-						return true;
-				case TypeCode.Int64:
-					// for long, consider implicit constant expression conversion
-					if (rr.IsCompileTimeConstant && rr.ConstantValue != null && (long)rr.ConstantValue >= 0)
-						return false;
-					else
-						return true;
-				default:
-					return false;
-			}
-		}
-		
-		Expression CastTo(TypeCode targetType, bool isNullable, Expression expression, bool allowNullableConstants)
-		{
-			IType elementType = compilation.FindType(targetType);
-			IType nullableType = MakeNullable(elementType, isNullable);
-			if (nullableType.Equals(expression.Type))
-				return expression;
-			if (allowNullableConstants && expression.IsCompileTimeConstant) {
-				if (expression.ConstantValue == null)
-					return new ConstantExpression(nullableType, null);
-				Expression rr = new CastExpression(elementType, expression).DoResolve(this);
-				if (rr.IsError)
-					return rr;
-				Debug.Assert(rr.IsCompileTimeConstant);
-				return new ConstantExpression(nullableType, rr.ConstantValue);
-			} else {
-				return Convert(expression, nullableType,
-				               isNullable ? Conversion.ImplicitNullableConversion : Conversion.ImplicitNumericConversion);
-			}
-		}
-		#endregion
-		
 		#region GetOverloadableOperatorName
-		static string GetOverloadableOperatorName(BinaryOperatorType op)
+	internal	static string GetOverloadableOperatorName(BinaryOperatorType op)
 		{
 			switch (op) {
 				case BinaryOperatorType.Addition:
@@ -1419,29 +722,10 @@ namespace VSC.TypeSystem.Resolver
 		}
 		#endregion
 		
-		#region Null coalescing operator
-		Expression ResolveNullCoalescingOperator(Expression lhs, Expression rhs)
-		{
-			if (NullableType.IsNullable(lhs.Type)) {
-				IType a0 = NullableType.GetUnderlyingType(lhs.Type);
-				if (TryConvert(ref rhs, a0)) {
-					return BinaryOperatorResolveResult(a0, lhs, BinaryOperatorType.NullCoalescing, rhs);
-				}
-			}
-			if (TryConvert(ref rhs, lhs.Type)) {
-				return BinaryOperatorResolveResult(lhs.Type, lhs, BinaryOperatorType.NullCoalescing, rhs);
-			}
-			if (TryConvert(ref lhs, rhs.Type)) {
-				return BinaryOperatorResolveResult(rhs.Type, lhs, BinaryOperatorType.NullCoalescing, rhs);
-			} else {
-				return new ErrorExpression(lhs.Type);
-			}
-		}
-		#endregion
 		#endregion
 		
 		#region Get user-defined operator candidates
-		IEnumerable<IParameterizedMember> GetUserDefinedOperatorCandidates(IType type, string operatorName)
+	internal	IEnumerable<IParameterizedMember> GetUserDefinedOperatorCandidates(IType type, string operatorName)
 		{
 			if (operatorName == null)
 				return EmptyList<IMethod>.Instance;
@@ -1581,16 +865,6 @@ namespace VSC.TypeSystem.Resolver
 				return NullableType.Create(compilation, type.AcceptVisitor(typeParameterSubstitution));
 			}
 		}
-		
-		Expression CreateResolveResultForUserDefinedOperator(OverloadResolution r, System.Linq.Expressions.ExpressionType operatorType)
-		{
-			if (r.BestCandidateErrors != OverloadResolutionErrors.None)
-				return r.CreateInvocation(null);
-			IMethod method = (IMethod)r.BestCandidate;
-			return new OperatorExpression(method.ReturnType, operatorType, method,
-			                                 isLiftedOperator: method is OverloadResolution.ILiftedOperator,
-			                                 operands: r.GetArgumentsWithConversions());
-		}
 		#endregion
 		
 		#region ResolveCast
@@ -1622,7 +896,7 @@ namespace VSC.TypeSystem.Resolver
 		/// </param>
 		/// <returns>True if the conversion is successful; false otherwise.
 		/// If the conversion is not successful, the ref parameters will not be modified.</returns>
-		bool TryConvertEnum(ref Expression rr, IType targetType, ref bool isNullable, ref Expression enumRR, bool allowConversionFromConstantZero = true)
+	internal	bool TryConvertEnum(ref Expression rr, IType targetType, ref bool isNullable, ref Expression enumRR, bool allowConversionFromConstantZero = true)
 		{
 			Conversion c;
 			if (!isNullable) {
@@ -1674,18 +948,17 @@ namespace VSC.TypeSystem.Resolver
 
         
         #region ResolveSimpleName
-
-
-        //public bool IsVariableReferenceWithSameType(ResolveResult rr, string identifier, out TypeResolveResult trr)
-        //{
-        //    if (!(rr is MemberResolveResult || rr is LocalResolveResult))
-        //    {
-        //        trr = null;
-        //        return false;
-        //    }
-        //    trr = LookupSimpleNameOrTypeName(identifier, EmptyList<IType>.Instance, NameLookupMode.Type) as TypeResolveResult;
-        //    return trr != null && trr.Type.Equals(rr.Type);
-        //}
+        public bool IsVariableReferenceWithSameType(Expression rr,out TypeExpression trr)
+        {
+            if (!(rr is MemberExpressionStatement || rr is LocalVariableExpression))
+            {
+                trr = null;
+                return false;
+            }
+            rr.lookupMode = NameLookupMode.Type;
+            trr = rr.DoResolve(this) as TypeExpression; 
+            return trr != null && trr.Type.Equals(rr.Type);
+        }
 
        #endregion
 		
@@ -1914,106 +1187,24 @@ namespace VSC.TypeSystem.Resolver
 		
 		#region ResolveInvocation
 
-		IList<Expression> AddArgumentNamesIfNecessary(Expression[] arguments, string[] argumentNames) {
-			if (argumentNames == null) {
-				return arguments;
-			}
-			else {
-				var result = new Expression[arguments.Length];
-				for (int i = 0; i < arguments.Length; i++) {
-					result[i] = (argumentNames[i] != null ? new NamedArgumentExpression(argumentNames[i], arguments[i]) : arguments[i]);
-				}
-				return result;
-			}
-		}
 
-		private Expression ResolveInvocation(Expression target, Expression[] arguments, string[] argumentNames, bool allowOptionalParameters)
-		{
-			// V# 4.0 spec: §7.6.5
-			
-			if (target.Type.Kind == TypeKind.Dynamic) {
-				return new DynamicInvocationExpression(target, DynamicInvocationType.Invocation, AddArgumentNamesIfNecessary(arguments, argumentNames));
-			}
-			
-			bool isDynamic = arguments.Any(a => a.Type.Kind == TypeKind.Dynamic);
-            MethodGroupExpression mgrr = target as MethodGroupExpression;
-			if (mgrr != null) {
-				if (isDynamic) {
-					// If we have dynamic arguments, we need to represent the invocation as a dynamic invocation if there is more than one applicable method.
-					var or2 = CreateOverloadResolution(arguments, argumentNames, mgrr.TypeArguments.ToArray());
-					var applicableMethods = mgrr.MethodsGroupedByDeclaringType.SelectMany(m => m, (x, m) => new { x.DeclaringType, Method = m }).Where(x => OverloadResolution.IsApplicable(or2.AddCandidate(x.Method))).ToList();
-
-					if (applicableMethods.Count > 1) {
-						Expression actualTarget;
-                        if (applicableMethods.All(x => x.Method.IsStatic) && !(mgrr.TargetResult is TypeExpression))
-							actualTarget = new TypeExpression(mgrr.TargetType);
-						else
-							actualTarget = mgrr.TargetResult;
-
-						var l = new List<MethodListWithDeclaringType>();
-						foreach (var m in applicableMethods) {
-							if (l.Count == 0 || l[l.Count - 1].DeclaringType != m.DeclaringType)
-								l.Add(new MethodListWithDeclaringType(m.DeclaringType));
-							l[l.Count - 1].Add(m.Method);
-						}
-                        return new DynamicInvocationExpression(new MethodGroupExpression(actualTarget, mgrr.MethodName, l, mgrr.TypeArguments), DynamicInvocationType.Invocation, AddArgumentNamesIfNecessary(arguments, argumentNames));
-					}
-				}
-
-				OverloadResolution or = mgrr.PerformOverloadResolution(compilation, arguments, argumentNames, checkForOverflow: checkForOverflow, conversions: conversions, allowOptionalParameters: allowOptionalParameters);
-				if (or.BestCandidate != null) {
-                    if (or.BestCandidate.IsStatic && !or.IsExtensionMethodInvocation && !(mgrr.TargetResult is TypeExpression))
-                        return or.CreateInvocation(new TypeExpression(mgrr.TargetType), returnTypeOverride: isDynamic ? SpecialTypeSpec.Dynamic : null);
-					else
-						return or.CreateInvocation(mgrr.TargetResult, returnTypeOverride: isDynamic ? SpecialTypeSpec.Dynamic : null);
-				} else {
-					// No candidate found at all (not even an inapplicable one).
-					// This can happen with empty method groups (as sometimes used with extension methods)
-					return new UnknownMethodExpression(
-						mgrr.TargetType, mgrr.MethodName, mgrr.TypeArguments, CreateParameters(arguments, argumentNames));
-				}
-			}
-			UnknownMemberExpression umrr = target as UnknownMemberExpression;
-			if (umrr != null) {
-				return new UnknownMethodExpression(umrr.TargetType, umrr.MemberName, umrr.TypeArguments, CreateParameters(arguments, argumentNames));
-			}
-			UnknownIdentifierExpression uirr = target as UnknownIdentifierExpression;
-			if (uirr != null && CurrentTypeDefinition != null) {
-				return new UnknownMethodExpression(CurrentTypeDefinition, uirr.Identifier, EmptyList<IType>.Instance, CreateParameters(arguments, argumentNames));
-			}
-			IMethod invokeMethod = target.Type.GetDelegateInvokeMethod();
-			if (invokeMethod != null) {
-				OverloadResolution or = CreateOverloadResolution(arguments, argumentNames);
-				or.AddCandidate(invokeMethod);
-				return new VSharpInvocationExpression(
-					target, invokeMethod, //invokeMethod.ReturnType.ResolveScope(context),
-					or.GetArgumentsWithConversionsAndNames(), or.BestCandidateErrors,
-					isExpandedForm: or.BestCandidateIsExpandedForm,
-					isDelegateInvocation: true,
-					argumentToParameterMap: or.GetArgumentToParameterMap(),
-					returnTypeOverride: isDynamic ? SpecialTypeSpec.Dynamic : null);
-			}
-			return ErrorResult;
-		}
-
-		/// <summary>
-		/// Resolves an invocation.
-		/// </summary>
-		/// <param name="target">The target of the invocation. Usually a MethodGroupResolveResult.</param>
-		/// <param name="arguments">
-		/// Arguments passed to the method.
-		/// The resolver may mutate this array to wrap elements in <see cref="CastExpression"/>s!
-		/// </param>
-		/// <param name="argumentNames">
-		/// The argument names. Pass the null string for positional arguments.
-		/// </param>
-		/// <returns>InvocationResolveResult or UnknownMethodResolveResult</returns>
-		public Expression ResolveInvocation(Expression target, Expression[] arguments, string[] argumentNames = null)
-		{
-			return ResolveInvocation(target, arguments, argumentNames, allowOptionalParameters: true);
-		}
-		
-		List<IParameter> CreateParameters(Expression[] arguments, string[] argumentNames)
+        internal IList<Expression> AddArgumentNamesIfNecessary(Expression[] arguments, string[] argumentNames)
+        {
+            if (argumentNames == null)
+            {
+                return arguments;
+            }
+            else
+            {
+                var result = new Expression[arguments.Length];
+                for (int i = 0; i < arguments.Length; i++)
+                {
+                    result[i] = (argumentNames[i] != null ? new NamedArgumentExpression(argumentNames[i], arguments[i]) : arguments[i]);
+                }
+                return result;
+            }
+        }
+        internal List<IParameter> CreateParameters(Expression[] arguments, string[] argumentNames)
 		{
 			List<IParameter> list = new List<IParameter>();
 			if (argumentNames == null) {
@@ -2056,8 +1247,7 @@ namespace VSC.TypeSystem.Resolver
 			}
 			return list;
 		}
-		
-		static string GuessParameterName(Expression rr)
+		internal static string GuessParameterName(Expression rr)
 		{
             MemberExpressionStatement mrr = rr as MemberExpressionStatement;
 			if (mrr != null)
@@ -2081,17 +1271,15 @@ namespace VSC.TypeSystem.Resolver
 				return "parameter";
 			}
 		}
-		
-		static string MakeParameterName(string variableName)
+		internal static string MakeParameterName(string variableName)
 		{
 			if (string.IsNullOrEmpty(variableName))
 				return "parameter";
 			if (variableName.Length > 1 && variableName[0] == '_')
 				variableName = variableName.Substring(1);
 			return char.ToLower(variableName[0]) + variableName.Substring(1);
-		}
-		
-		OverloadResolution CreateOverloadResolution(Expression[] arguments, string[] argumentNames = null, IType[] typeArguments = null)
+		}	
+		internal OverloadResolution CreateOverloadResolution(Expression[] arguments, string[] argumentNames = null, IType[] typeArguments = null)
 		{
 			var or = new OverloadResolution(compilation, arguments, argumentNames, typeArguments, conversions);
 			or.CheckForOverflow = checkForOverflow;
@@ -2099,135 +1287,7 @@ namespace VSC.TypeSystem.Resolver
 		}
 		#endregion
 		
-		#region ResolveIndexer
-		/// <summary>
-		/// Resolves an indexer access.
-		/// </summary>
-		/// <param name="target">Target expression.</param>
-		/// <param name="arguments">
-		/// Arguments passed to the indexer.
-		/// The resolver may mutate this array to wrap elements in <see cref="CastExpression"/>s!
-		/// </param>
-		/// <param name="argumentNames">
-		/// The argument names. Pass the null string for positional arguments.
-		/// </param>
-		/// <returns>ArrayAccessResolveResult, InvocationResolveResult, or ErrorResolveResult</returns>
-		public Expression ResolveIndexer(Expression target, Expression[] arguments, string[] argumentNames = null)
-		{
-			switch (target.Type.Kind) {
-				case TypeKind.Dynamic:
-					return new DynamicInvocationExpression(target, DynamicInvocationType.Indexing, AddArgumentNamesIfNecessary(arguments, argumentNames));
-					
-				case TypeKind.Array:
-				case TypeKind.Pointer:
-					// §7.6.6.1 Array access / §18.5.3 Pointer element access
-					AdjustArrayAccessArguments(arguments);
-					return new ArrayAccessExpression(((ElementTypeSpec)target.Type).ElementType, target, arguments);
-			}
-			
-			// §7.6.6.2 Indexer access
-
-			MemberLookup lookup = CreateMemberLookup();
-			var indexers = lookup.LookupIndexers(target);
-
-			if (arguments.Any(a => a.Type.Kind == TypeKind.Dynamic)) {
-				// If we have dynamic arguments, we need to represent the invocation as a dynamic invocation if there is more than one applicable indexer.
-				var or2 = CreateOverloadResolution(arguments, argumentNames, null);
-				var applicableIndexers = indexers.SelectMany(x => x).Where(m => OverloadResolution.IsApplicable(or2.AddCandidate(m))).ToList();
-
-				if (applicableIndexers.Count > 1) {
-					return new DynamicInvocationExpression(target, DynamicInvocationType.Indexing, AddArgumentNamesIfNecessary(arguments, argumentNames));
-				}
-			}
-
-			OverloadResolution or = CreateOverloadResolution(arguments, argumentNames);
-			or.AddMethodLists(indexers);
-			if (or.BestCandidate != null) {
-				return or.CreateInvocation(target);
-			} else {
-				return ErrorResult;
-			}
-		}
-		
-		/// <summary>
-		/// Converts all arguments to int,uint,long or ulong.
-		/// </summary>
-		void AdjustArrayAccessArguments(Expression[] arguments)
-		{
-			for (int i = 0; i < arguments.Length; i++) {
-				if (!(TryConvert(ref arguments[i], compilation.FindType(KnownTypeCode.Int32)) ||
-				      TryConvert(ref arguments[i], compilation.FindType(KnownTypeCode.UInt32)) ||
-				      TryConvert(ref arguments[i], compilation.FindType(KnownTypeCode.Int64)) ||
-				      TryConvert(ref arguments[i], compilation.FindType(KnownTypeCode.UInt64))))
-				{
-					// conversion failed
-					arguments[i] = Convert(arguments[i], compilation.FindType(KnownTypeCode.Int32), Conversion.None);
-				}
-			}
-		}
-		#endregion
-		
-		#region ResolveObjectCreation
-		/// <summary>
-		/// Resolves an object creation.
-		/// </summary>
-		/// <param name="type">Type of the object to create.</param>
-		/// <param name="arguments">
-		/// Arguments passed to the constructor.
-		/// The resolver may mutate this array to wrap elements in <see cref="CastExpression"/>s!
-		/// </param>
-		/// <param name="argumentNames">
-		/// The argument names. Pass the null string for positional arguments.
-		/// </param>
-		/// <param name="allowProtectedAccess">
-		/// Whether to allow calling protected constructors.
-		/// This should be false except when resolving constructor initializers.
-		/// </param>
-		/// <param name="initializerStatements">
-		/// Statements for Objects/Collections initializer.
-		/// <see cref="InvocationExpression.InitializerStatements"/>
-		/// </param>
-		/// <returns>InvocationResolveResult or ErrorResolveResult</returns>
-		public Expression ResolveObjectCreation(IType type, Expression[] arguments, string[] argumentNames = null, bool allowProtectedAccess = false, IList<Expression> initializerStatements = null)
-		{
-			if (type.Kind == TypeKind.Delegate && arguments.Length == 1) {
-				Expression input = arguments[0];
-				IMethod invoke = input.Type.GetDelegateInvokeMethod();
-				if (invoke != null) {
-					input = new MethodGroupExpression(
-						input, invoke.Name,
-						methods: new[] { new MethodListWithDeclaringType(input.Type) { invoke } },
-						typeArguments: EmptyList<IType>.Instance
-					);
-				}
-				return Convert(input, type);
-			}
-			OverloadResolution or = CreateOverloadResolution(arguments, argumentNames);
-			MemberLookup lookup = CreateMemberLookup();
-			var allApplicable = (arguments.Any(a => a.Type.Kind == TypeKind.Dynamic) ? new List<IMethod>() : null);
-			foreach (IMethod ctor in type.GetConstructors()) {
-				if (lookup.IsAccessible(ctor, allowProtectedAccess)) {
-					var orErrors = or.AddCandidate(ctor);
-					if (allApplicable != null && OverloadResolution.IsApplicable(orErrors))
-						allApplicable.Add(ctor);
-				}
-				else
-					or.AddCandidate(ctor, OverloadResolutionErrors.Inaccessible);
-			}
-
-			if (allApplicable != null && allApplicable.Count > 1) {
-				// If we have dynamic arguments, we need to represent the invocation as a dynamic invocation if there is more than one applicable constructor.
-                return new DynamicInvocationExpression(new MethodGroupExpression(null, allApplicable[0].Name, new[] { new MethodListWithDeclaringType(type, allApplicable) }, null), DynamicInvocationType.ObjectCreation, AddArgumentNamesIfNecessary(arguments, argumentNames), initializerStatements);
-			}
-
-			if (or.BestCandidate != null) {
-				return or.CreateInvocation(null, initializerStatements);
-			} else {
-				return new ErrorExpression(type);
-			}
-		}
-		#endregion
-		
+	
 		
 		#region ResolveConditional
 		/// <summary>
@@ -2267,7 +1327,7 @@ namespace VSC.TypeSystem.Resolver
 					return Convert(input, boolean, c);
 				}
 			}
-			return ResolveUnaryOperator(UnaryOperatorType.LogicalNot, Convert(input, boolean, c));
+			return new VSC.AST.UnaryExpression(UnaryOperatorType.LogicalNot, Convert(input, boolean, c), input.Location);
 		}
 		
 
@@ -2286,8 +1346,6 @@ namespace VSC.TypeSystem.Resolver
 			return r.Type.Kind != TypeKind.Unknown && r.Type.Kind != TypeKind.Null;
 		}
 		#endregion
-		
-
 		
 		#region ResolveDefaultValue
 	
@@ -2391,7 +1449,7 @@ namespace VSC.TypeSystem.Resolver
 			}
 			IType arrayType = new ArrayType(compilation, elementType, dimensions);
 			
-			AdjustArrayAccessArguments(sizeArguments);
+			AdjustArrayAccessArguments(this,sizeArguments);
 			
 			if (initializerElements != null) {
 				for (int i = 0; i < initializerElements.Length; i++) {
@@ -2400,6 +1458,20 @@ namespace VSC.TypeSystem.Resolver
 			}
 			return new ArrayCreateExpression(arrayType, sizeArguments, initializerElements);
 		}
+        void AdjustArrayAccessArguments(ResolveContext rc, Expression[] arguments)
+        {
+            for (int i = 0; i < arguments.Length; i++)
+            {
+                if (!(rc.TryConvert(ref arguments[i], rc.compilation.FindType(KnownTypeCode.Int32)) ||
+                      rc.TryConvert(ref arguments[i], rc.compilation.FindType(KnownTypeCode.UInt32)) ||
+                     rc.TryConvert(ref arguments[i], rc.compilation.FindType(KnownTypeCode.Int64)) ||
+                      rc.TryConvert(ref arguments[i], rc.compilation.FindType(KnownTypeCode.UInt64))))
+                {
+                    // conversion failed
+                    arguments[i] = rc.Convert(arguments[i], rc.compilation.FindType(KnownTypeCode.Int32), Conversion.None);
+                }
+            }
+        }
 		#endregion
 		
 		
@@ -2450,7 +1522,7 @@ namespace VSC.TypeSystem.Resolver
 			if (bop == null) {
 				return new OperatorExpression(lhs.Type, linqOp, lhs, this.Convert(rhs, lhs.Type));
 			}
-			Expression bopResult = ResolveBinaryOperator(bop.Value, lhs, rhs);
+			Expression bopResult = new VSC.AST.BinaryExpression(bop.Value, lhs, rhs).DoResolve(this);
 			OperatorExpression opResult = bopResult as OperatorExpression;
 			if (opResult == null || opResult.Operands.Count != 2)
 				return bopResult;

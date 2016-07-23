@@ -19,12 +19,45 @@ namespace VSC.Context
     public class ModuleContext
     {
         public int CounterAnonymousTypes { get; set; }
-        public CompilerContext Compiler { get; set; }
-      
+        public CompilerContext Compiler { get; set; }	
+        readonly Dictionary<int, List<AnonymousTypeClass>> anonymous_types;
+        public AnonymousTypeClass GetAnonymousType(IList<AnonymousTypeParameter> parameters)
+        {
+            List<AnonymousTypeClass> candidates;
+            if (!anonymous_types.TryGetValue(parameters.Count, out candidates))
+                return null;
+
+            int i;
+            foreach (AnonymousTypeClass at in candidates)
+            {
+                for (i = 0; i < parameters.Count; ++i)
+                {
+                    if (!parameters[i].Equals(at.Parameters[i]))
+                        break;
+                }
+
+                if (i == parameters.Count)
+                    return at;
+            }
+
+            return null;
+        }
+        public void AddAnonymousType(AnonymousTypeClass type)
+        {
+            List<AnonymousTypeClass> existing;
+            if (!anonymous_types.TryGetValue(type.Parameters.Count, out existing))
+                if (existing == null)
+                {
+                    existing = new List<AnonymousTypeClass>();
+                    anonymous_types.Add(type.Parameters.Count, existing);
+                }
+
+            existing.Add(type);
+        }
         public ModuleContext(CompilerContext compiler)
         {
             Compiler = compiler;
-
+            anonymous_types = new Dictionary<int, List<AnonymousTypeClass>>();
         }
     }
     public class CompilerContext

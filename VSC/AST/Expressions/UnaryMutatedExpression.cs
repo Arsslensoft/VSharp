@@ -1,4 +1,6 @@
 using System;
+using VSC.TypeSystem;
+using VSC.TypeSystem.Resolver;
 
 namespace VSC.AST
 {
@@ -57,5 +59,47 @@ namespace VSC.AST
                 return expr;
             }
         }
+
+        public override VSC.AST.Expression DoResolve(VSC.TypeSystem.Resolver.ResolveContext rc)
+        {
+            UnaryOperatorType op = UnaryOperatorType.PostIncrement;
+            if (mode == Mode.PreIncrement)
+                op = UnaryOperatorType.PreIncrement;
+            else if (mode == Mode.PreDecrement)
+                op = UnaryOperatorType.Decrement;
+            else if (mode == Mode.PostDecrement)
+                op = UnaryOperatorType.PostDecrement;
+
+            expr = expr.DoResolve(rc);
+            if (expr == null)
+                return null;
+
+            // ++/-- on pointer variables of all types except void*
+            if (expr.Type is PointerTypeSpec)
+            {
+                if (((PointerTypeSpec)expr.Type).ElementType.Kind == TypeKind.Void)
+                {
+                    rc.Report.Error(0, loc, "The operation in question is undefined on void pointers");
+                    return null;
+                }
+            }
+            if (expr.eclass == ExprClass.Variable || expr.eclass == ExprClass.IndexerAccess || expr.eclass == ExprClass.PropertyAccess)
+                expr = expr.DoResolveLeftValue(rc, expr);
+            else
+                rc.Report.Error(0, loc, "The operand of an increment or decrement operator must be a variable, property or indexer");
+
+            operation = new UnaryExpression(op, expr, loc).DoResolve(rc);
+            if (operation == null)
+                return null;
+
+
+            
+	
+            _resolved = true;
+            ResolvedType = operation.Type;
+            eclass = ExprClass.Value;
+            return this;
+        }
+      
     }
 }

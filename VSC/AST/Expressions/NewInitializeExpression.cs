@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace VSC.AST
 {
     public class NewInitializeExpression : NewExpression
@@ -17,5 +19,22 @@ namespace VSC.AST
             }
         }
 
+
+        public override VSC.AST.Expression DoResolve(VSC.TypeSystem.Resolver.ResolveContext rc)
+        {
+            if (_resolved)
+                return this;
+
+            if (!ResolveCommon(rc))
+                return null;
+
+            string[] argumentNames;
+            Expression[] rarguments = Arguments.GetArguments(out argumentNames);
+            initializers = (CollectionOrObjectInitializers)initializers.DoResolve(rc);
+            if (initializers == null)
+                return null;
+
+            return ResolveObjectCreation(rc, loc, ResolvedType, rarguments, argumentNames, false, initializers.Initializers);
+        }
     }
 }

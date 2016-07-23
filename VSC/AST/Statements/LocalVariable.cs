@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using VSC.TypeSystem;
 
 namespace VSC.AST {
@@ -5,8 +6,11 @@ namespace VSC.AST {
     //
     // The information about a user-perceived local variable
     //
-    public sealed class LocalVariable : INamedBlockVariable, ILocalVariable
+    public sealed class LocalVariable : INamedBlockVariable, IVariable
     {
+        readonly DomRegion region;
+     internal   IType type;
+        readonly string name;
         [System.Flags]
         public enum Flags
         {
@@ -23,8 +27,6 @@ namespace VSC.AST {
             ReadonlyMask = ForeachVariable | FixedVariable | UsingVariable
         }
 
-        IType type;
-        readonly string name;
         readonly Location loc;
         readonly Block block;
         Flags flags;
@@ -34,7 +36,48 @@ namespace VSC.AST {
        // HoistedVariable hoisted_variant;
 
 
+        public LocalVariable( IType type, string name)
+			{
+				Debug.Assert(type != null);
+				Debug.Assert(name != null);
+				this.type = type;
+				this.name = name;
+			}
+			
+			public SymbolKind SymbolKind {
+				get { return SymbolKind.Variable; }
+			}
+			
+			public string Name {
+				get { return name; }
+			}
+			
+			public DomRegion Region {
+				get { return region; }
+			}
+			
+			public IType Type {
+				get { return type; }
+               
+			}
+			
+			public bool IsConst {
+				get { return false; }
+			}
+			
+			public object ConstantValue {
+				get { return null; }
+			}
+			
+			public override string ToString()
+			{
+				return type.ToString() + " " + name + ";";
+			}
 
+			public ISymbolReference ToReference()
+			{
+                return new VSC.TypeSystem.Implementation.VariableReference(type.ToTypeReference(), name, region, IsConst, ConstantValue);
+			}
         public LocalVariable(Block block, string name, Location loc)
         {
             this.block = block;
@@ -74,17 +117,7 @@ namespace VSC.AST {
             }
         }
 
-        public Constant ConstantValue
-        {
-            get
-            {
-                return const_value;
-            }
-            set
-            {
-                const_value = value;
-            }
-        }
+   
 
       /*  //
         // Hoisted local variable variant
@@ -177,32 +210,14 @@ namespace VSC.AST {
             }
         }
 
-        public string Name
-        {
-            get
-            {
-                return name;
-            }
-        }
-
-        public IType Type
-        {
-            get
-            {
-                return type;
-            }
-            set
-            {
-                type = value;
-            }
-        }
+     
 
         #endregion
 
         public static LocalVariable CreateCompilerGenerated(IType type, Block block, Location loc)
         {
             LocalVariable li = new LocalVariable(block, GetCompilerGeneratedName(block), Flags.CompilerGenerated | Flags.Used, loc);
-            li.Type = type;
+            li.type = type;
             return li;
         }
         public static string GetCompilerGeneratedName(Block block)
@@ -224,11 +239,7 @@ namespace VSC.AST {
             throw new InternalErrorException("Variable is not readonly");
         }
 
-
-        public override string ToString()
-        {
-            return string.Format("LocalInfo ({0},{1},{2},{3})", name, type, VariableInfo, Location);
-        }
+  
     }
 
 	

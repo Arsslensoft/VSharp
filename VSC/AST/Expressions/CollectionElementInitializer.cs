@@ -13,6 +13,15 @@ namespace VSC.AST
             {
             }
         }
+        sealed class AddMemberAccess : MemberAccess
+        {
+            public AddMemberAccess(Expression expr, Location loc)
+                : base(expr, "Add", loc)
+            {
+            }
+
+         
+        }
         public CollectionElementInitializer(Expression argument)
             : base(null, new Arguments(1))
         {
@@ -35,25 +44,11 @@ namespace VSC.AST
             this.loc = loc;
         }
 
-        public override Expression DoResolve(TypeSystem.Resolver.ResolveContext rc)
-        {
-            //// constructor argument list in collection initializer
-            //Expression[] addArguments = new Expression[arguments.Count];
-            //int i = 0;
-            //foreach (var addArgument in arguments.FilterArgs)
-            //    addArguments[i++] = addArgument.DoResolve(rc);
-
-            //MemberLookup memberLookup = rc.CreateMemberLookup();
-            //var addRR = memberLookup.Lookup(initializedObject, "Add", EmptyList<IType>.Instance, true);
-            //var mgrr = addRR as MethodGroupExpression;
-            //if (mgrr != null)
-            //{
-            //    OverloadResolution or = mgrr.PerformOverloadResolution(rc.Compilation, addArguments, null, false, false, false, resolver.CheckForOverflow, resolver.conversions);
-            //    var invocationRR = or.CreateInvocation(initializedObject);
-            //    initializerStatements.Add(invocationRR);
-            //}
-            return this;
-        }
+        public override Expression DoResolve (ResolveContext ec)
+		{
+			base.expr = new AddMemberAccess (ec.CurrentObjectInitializer, loc);
+			return base.DoResolve (ec);
+		}
       
 
     }

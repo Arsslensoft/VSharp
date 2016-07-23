@@ -418,7 +418,7 @@ namespace VSC.AST
     /// </remarks>
     public  class Expression : IAstNode, IResolveExpression, IEmitExpression
      {
-      
+        public NameLookupMode lookupMode;
         protected ITypeReference type;
          protected IType ResolvedType;
         protected Location loc;
@@ -477,7 +477,7 @@ namespace VSC.AST
         {
             get { return false; }
         }
-		
+
         public static ErrorExpression ErrorResult = new ErrorExpression(Location.Null);
         public virtual string GetSignatureForError()
         {

@@ -19,6 +19,7 @@ namespace VSC.AST
             this._resolved = true;
             this.ResolvedType = UnpackTypeIfByRefParameter(variable);
             this.variable = variable;
+            eclass = ExprClass.Variable;
         }
 
         static IType UnpackTypeIfByRefParameter(IVariable variable)

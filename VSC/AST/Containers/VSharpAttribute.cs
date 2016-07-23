@@ -144,7 +144,8 @@ namespace VSC.AST
                         arguments[i] = pair.Value.Resolve(context);
                         i++;
                     }
-                    rr = context.ResolveObjectCreation(attributeType, arguments, argumentNames);
+
+                    rr = NewExpression.ResolveObjectCreation(context,unresolved.loc,attributeType, arguments, argumentNames);
                     return LazyInit.GetOrSet(ref this.ctorInvocation, rr) as Invocation;
                 }
             }

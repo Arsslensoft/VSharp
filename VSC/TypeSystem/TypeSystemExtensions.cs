@@ -10,7 +10,11 @@ namespace VSC.TypeSystem
 	/// Contains extension methods for the type system.
 	/// </summary>
 	public static class TypeSystemExtensions
-	{
+    {
+        public static bool Implements(this IType type, IType t)
+        {
+            return type.DirectBaseTypes.Contains(t);
+        }
         public static bool IsBuiltinType(this IType type)
         {
             return type.IsKnownType(KnownTypeCode.Byte) || type.IsKnownType(KnownTypeCode.SByte)

@@ -15,7 +15,13 @@ namespace VSC.AST
 {
     public abstract class Constant : Expression, IConstantValue
     {
-
+        public Constant
+            ResolveType(ICompilation c)
+        {
+            this._resolved = true;
+            this.ResolvedType = c.FindType((this.type as KnownTypeReference).KnownTypeCode);
+            return this;
+        }
         public virtual AST.Expression Resolve(ResolveContext resolver)
         {
             return new ConstantExpression(type.Resolve(resolver.CurrentTypeResolveContext), GetValue());
@@ -168,7 +174,6 @@ namespace VSC.AST
             _resolved = true;
             return this;
         }
-
         public static Constant CreateConstantFromValue(ResolveContext rc,IType t, object v, Location loc)
         {
             Constant c = null;
@@ -207,7 +212,7 @@ namespace VSC.AST
 
             if (t.Kind == TypeKind.Enum)
             {
-                var real_type = rc.GetEnumUnderlyingType(t);
+                var real_type = ResolveContext.GetEnumUnderlyingType(t);
                   return CreateConstantFromValue(rc,real_type, v, loc);
             }
 
@@ -221,6 +226,62 @@ namespace VSC.AST
 
             if (c != null)
                 c = (Constant)c.DoResolve(rc);
+
+            return c;
+
+        }
+        public static Constant CreateConstantFromValue(ICompilation rc, IType t, object v, Location loc)
+        {
+            Constant c = null;
+            switch ((t as ITypeDefinition).KnownTypeCode)
+            {
+
+                case KnownTypeCode.Int32:
+                    c = new IntConstant((int)v, loc);
+                    break;
+                case KnownTypeCode.String:
+                    c = new StringConstant((string)v, loc); break;
+                case KnownTypeCode.UInt32:
+                    c = new UIntConstant((uint)v, loc); break;
+                case KnownTypeCode.Int64:
+                    c = new LongConstant((long)v, loc); break;
+                case KnownTypeCode.UInt64:
+                    c = new ULongConstant((ulong)v, loc); break;
+                case KnownTypeCode.Single:
+                    c = new FloatConstant((float)v, loc); break;
+                case KnownTypeCode.Double:
+                    c = new DoubleConstant((double)v, loc); break;
+                case KnownTypeCode.Int16:
+                    c = new ShortConstant((short)v, loc); break;
+                case KnownTypeCode.UInt16:
+                    c = new UShortConstant((ushort)v, loc); break;
+                case KnownTypeCode.SByte:
+                    c = new SByteConstant((sbyte)v, loc); break;
+                case KnownTypeCode.Byte:
+                    c = new ByteConstant((byte)v, loc); break;
+                case KnownTypeCode.Char:
+                    c = new CharConstant((char)v, loc); break;
+                case KnownTypeCode.Boolean:
+                    c = new BoolConstant((bool)v, loc); break;
+            }
+
+
+            if (t.Kind == TypeKind.Enum)
+            {
+                var real_type = ResolveContext.GetEnumUnderlyingType(t);
+                return CreateConstantFromValue(rc, real_type, v, loc);
+            }
+
+            if (v == null)
+            {
+                // TODO:Support nullable constant ?
+
+                if (t.IsReferenceType.HasValue && t.IsReferenceType.Value)
+                    c = new NullConstant(t, loc);
+            }
+
+            if (c != null)
+                c = ((Constant) c).ResolveType(rc);
 
             return c;
 

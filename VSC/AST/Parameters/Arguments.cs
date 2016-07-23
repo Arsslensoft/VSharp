@@ -49,17 +49,12 @@ namespace VSC.AST
             args.Add(arg);
         }
 
-        public void Resolve(ResolveContext rc, out bool dynamic)
+        public void Resolve(ResolveContext rc)
         {
-            dynamic = false;
             foreach (Argument a in args)
-            {
                 a.Resolve(rc);
-                if (a.Expr.Type.Kind == TypeKind.Dynamic && !a.IsByRef)
-                    dynamic = true;
-            }
+            
         }
-   
        public Expression[] GetArguments(out string[] argumentNames)
         {
             argumentNames = null;
