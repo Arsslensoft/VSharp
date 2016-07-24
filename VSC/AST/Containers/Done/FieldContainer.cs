@@ -6,6 +6,7 @@ using VSC.TypeSystem.Resolver;
 
 namespace VSC.AST
 {
+    
     /// <summary>
     /// Default implementation of <see cref="IUnresolvedField"/>.
     /// </summary>
@@ -24,6 +25,11 @@ namespace VSC.AST
             get { return ResolvedField.ReturnType; }
         }
 
+        public bool IsInitializationRequired
+        {
+            get { return init != null; }
+        }
+      
         public FieldContainer(FieldContainer baseconstant, MemberName name,Modifiers allowed, SymbolKind sym)
             : this(baseconstant.Parent, baseconstant.TypeExpression, baseconstant.mod_flags, allowed, baseconstant.member_name, baseconstant.attribs,sym)
         {
@@ -33,17 +39,17 @@ namespace VSC.AST
         public FieldContainer(TypeContainer parent, FullNamedExpression type, Modifiers mods, Modifiers allowed, MemberName name, VSharpAttributes attr,SymbolKind sym)
             : base(parent,type,mods, allowed, Modifiers.PRIVATE, name , attr,sym)
         {
-            
 
 
+            IsReadOnly = (mods & VSC.TypeSystem.Modifiers.READONLY) != 0;
             if ((mods & Modifiers.ABSTRACT) != 0)
                 Report.Error(233, Location, "The modifier 'abstract' is not valid on fields. Try using a property instead");
         }
 
 
-        private Expression init = null;
+        protected Expression init = null;
 
-        public Expression Initializer
+        public virtual Expression Initializer
         {
             get { return init; }
             set

@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ICSharpCode.NRefactory.CSha
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ICSharpCode.NRefactory.Demo", "..\NRefactory\ICSharpCode.NRefactory.Demo\ICSharpCode.NRefactory.Demo.csproj", "{9C19E629-C93E-4ACB-9A4B-13072B5AEF9D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Std", "..\Std\Std.csproj", "{E64B95B5-5246-417B-BD30-F56C56634273}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug - AST|Any CPU = Debug - AST|Any CPU
@@ -112,6 +114,21 @@ Global
 		{9C19E629-C93E-4ACB-9A4B-13072B5AEF9D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9C19E629-C93E-4ACB-9A4B-13072B5AEF9D}.Release|x86.ActiveCfg = Release|x86
 		{9C19E629-C93E-4ACB-9A4B-13072B5AEF9D}.Release|x86.Build.0 = Release|x86
+		{E64B95B5-5246-417B-BD30-F56C56634273}.Debug - AST|Any CPU.ActiveCfg = Debug|Any CPU
+		{E64B95B5-5246-417B-BD30-F56C56634273}.Debug - AST|Any CPU.Build.0 = Debug|Any CPU
+		{E64B95B5-5246-417B-BD30-F56C56634273}.Debug - AST|x86.ActiveCfg = Debug|Any CPU
+		{E64B95B5-5246-417B-BD30-F56C56634273}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E64B95B5-5246-417B-BD30-F56C56634273}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E64B95B5-5246-417B-BD30-F56C56634273}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E64B95B5-5246-417B-BD30-F56C56634273}.net_4_5_Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E64B95B5-5246-417B-BD30-F56C56634273}.net_4_5_Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E64B95B5-5246-417B-BD30-F56C56634273}.net_4_5_Debug|x86.ActiveCfg = Debug|Any CPU
+		{E64B95B5-5246-417B-BD30-F56C56634273}.net_4_5_Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E64B95B5-5246-417B-BD30-F56C56634273}.net_4_5_Release|Any CPU.Build.0 = Release|Any CPU
+		{E64B95B5-5246-417B-BD30-F56C56634273}.net_4_5_Release|x86.ActiveCfg = Release|Any CPU
+		{E64B95B5-5246-417B-BD30-F56C56634273}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E64B95B5-5246-417B-BD30-F56C56634273}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E64B95B5-5246-417B-BD30-F56C56634273}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

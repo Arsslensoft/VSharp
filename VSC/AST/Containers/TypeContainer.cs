@@ -27,7 +27,10 @@ namespace VSC.AST
                 int idx = 0;
          
                     foreach (var tp in mn.TypeParameters.names)
+                        if(!typeParameters.Any(x => x.Name == tp.Name))
                         this.typeParameters.Add(new UnresolvedTypeParameterSpec(SymbolKind.TypeDefinition, idx++,tp.Location, tp.Name));
+                        else Report.Error(0, tp.Location,
+    "Duplicate type parameter `{0}'", tp.ToString());
                 
             }
         }
@@ -179,11 +182,19 @@ namespace VSC.AST
         {
             get { return loc; }
         }
-
+        protected Dictionary<string, EntityCore> defined_names;
+        public Dictionary<string, EntityCore> DefinedNames
+        {
+            get
+            {
+                return defined_names;
+            }
+        }
         public PackageContainer ParentPackageContainer = null;
         public TypeContainer(TypeContainer parent, MemberName name, Location l, CompilationSourceFile file)
             : base(parent, name.Name)
         {
+            defined_names = new Dictionary<string, EntityCore>();
             HasExtensionMethods = false;
             SetTypeParameters(name);
             if (parent.Name != "default")
@@ -207,6 +218,7 @@ namespace VSC.AST
         public TypeContainer(PackageContainer parent, MemberName name, Location l, CompilationSourceFile file)
             : base(parent.NamespaceName, name.Name)
         {
+            defined_names = new Dictionary<string, EntityCore>();
             SetTypeParameters(name);
             HasExtensionMethods = false;
             UnresolvedFile = file;
@@ -269,7 +281,42 @@ namespace VSC.AST
 
 #endregion
 
+        //
+        // Adds the member to defined_names table. It tests for duplications and enclosing name conflicts
+        //
+        public virtual void AddNameToContainer(EntityCore symbol, string name)
+        {
+            if (((ModFlags | symbol.ModFlags) & Modifiers.COMPILER_GENERATED) != 0)
+                return;
 
+            EntityCore mc;
+            if (!defined_names.TryGetValue(name, out mc))
+            {
+                defined_names.Add(name, symbol);
+                return;
+            }
+
+            
+            InterfaceMemberContainer im = mc as InterfaceMemberContainer;
+            if (im != null && im.IsExplicitInterfaceImplementation)
+                return;
+
+            if ((mc.ModFlags & Modifiers.PARTIAL) != 0 && (symbol is ClassOrStructDeclaration || symbol is InterfaceDeclaration))
+            {
+                Report.Error(0, symbol.Location,
+                  "Missing partial modifier on declaration of type `{0}'. Another partial declaration of this type exists",
+                  symbol.GetSignatureForError());
+                return;
+            }
+
+
+                Report.Error(0, symbol.Location,
+                    "The type `{0}' already contains a definition for `{1}'",
+                    GetSignatureForError(), name);
+            
+
+            return;
+        }
         /// <summary>
         /// Resolves base types
         /// </summary>
@@ -287,8 +334,9 @@ namespace VSC.AST
             return true;
         }
       
-        public void AddMember(MemberContainer member)
+        public virtual void AddMember(MemberContainer member)
         {
+            AddNameToContainer(member, member.Name);
             Members.Add(member);
             member.ApplyInterningProvider(CompilerContext.InternProvider);
         }

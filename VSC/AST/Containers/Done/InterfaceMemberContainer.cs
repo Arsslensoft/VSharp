@@ -79,7 +79,24 @@ namespace VSC.AST
         {
             return GetFullName(name.Name);
         }
+        public override bool IsOverloadAllowed(MemberContainer overload)
+        {
+            //
+            // Two members can differ in their explicit interface
+            // type parameter only
+            //
+            InterfaceMemberContainer imb = overload as InterfaceMemberContainer;
+            if (imb != null && imb.IsExplicitInterfaceImplementation)
+            {
+                if (IsExplicitInterfaceImplementation)
+                {
+                    caching_flags |= Flags.MethodOverloadsExist;
+                }
+                return true;
+            }
 
+            return IsExplicitInterfaceImplementation;
+        }
         public string GetFullName(string name)
         {
             if (!IsExplicitInterfaceImplementation)

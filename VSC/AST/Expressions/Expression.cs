@@ -161,7 +161,8 @@ namespace VSC.AST
         public ErrorExpression(Location loc)
         {
             this.loc = loc;
-            type = KnownTypeReference.Void;
+            type = SpecialTypeSpec.UnknownType;
+            ResolvedType = SpecialTypeSpec.UnknownType;
         }
         public ErrorExpression(IType t)
      
@@ -178,7 +179,13 @@ namespace VSC.AST
             _resolved = true;
 
         }
-     
+        public override bool IsError
+        {
+            get
+            {
+                return true;
+            }
+        }
     }
 
     /// <summary>

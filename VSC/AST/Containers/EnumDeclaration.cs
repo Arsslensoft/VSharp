@@ -25,6 +25,17 @@ namespace VSC.AST
             mod_flags |= Modifiers.SEALED;
             IsSealed = true;
         }
+        public static readonly string UnderlyingValueField = "value__";
+        public override void AddMember(MemberContainer member)
+        {
+            if (member.Name == UnderlyingValueField)
+            {
+                Report.Error(0, member.Location, "An item in an enumeration cannot have an identifier `{0}'",
+                    UnderlyingValueField);
+                return;
+            }
+            base.AddMember(member);
+        }
 
         public override void ResolveWithCurrentContext(ResolveContext rc)
         {

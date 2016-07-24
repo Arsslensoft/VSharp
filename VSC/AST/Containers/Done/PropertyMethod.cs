@@ -54,7 +54,7 @@ namespace VSC.AST
             //
             // Check for custom access modifier
             //
-            if ((ModFlags & Modifiers.AccessibilityMask) == 0)
+            if (Accessibility == TypeSystem.Accessibility.None)
                 ModFlags |= Property.ModFlags;
             else
             {

@@ -21,6 +21,21 @@ namespace VSC.AST
     [Serializable]
     public abstract class MemberContainer : EntityCore, IUnresolvedMember, IAstNode, IResolve
     {
+        [System.Flags]
+        public enum Flags
+        {
+            Obsolete_Undetected = 1,		// Obsolete attribute has not been detected yet
+            Obsolete = 1 << 1,			// Type has obsolete attribute
+            MethodOverloadsExist = 1 << 2,		// Test for duplication must be performed
+            PartialDefinitionExists = 1 << 3,	// Set when corresponding partial method definition exists
+            HasStructLayout = 1 << 4,			// Has StructLayoutAttribute
+
+        }
+
+        /// <summary>
+        ///   MemberCore flags at first detected then cached
+        /// </summary>
+        internal Flags caching_flags;
 
         public abstract IEntity ResolvedEntity { get; }
         public abstract IType ResolvedMemberType { get; }
@@ -61,9 +76,10 @@ namespace VSC.AST
 
 
         protected VSharpAttributes attribs;
-         protected MemberContainer(){}
+        protected MemberContainer() { caching_flags = Flags.Obsolete_Undetected; }
         protected MemberContainer(TypeContainer parent, FullNamedExpression type, Modifiers mod, Modifiers allowed_mod, Modifiers def_mod, MemberName name, VSharpAttributes attrs, SymbolKind sym)
-        {
+         {
+             caching_flags = Flags.Obsolete_Undetected;
             this.SymbolKind = sym;
 			this.Parent = parent;
             this.declaringTypeDefinition = parent;
@@ -126,6 +142,7 @@ namespace VSC.AST
             IsShadowing = (modifiers & VSC.TypeSystem.Modifiers.NEW) != 0;
             IsStatic = (modifiers & VSC.TypeSystem.Modifiers.STATIC) != 0;
             IsVirtual = (modifiers & VSC.TypeSystem.Modifiers.VIRTUAL) != 0;
+     
         }
         public Accessibility? GetAccessibility(VSC.TypeSystem.Modifiers modifiers)
         {
@@ -147,7 +164,7 @@ namespace VSC.AST
         }
 
  
-        protected FullNamedExpression type_expr;
+        internal FullNamedExpression type_expr;
         public FullNamedExpression TypeExpression
         {
             get
@@ -159,9 +176,17 @@ namespace VSC.AST
                 type_expr = value;
             }
         }
-  
 
-      
+
+
+
+        /// <summary>
+        /// Returns true when a member supports multiple overloads (methods, indexers, etc)
+        /// </summary>
+        public virtual bool IsOverloadAllowed(MemberContainer  overload)
+        {
+            return false;
+        }
 
 
         public void AcceptVisitor(IVisitor visitor)

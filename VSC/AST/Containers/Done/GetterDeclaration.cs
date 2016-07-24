@@ -15,5 +15,10 @@ namespace VSC.AST
         {
 
         }
+
+        public override void ResolveWithCurrentContext(ResolveContext rc)
+        {
+            // TODO:Resolve Accessor Block
+        }
     }
 }

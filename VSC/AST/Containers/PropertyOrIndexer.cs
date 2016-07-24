@@ -23,6 +23,7 @@ namespace VSC.AST
         {
             get { return ResolvedProperty.ReturnType; }
         }
+     
         public PropertyOrIndexer(TypeContainer parent, FullNamedExpression type, Modifiers mod, Modifiers allowed_mod,
             MemberName name, VSharpAttributes attrs, SymbolKind sym)
          :base(parent,type, mod,allowed_mod, name,attrs,sym)
@@ -171,14 +172,15 @@ namespace VSC.AST
             //
             if (AccessorSecond != null)
             {
-                if ((Getter.ModFlags & Modifiers.AccessibilityMask) != 0 && (Setter.ModFlags & Modifiers.AccessibilityMask) != 0)
+               
+                if ((Getter.Accessibility != TypeSystem.Accessibility.None) && (Setter.Accessibility != TypeSystem.Accessibility.None))
                 {
                     rc.Report.Error(274, Location, "`{0}': Cannot specify accessibility modifiers for both accessors of the property or indexer",
                         GetSignatureForError());
                 }
             }
             else if ((ModFlags & Modifiers.OVERRIDE) == 0 &&
-              ((Getter == null && (Setter.ModFlags & Modifiers.AccessibilityMask) != 0) || (Setter == null && (Getter.ModFlags & Modifiers.AccessibilityMask) != 0)))
+              ((Getter == null && Setter.Accessibility != TypeSystem.Accessibility.None) || (Setter == null && Getter.Accessibility != TypeSystem.Accessibility.None)))
             {
                 rc.Report.Error(276, Location,
                           "`{0}': accessibility modifiers on accessors may only be used if the property or indexer has both a get and a set accessor",
@@ -220,10 +222,6 @@ namespace VSC.AST
 
         public override bool DoResolve(ResolveContext resolver)
         {
-            ResolveContext oldResolver = resolver;
-            try
-            {
-              
              
                     // Re-discover the property:
              
@@ -238,13 +236,7 @@ namespace VSC.AST
                 
                 // We need to use the property as current member so that indexer parameters can be resolved correctly.
                     base.DoResolve(resolver);
-                    resolver = resolver.WithCurrentMember(ResolvedProperty);
-                ResolveWithCurrentContext(resolver);
-            }
-            finally
-            {
-                resolver = oldResolver;
-            }
+     
             return true;
         }
     }

@@ -42,7 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AST\anonymous.cs" />
-    <Compile Include="AST\Containers\AbstractPropertyEventMethod.cs" />
+    <Compile Include="AST\Containers\Done\AbstractPropertyEventMethod.cs" />
     <Compile Include="AST\Containers\Done\FieldContainer.cs" />
     <Compile Include="AST\Containers\Done\InterfaceMemberContainer.cs" />
     <Compile Include="AST\Containers\PropertyBasedMember.cs" />
@@ -69,14 +69,14 @@
     <Compile Include="AST\Expressions\ConditionalExpression.cs" />
     <Compile Include="AST\Expressions\ConditionalMemberAccess.cs" />
     <Compile Include="AST\Constants\Constant.cs" />
-    <Compile Include="AST\Containers\AddEventAccessor.cs" />
+    <Compile Include="AST\Containers\Done\AddEventAccessor.cs" />
     <Compile Include="AST\Parameters\Argument.cs" />
     <Compile Include="AST\Parameters\Arguments.cs" />
     <Compile Include="AST\Containers\EventFieldDeclaration.cs" />
     <Compile Include="AST\Containers\VSharpAttribute.cs" />
     <Compile Include="AST\Containers\ClassDeclaration.cs" />
     <Compile Include="AST\Containers\ClassOrStructDeclaration.cs" />
-    <Compile Include="AST\Containers\ConstantDeclaration.cs" />
+    <Compile Include="AST\Containers\Done\ConstantDeclaration.cs" />
     <Compile Include="AST\Containers\ConstructorDeclaration.cs" />
     <Compile Include="AST\Containers\ConstructorInitializer.cs" />
     <Compile Include="AST\Containers\ConstructorSelfInitializer.cs" />
@@ -84,15 +84,15 @@
     <Compile Include="AST\Containers\DelegateDeclaration.cs" />
     <Compile Include="AST\Containers\DestructorDeclaration.cs" />
     <Compile Include="AST\Containers\EnumDeclaration.cs" />
-    <Compile Include="AST\Containers\EnumMemberDeclaration.cs" />
-    <Compile Include="AST\Containers\EventAccessor.cs" />
+    <Compile Include="AST\Containers\Done\EnumMemberDeclaration.cs" />
+    <Compile Include="AST\Containers\Done\EventAccessor.cs" />
     <Compile Include="AST\Containers\EventBase.cs" />
     <Compile Include="AST\Containers\EventDeclaration.cs" />
     <Compile Include="AST\Containers\GeneratedSuperInitializer.cs" />
-    <Compile Include="AST\Containers\GetterDeclaration.cs" />
+    <Compile Include="AST\Containers\Done\GetterDeclaration.cs" />
     <Compile Include="AST\Containers\IndexerDeclaration.cs" />
-    <Compile Include="AST\Containers\IndexerGetterDeclaration.cs" />
-    <Compile Include="AST\Containers\IndexerSetterDeclaration.cs" />
+    <Compile Include="AST\Containers\Done\IndexerGetterDeclaration.cs" />
+    <Compile Include="AST\Containers\Done\IndexerSetterDeclaration.cs" />
     <Compile Include="AST\Containers\InterfaceDeclaration.cs" />
     <Compile Include="AST\Containers\Done\FieldDeclaration.cs" />
     <Compile Include="AST\Containers\MethodDeclaration.cs" />
@@ -102,10 +102,10 @@
     <Compile Include="AST\Containers\OperatorDeclaration.cs" />
     <Compile Include="AST\Containers\PackageContainer.cs" />
     <Compile Include="AST\Containers\PropertyDeclaration.cs" />
-    <Compile Include="AST\Containers\PropertyMethod.cs" />
+    <Compile Include="AST\Containers\Done\PropertyMethod.cs" />
     <Compile Include="AST\Containers\PropertyOrIndexer.cs" />
-    <Compile Include="AST\Containers\RemoveEventAccessor.cs" />
-    <Compile Include="AST\Containers\SetterDeclaration.cs" />
+    <Compile Include="AST\Containers\Done\RemoveEventAccessor.cs" />
+    <Compile Include="AST\Containers\Done\SetterDeclaration.cs" />
     <Compile Include="AST\Containers\StructDeclaration.cs" />
     <Compile Include="AST\Containers\TypeContainer.cs" />
     <Compile Include="AST\Containers\TypeDeclaration.cs" />

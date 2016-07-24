@@ -68,7 +68,20 @@ namespace VSC.AST
         {
             get { return ResolvedMethod; }
         }
-    
+        public override bool IsOverloadAllowed(MemberContainer overload)
+        {
+            if (overload is MethodCore)
+            {
+                caching_flags |= Flags.MethodOverloadsExist;
+                return true;
+            }
+
+            if (overload is AbstractPropertyEventMethod)
+                return true;
+
+            return base.IsOverloadAllowed(overload);
+        }
+
 
         public MethodCore(TypeContainer parent, FullNamedExpression returnType, Modifiers mod,Modifiers allowed,
             MemberName name, ParametersCompiled parameters, VSharpAttributes attrs, SymbolKind sym)

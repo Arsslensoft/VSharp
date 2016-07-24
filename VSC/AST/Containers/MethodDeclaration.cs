@@ -10,6 +10,14 @@ namespace VSC.AST
     [Serializable]
     public class MethodDeclaration : MethodCore
     {
+        public override bool IsOverloadAllowed(MemberContainer overload)
+        {
+            if (overload is IndexerDeclaration)
+                return false;
+
+            return base.IsOverloadAllowed(overload);
+        }
+
         public void SetTypeParameters(MemberName mn)
         {
             if (mn.TypeParameters != null)
@@ -20,17 +28,24 @@ namespace VSC.AST
                 {
                     foreach (var tp in mn.TypeParameters.names)
                     {
-
-                        var tpar = new MethodTypeParameterWithInheritedConstraints(idx++, tp.Name,tp.Location);
-                        tpar.ApplyInterningProvider(CompilerContext.InternProvider);
-                        this.typeParameters.Add(tp);
+                        if (!typeParameters.Any(x => x.Name == tp.Name))
+                        {
+                            var tpar = new MethodTypeParameterWithInheritedConstraints(idx++, tp.Name, tp.Location);
+                            tpar.ApplyInterningProvider(CompilerContext.InternProvider);
+                            this.typeParameters.Add(tp);
+                        }
+                        else Report.Error(0, tp.Location,
+       "Duplicate type parameter `{0}'", tp.ToString());
                     }
                 }
                 else
                 {
                     this.typeParameters = new List<IUnresolvedTypeParameter>();
                     foreach (var tp in mn.TypeParameters.names)
+                        if (!typeParameters.Any(x => x.Name == tp.Name))
                         this.typeParameters.Add(new UnresolvedTypeParameterSpec(SymbolKind.Method, idx++, tp.Location,tp.Name));
+                        else Report.Error(0, tp.Location,
+        "Duplicate type parameter `{0}'", tp.ToString());
                 }
             }
         }

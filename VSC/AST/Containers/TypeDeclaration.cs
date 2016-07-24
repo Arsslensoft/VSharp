@@ -154,9 +154,10 @@ namespace VSC.AST
             }
             else if (Kind == TypeKind.Enum)
             {
+                
                 // only primitive integral types
                 ResolvedBaseType = rc.CurrentTypeDefinition.DirectBaseTypes.FirstOrDefault();
-                if (ResolvedBaseType != null)
+                if (ResolvedBaseType != null && !ResolvedBaseType.IsKnownType(KnownTypeCode.Enum))
                 {
                     if (!ResolvedBaseType.IsKnownType(KnownTypeCode.Byte) && !ResolvedBaseType.IsKnownType(KnownTypeCode.SByte)
                         && !ResolvedBaseType.IsKnownType(KnownTypeCode.Int16) && !ResolvedBaseType.IsKnownType(KnownTypeCode.UInt16)

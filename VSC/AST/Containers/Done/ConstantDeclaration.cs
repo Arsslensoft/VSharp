@@ -57,35 +57,18 @@ namespace VSC.AST
                 return false;
 
 
-            if (IsConstantCompatible(ResolvedField.ReturnType))
+            if (!IsConstantCompatible(ResolvedField.ReturnType))
             {
 
-                if (ResolvedField.ConstantValue != null)
-                {
-                    AST.Expression rr = ResolvedField.constantValue;
-                    if (rr.IsError)
-                        rc.Report.Error(196, Location, "Cannot convert source type `{0}' to target type `{1}'", rr.Type.ToString(), ResolvedField.ReturnType.ToString());
+                if (ResolvedField.ReturnType is TypeParameterSpec)
+                    rc.Report.Error(197, Location,
+                        "Type parameter `{0}' cannot be declared const", ResolvedField.ReturnType.ToString());
 
-                }
-          
-                else if (Initializer != null && Initializer.UnresolvedTypeReference != null)
-                    rc.Report.Error(196, Location, "Cannot convert source type `{0}' to target type `{1}'", Initializer.UnresolvedTypeReference.ToString(), ResolvedField.ReturnType.ToString());
                 else
-                    rc.Report.Error(196, Location, "Cannot convert value to target type `{0}'", ResolvedField.ReturnType.ToString());
+                    rc.Report.Error(198, Location,
+                        "The type `{0}' cannot be declared const", ResolvedField.ReturnType.ToString());
 
-                return true;
-                
             }
-          
-            if (ResolvedField.ReturnType is TypeParameterSpec)
-                rc.Report.Error(197, Location,
-                    "Type parameter `{0}' cannot be declared const", ResolvedField.ReturnType.ToString());
-                
-            else
-                rc.Report.Error(198,Location,
-                    "The type `{0}' cannot be declared const", ResolvedField.ReturnType.ToString());
-
-
             return false;
         }
    
