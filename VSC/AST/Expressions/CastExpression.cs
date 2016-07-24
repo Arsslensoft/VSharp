@@ -10,8 +10,7 @@ namespace VSC.AST
     /// </summary>
     public class CastExpression : ShimExpression, IConstantValue
     {
-        Expression target_type;
-
+       protected Expression target_type;
         public CastExpression(Expression cast_type, Expression expr, Location loc)
             : base(expr)
         {
@@ -96,9 +95,14 @@ namespace VSC.AST
 
             // V# 4.0 spec: §7.7.6 Cast expressions
             Conversion c = rc.conversions.ExplicitConversion(expr, ResolvedType);
+            if (!c.IsValid){
+                rc.Report.Error(196, Location, "Cannot convert source type `{0}' to target type `{1}'", expr.Type.ToString(), ResolvedType.ToString());
+                   return ErrorResult;
+            }
 
             if (expr.IsCompileTimeConstant && !c.IsUserDefined)
             {
+               
                 TypeCode code = ReflectionHelper.GetTypeCode(ResolvedType);
                 if (code >= TypeCode.Boolean && code <= TypeCode.Decimal && expr.ConstantValue != null)
                 {
@@ -142,21 +146,121 @@ namespace VSC.AST
                     }
                 }
             }
+         
             return new CastExpression(ResolvedType, expr, c, rc.checkForOverflow);
         }
-        //public override IConstantValue BuilConstantValue( bool isAttributeConstant)
-        //{
-        //    Constant v = Expr.BuilConstantValue( isAttributeConstant) as Constant;
-        //    if (v == null)
-        //        return null;
-        //    var typeReference = TargetType as ITypeReference;
-        //    return new ConstantCast(typeReference, v, false);
-        //}
+
+ 
         public override VSC.AST.Expression Constantify(VSC.TypeSystem.Resolver.ResolveContext resolver)
         {
-            return DoResolve(resolver) as Constant;
+            return DoResolve(resolver);
         }
         
 
     }
+
+    public class ImplicitCastExpression : CastExpression
+    {
+        public ImplicitCastExpression(Expression cast_type, Expression expr, Location loc)
+            : base(cast_type, expr,loc)
+        {
+      
+        }
+
+        public override Expression DoResolve(ResolveContext rc)
+        {
+            if (_resolved)
+                return this;
+
+            expr = expr.DoResolve(rc);
+            if (expr == null)
+                return null;
+
+            eclass = ExprClass.Value;
+            if (ResolvedType == null)
+            {
+                ResolvedType = target_type.ResolveAsType(rc);
+
+
+                if (ResolvedType == null)
+                    return null;
+            }
+
+            if (rc.IsStaticType(ResolvedType))
+            {
+                rc.Report.Error(246, loc, "Cannot convert to static type `{0}'", ResolvedType.ToString());
+                return null;
+            }
+            Conversion c = rc.conversions.ImplicitConversion(expr, ResolvedType);
+
+            if (!c.IsValid && !c.IsNumericConversion)
+            {
+                c = rc.conversions.ExplicitConversion(expr, ResolvedType);
+                if (c.IsValid)
+                    rc.Report.Error(0, loc,
+                        "Cannot implicitly convert type `{0}' to `{1}'. An explicit conversion exists (are you missing a cast?)",
+                     expr.Type.ToString(), ResolvedType.ToString());
+                else
+                    rc.Report.Error(0, loc, "Cannot implicitly convert type `{0}' to `{1}'",
+                        expr.Type.ToString(), ResolvedType.ToString());
+                
+                return ErrorResult;
+            }
+            //else if (!c.IsValid && c.IsNumericConversion)
+            //    rc.Report.Warning(0, 4 ,loc, "Implicit conversion from type `{0}' to `{1}' was performed",
+            //           expr.Type.ToString(), ResolvedType.ToString());
+
+
+            if (expr.IsCompileTimeConstant && !c.IsUserDefined)
+            {
+              TypeCode code = ReflectionHelper.GetTypeCode(ResolvedType);
+                if (code >= TypeCode.Boolean && code <= TypeCode.Decimal && expr.ConstantValue != null)
+                {
+                    try
+                    {
+                        return Constant.CreateConstantFromValue(rc, ResolvedType, rc.VSharpPrimitiveCast(code, expr.ConstantValue), loc);
+                    }
+                    catch (OverflowException)
+                    {
+                        return new ErrorExpression(ResolvedType, loc);
+                    }
+                    catch (InvalidCastException)
+                    {
+                        return new ErrorExpression(ResolvedType, loc);
+                    }
+                }
+                else if (code == TypeCode.String)
+                {
+                    if (expr.ConstantValue == null || expr.ConstantValue is string)
+                        return Constant.CreateConstantFromValue(rc, ResolvedType, expr.ConstantValue, loc);
+                    else
+                        return new ErrorExpression(ResolvedType, loc);
+                }
+                else if (ResolvedType.Kind == TypeKind.Enum)
+                {
+                    code = ReflectionHelper.GetTypeCode(ResolveContext.GetEnumUnderlyingType(ResolvedType));
+                    if (code >= TypeCode.SByte && code <= TypeCode.UInt64 && expr.ConstantValue != null)
+                    {
+                        try
+                        {
+                            return Constant.CreateConstantFromValue(rc, ResolvedType, rc.VSharpPrimitiveCast(code, expr.ConstantValue), loc);
+                        }
+                        catch (OverflowException)
+                        {
+                            return new ErrorExpression(ResolvedType, loc);
+                        }
+                        catch (InvalidCastException)
+                        {
+                            return new ErrorExpression(ResolvedType, loc);
+                        }
+                    }
+                }
+            }
+
+            return new CastExpression(ResolvedType, expr, c, rc.checkForOverflow);
+        }
+
+
+    }
+
 }

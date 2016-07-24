@@ -6,7 +6,7 @@ namespace VSC.AST
     /// <summary>
     ///   Implements the unchecked expression
     /// </summary>
-    public class UnCheckedExpression : Expression
+    public class UnCheckedExpression : Expression, IConstantValue
     {
 
         public Expression Expr;
@@ -46,13 +46,9 @@ namespace VSC.AST
             eclass = Expr.eclass;
             return this;
         }
-        //public override IConstantValue BuilConstantValue( bool isAttributeConstant)
-        //{
-        //    Constant v = Expr.BuilConstantValue(isAttributeConstant) as Constant;
-        //    if (v != null)
-        //        return new ConstantCheckedExpression(false, v);
-        //    else
-        //        return null;
-        //}
+        public override Expression Constantify(ResolveContext resolver)
+        {
+            return DoResolve(resolver);
+        }
     }
 }

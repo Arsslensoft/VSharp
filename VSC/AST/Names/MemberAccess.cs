@@ -14,32 +14,32 @@ namespace VSC.AST
     ///   Implements the member access expression
     /// </summary>
     [Serializable]
-    public class MemberAccess : TypeNameExpression, ISupportsInterning
+    public class MemberAccess : TypeNameExpression, ISupportsInterning, IConstantValue
     {
         protected Expression expr;
 
-        public MemberAccess(Expression expr, string id, NameLookupMode lookupMode = NameLookupMode.Type)
+        public MemberAccess(Expression expr, string id, NameLookupMode lookupMode = NameLookupMode.Expression)
             : base(id, expr.Location)
         {
             this.expr = expr;
             this.typeArgumentsrefs = EmptyList<ITypeReference>.Instance;
             this.lookupMode = lookupMode;
         }
-        public MemberAccess(Expression expr, string identifier, Location loc, NameLookupMode lookupMode = NameLookupMode.Type)
+        public MemberAccess(Expression expr, string identifier, Location loc, NameLookupMode lookupMode = NameLookupMode.Expression)
             : base(identifier, loc)
         {
             this.expr = expr;
             this.typeArgumentsrefs = EmptyList<ITypeReference>.Instance;
             this.lookupMode = lookupMode;
         }
-        public MemberAccess(Expression expr, string identifier, TypeArguments args, Location loc, NameLookupMode lookupMode = NameLookupMode.Type)
+        public MemberAccess(Expression expr, string identifier, TypeArguments args, Location loc, NameLookupMode lookupMode = NameLookupMode.Expression)
             : base(identifier, args, loc)
         {
             this.expr = expr;
             this.typeArgumentsrefs = targs != null ? targs.ToTypeReferences(CompilerContext.InternProvider) : EmptyList<ITypeReference>.Instance.ToList();
             this.lookupMode = lookupMode;
         }
-        public MemberAccess(Expression expr, string identifier, int arity, Location loc, NameLookupMode lookupMode = NameLookupMode.Type)
+        public MemberAccess(Expression expr, string identifier, int arity, Location loc, NameLookupMode lookupMode = NameLookupMode.Expression)
             : base(identifier, arity, loc)
         {
             this.expr = expr;
@@ -100,8 +100,8 @@ namespace VSC.AST
                 return this;
             else
             {
-                TypeNameExpression target = expr.DoResolve(rc) as TypeNameExpression;
-                Expression targetRR = target.Resolve(rc);
+      
+                Expression targetRR = expr.DoResolve(rc);
                 IList<IType> typeArgs = typeArgumentsrefs.Resolve(rc.CurrentTypeResolveContext);
                 if (LookForAttribute)
                 {
@@ -237,6 +237,19 @@ namespace VSC.AST
                     return new TypeExpression(def, loc);
             }
             return ErrorResult;
+        }
+        public override Expression Constantify(ResolveContext resolver)
+        {
+            Expression rr;
+            if (expr is ITypeReference)
+                rr = new TypeExpression(expr.ResolveAsType(resolver), loc);
+            else if (expr is Constant)
+                rr = expr.DoResolve(resolver);
+            else return null;
+               
+            IList<IType> typeArgs = typeArgumentsrefs.Resolve(resolver.CurrentTypeResolveContext);
+            return ResolveMemberAccess(resolver,rr, name, typeArgs);
+   
         }
         //public override IConstantValue BuilConstantValue(bool isAttributeConstant)
         //{

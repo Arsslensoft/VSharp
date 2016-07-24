@@ -5,7 +5,7 @@ using VSC.TypeSystem.Resolver;
 
 namespace VSC.AST
 {
-    public class DefaultValueExpression : Expression
+    public class DefaultValueExpression : Expression, IConstantValue
     {
         Expression expr;
 
@@ -41,16 +41,12 @@ namespace VSC.AST
                 return new NullConstant(tpexpr,loc);
 
             // TODO:Add cast to nullable/struct
-            return CreateConstant(tpexpr, ResolveContext.GetDefaultValue(tpexpr));
+            return Constant.CreateConstantFromValue(rc,tpexpr, ResolveContext.GetDefaultValue(tpexpr),loc);
         }
 
-        public Constant CreateConstant(IType t, object val)
+        public override Expression Constantify(ResolveContext resolver)
         {
-           throw new NotSupportedException();
+            return DoResolve(resolver);
         }
-        //public override IConstantValue BuilConstantValue( bool isAttributeConstant)
-        //{
-        //    return new ConstantDefaultValue(Expr as ITypeReference);
-        //}
     }
 }

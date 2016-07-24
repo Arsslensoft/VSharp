@@ -6,7 +6,7 @@ using VSC.TypeSystem.Resolver;
 
 namespace VSC.AST
 {
-    public class UnaryExpression : Expression
+    public class UnaryExpression : Expression, IConstantValue
     {
         public Expression Expr;
         public readonly VSC.TypeSystem.Resolver.UnaryOperatorType Oper;
@@ -46,11 +46,11 @@ namespace VSC.AST
 
             }
             Expression rr = ResolveUnaryOperator(rc,Oper,Expr);
-            UnaryExpression uorr = rr as UnaryExpression;
-            if (uorr == null)
+          
+            if (rr.IsError)
             {
                 rc.Report.Error(0, loc, "The `{0}' operator cannot be applied to operand of type `{1}'",
-                OperName(Oper), ResolvedType.ToString());
+                OperName(Oper), rr.Type.ToString());
                 return null;
             }
             rr.eclass = ExprClass.Value;
@@ -305,21 +305,24 @@ namespace VSC.AST
 
             throw new NotImplementedException(oper.ToString());
         }
-        //public override IConstantValue BuilConstantValue( bool isAttributeConstant)
-        //{
-        //    Constant v = Expr.BuilConstantValue(isAttributeConstant) as Constant;
-        //    if (v == null)
-        //        return null;
-        //    switch (Oper)
-        //    {
-        //        case UnaryOperatorType.LogicalNot:
-        //        case UnaryOperatorType.OnesComplement:
-        //        case UnaryOperatorType.UnaryNegation:
-        //        case UnaryOperatorType.UnaryPlus:
-        //            return new ConstantUnaryOperator(Oper, v);
-        //        default:
-        //            return null;
-        //    }
-        //}
+
+        public override Expression Constantify(ResolveContext resolver)
+        {
+            Constant c = Expr.Constantify(resolver) as Constant;
+            if (c == null)
+                return null;
+
+            switch (Oper)
+            {
+                case UnaryOperatorType.LogicalNot:
+                case UnaryOperatorType.OnesComplement:
+                case UnaryOperatorType.UnaryNegation:
+                case UnaryOperatorType.UnaryPlus:
+                    return DoResolve(resolver);
+                default:
+                    return null;
+            }
+        }
+
     }
 }

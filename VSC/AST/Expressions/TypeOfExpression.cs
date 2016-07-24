@@ -6,7 +6,7 @@ namespace VSC.AST
     /// <summary>
     ///   Implements the typeof operator
     /// </summary>
-    public class TypeOfExpression : Expression
+    public class TypeOfExpression : Expression, IConstantValue
     {
         FullNamedExpression QueriedType;
       public  IType TargetType = null;
@@ -63,16 +63,9 @@ namespace VSC.AST
             return this;
 
         }
-        //public override IConstantValue BuilConstantValue(bool isAttributeConstant)
-        //{
-        //    if (isAttributeConstant)
-        //    {
-        //        return new TypeOfConstantExpression(QueriedType as ITypeReference);
-        //    }
-        //    else
-        //    {
-        //        return null;
-        //    }
-        //}
+        public override Expression Constantify(ResolveContext resolver)
+        {
+            return DoResolve(resolver);
+        }
     }
 }

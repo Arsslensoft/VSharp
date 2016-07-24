@@ -53,13 +53,13 @@ namespace VSC.AST
                 {
                     ConstantValue = init as IConstantValue;
                     if (ConstantValue != null)
-                        ConstantValue = new CastExpression(type_expr, ConstantValue as Expression,init.Location);
+                        ConstantValue = new ImplicitCastExpression(type_expr, ConstantValue as Expression,init.Location);
                 }
                 else if (ConstantValue != null)
                 {
                     ConstantValue = (ConstantValue as IConstantValue);
                     if (ConstantValue != null)
-                        ConstantValue = new CastExpression(type_expr, ConstantValue as Expression, init.Location);
+                        ConstantValue = new ImplicitCastExpression(type_expr, ConstantValue as Expression, init.Location);
                 }
             }
         }

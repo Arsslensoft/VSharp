@@ -3,7 +3,7 @@ using VSC.TypeSystem.Resolver;
 
 namespace VSC.AST
 {
-    public class ParenthesizedExpression : ShimExpression
+    public class ParenthesizedExpression : ShimExpression, IConstantValue
     {
         public ParenthesizedExpression(Expression expr, Location loc)
             : base(expr)
@@ -24,9 +24,9 @@ namespace VSC.AST
         {
             return expr.DoResolveLeftValue(ec, right_side);
         }
-        //public override IConstantValue BuilConstantValue( bool isAttributeConstant)
-        //{
-        //    return Expr.BuilConstantValue(isAttributeConstant);
-        //}
+        public override VSC.AST.Expression Constantify(VSC.TypeSystem.Resolver.ResolveContext resolver)
+        {
+            return DoResolve(resolver);
+        }
     }
 }

@@ -13,23 +13,23 @@ namespace VSC.AST
     /// Represents a simple V# name. (a single non-qualified identifier with an optional list of type arguments)
     /// </summary>
     [Serializable]
-    public class SimpleName : TypeNameExpression, ISupportsInterning
+    public class SimpleName : TypeNameExpression, ISupportsInterning, IConstantValue
     {    
-        public SimpleName(string name, Location l, NameLookupMode lookupMode = NameLookupMode.Type)
+        public SimpleName(string name, Location l, NameLookupMode lookupMode = NameLookupMode.Expression)
             : base(name, l)
         {
             this.typeArgumentsrefs = EmptyList<ITypeReference>.Instance;
             this.lookupMode = lookupMode;
         }
 
-        public SimpleName(string name, TypeArguments args, Location l, NameLookupMode lookupMode = NameLookupMode.Type)
+        public SimpleName(string name, TypeArguments args, Location l, NameLookupMode lookupMode = NameLookupMode.Expression)
             : base(name, args, l)
         {
             this.typeArgumentsrefs = args != null ? args.ToTypeReferences(CompilerContext.InternProvider) : EmptyList<ITypeReference>.Instance.ToList();
             this.lookupMode = lookupMode;
         }
 
-        public SimpleName(string name, int arity, Location l, NameLookupMode lookupMode = NameLookupMode.Type)
+        public SimpleName(string name, int arity, Location l, NameLookupMode lookupMode = NameLookupMode.Expression)
             : base(name, arity, l)
         {
             this.typeArgumentsrefs = EmptyList<ITypeReference>.Instance;
@@ -458,11 +458,10 @@ namespace VSC.AST
             else
                 return ErrorResult;
         }
-        
-        
-        //public override IConstantValue BuilConstantValue(bool isAttributeConstant)
-        //{
-        //    return new ConstantIdentifierReference(Name, TypeArgumentsReferences);
-        //}
+        public override Expression Constantify(ResolveContext resolver)
+        {
+            return Resolve(resolver);
+        }
+
     }
 }

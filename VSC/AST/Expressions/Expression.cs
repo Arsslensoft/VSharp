@@ -416,7 +416,7 @@ namespace VSC.AST
      /// <remarks>
     ///   Base class for expressions
     /// </remarks>
-    public  class Expression : IAstNode, IResolveExpression, IEmitExpression
+    public  class Expression : IAstNode, IResolveExpression
      {
         public NameLookupMode lookupMode;
         protected ITypeReference type;
@@ -499,24 +499,27 @@ namespace VSC.AST
 
          public IType ResolveAsType(ResolveContext rc)
          {
+             this.lookupMode = NameLookupMode.Type;
              return (this as ITypeReference).Resolve(rc);
          }
-        public bool EmitToStack(EmitContext ec)
-        {
-            throw new NotImplementedException();
-        }
+         public Expression ResolveAsInvocationTarget(ResolveContext rc)
+         {
+             this.lookupMode = NameLookupMode.InvocationTarget;
+             return DoResolve(rc);
+         }
+         public Expression ResolveAsTypeInUsingDeclaration(ResolveContext rc)
+         {
+             this.lookupMode = NameLookupMode.TypeInUsingDeclaration;
+             return DoResolve(rc);
+         }
+         public Expression ResolveAsBaseTypeReference(ResolveContext rc)
+         {
+             this.lookupMode = NameLookupMode.BaseTypeReference;
+             return DoResolve(rc);
+         }
 
-        public bool EmitFromStack(EmitContext ec)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool Emit(EmitContext ec)
-        {
-            throw new NotImplementedException();
-        }
-
-         // Constant folding
+        #region Constant Folding
+        // Constant folding
         public virtual AST.Expression Constantify(ResolveContext resolver)
         {
             return this;
@@ -593,8 +596,11 @@ namespace VSC.AST
             }
             return output;
         }
+        #endregion
 
-         public virtual bool HasConditionalAccess()
+
+
+        public virtual bool HasConditionalAccess()
          {
              return false;
          }

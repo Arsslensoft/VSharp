@@ -10,7 +10,7 @@ namespace VSC.AST
     /// <summary>
     ///   Binary operators
     /// </summary>
-    public class BinaryExpression : Expression
+    public class BinaryExpression : Expression, IConstantValue
     {
         readonly VSC.TypeSystem.Resolver.BinaryOperatorType oper;
         Expression left, right;
@@ -824,14 +824,15 @@ namespace VSC.AST
         }
         #endregion
         #endregion
-		
-        //public override IConstantValue BuilConstantValue(bool isAttributeConstant)
-        //{
-        //    Constant cleft = left.BuilConstantValue(isAttributeConstant) as Constant;
-        //    Constant cright = right.BuilConstantValue( isAttributeConstant) as Constant;
-        //    if (cleft == null || cright == null)
-        //        return null;
-        //    return new ConstantBinaryOperator(cleft, oper, cright);
-        //}
+        public override Expression Constantify(ResolveContext resolver)
+        {
+            Constant cleft = left.Constantify(resolver) as Constant;
+            Constant cright = right.Constantify(resolver) as Constant;
+            if (cleft == null || cright == null)
+                return null;
+
+            return DoResolve(resolver);
+        }
+      
     }
 }
