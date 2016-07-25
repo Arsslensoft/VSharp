@@ -21,10 +21,7 @@ namespace VSC.TypeSystem
         /// </summary>
         bool IsSupersede { get; }
 
-        /// <summary>
-        /// Gets whether the method is a V#-style async method.
-        /// </summary>
-        bool IsAsync { get; }
+ 
 
 		
         /// <summary>

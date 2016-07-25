@@ -14,7 +14,6 @@ namespace VSC.AST
         {
             ModFlags &= ~Modifiers.PRIVATE;
             ModFlags |= Modifiers.PROTECTED | Modifiers.OVERRIDE;
-            ApplyModifiers(ModFlags);
         }
     }
 }

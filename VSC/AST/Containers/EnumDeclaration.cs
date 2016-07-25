@@ -23,7 +23,6 @@ namespace VSC.AST
             if(type != null)
             SetBaseTypes(type);
             mod_flags |= Modifiers.SEALED;
-            IsSealed = true;
         }
         public static readonly string UnderlyingValueField = "value__";
         public override void AddMember(MemberContainer member)

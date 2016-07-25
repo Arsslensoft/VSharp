@@ -247,21 +247,8 @@ namespace VSC.AST
 
         public bool IsSupersede
         {
-            get { return flags[FlagSupersededMethod]; }
-            set
-            {
-                ThrowIfFrozen();
-                flags[FlagSupersededMethod] = value;
-            }
-        }
-        public bool IsAsync
-        {
-            get { return flags[FlagAsyncMethod]; }
-            set
-            {
-                ThrowIfFrozen();
-                flags[FlagAsyncMethod] = value;
-            }
+            get { return (mod_flags & Modifiers.SUPERSEDE) != 0; }
+     
         }
 
         public virtual bool HasBody
@@ -370,11 +357,9 @@ namespace VSC.AST
                 throw new ArgumentNullException("typeDefinition");
             DomRegion region = typeDefinition.Region;
             region = new DomRegion(region.FileName, region.BeginLine, region.BeginColumn); // remove endline/endcolumn
-            return  new ConstructorDeclaration(typeDefinition as TypeContainer, ".ctor", Modifiers.PUBLIC, null,ParametersCompiled.EmptyReadOnlyParameters,Location.Null  )
+            return new ConstructorDeclaration(typeDefinition as TypeContainer, ".ctor",( typeDefinition.IsAbstract ? Modifiers.PROTECTED : Modifiers.PUBLIC) | Modifiers.COMPILER_GENERATED, null, ParametersCompiled.EmptyReadOnlyParameters, Location.Null)
             {
                 SymbolKind = SymbolKind.Constructor,
-                Accessibility = typeDefinition.IsAbstract ? Accessibility.Protected : Accessibility.Public,
-                IsSynthetic = true,
                 HasBody = true,
                 Region = region,
                 BodyRegion = region,
@@ -401,10 +386,9 @@ namespace VSC.AST
             {
                 SymbolKind = SymbolKind.Constructor,
                 Name = ".ctor",
-                Accessibility = Accessibility.Public,
-                IsSynthetic = true,
                 ReturnType = KnownTypeReference.Void
             };
+            m.mod_flags |= Modifiers.PUBLIC | Modifiers.COMPILER_GENERATED;
             m.Freeze();
             return m;
         }

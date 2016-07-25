@@ -25,8 +25,6 @@ namespace VSC.AST
             : base(parent, mod, mod, name, null, Location.Null, kind, f)
         {
             ModFlags = mod | Modifiers.COMPILER_GENERATED | Modifiers.SEALED;
-            IsSealed = true;
-            IsSynthetic = true;
 
 
         }
@@ -34,8 +32,6 @@ namespace VSC.AST
             : base(parent, mod,mod,name,null, Location.Null, kind, f)
         {
             ModFlags = mod | Modifiers.COMPILER_GENERATED | Modifiers.SEALED;
-            IsSealed = true;
-            IsSynthetic = true;
 
 
         }

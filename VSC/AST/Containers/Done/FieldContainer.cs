@@ -40,8 +40,6 @@ namespace VSC.AST
             : base(parent,type,mods, allowed, Modifiers.PRIVATE, name , attr,sym)
         {
 
-
-            IsReadOnly = (mods & VSC.TypeSystem.Modifiers.READONLY) != 0;
             if ((mods & Modifiers.ABSTRACT) != 0)
                 Report.Error(233, Location, "The modifier 'abstract' is not valid on fields. Try using a property instead");
         }
@@ -72,38 +70,15 @@ namespace VSC.AST
         IConstantValue constantValue;
         public bool IsConst
         {
-            get { return constantValue != null && !IsFixed; }
+            get { return constantValue != null; }
         }
 
         public bool IsReadOnly
         {
-            get { return flags[FlagFieldIsReadOnly]; }
-            set
-            {
-                ThrowIfFrozen();
-                flags[FlagFieldIsReadOnly] = value;
-            }
+            get { return (mod_flags & Modifiers.READONLY) != 0; }
+     
         }
 
-        public bool IsVolatile
-        {
-            get { return flags[FlagFieldIsVolatile]; }
-            set
-            {
-                ThrowIfFrozen();
-                flags[FlagFieldIsVolatile] = value;
-            }
-        }
-
-        public bool IsFixed
-        {
-            get { return flags[FlagFieldIsFixedSize]; }
-            set
-            {
-                ThrowIfFrozen();
-                flags[FlagFieldIsFixedSize] = value;
-            }
-        }
 
         public IConstantValue ConstantValue
         {

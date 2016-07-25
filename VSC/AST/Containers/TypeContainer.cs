@@ -35,33 +35,8 @@ namespace VSC.AST
             }
         }
 
-        public void ApplyModifiers( VSC.TypeSystem.Modifiers modifiers)
-        {
-            Accessibility = GetAccessibility(modifiers) ?? (DeclaringTypeDefinition != null ? Accessibility.Private : Accessibility.Internal);
-            IsAbstract = (modifiers & VSC.TypeSystem.Modifiers.ABSTRACT) != 0;
-            IsSealed = (modifiers & VSC.TypeSystem.Modifiers.SEALED) != 0;
-            IsShadowing = (modifiers & VSC.TypeSystem.Modifiers.NEW) != 0;
-            IsPartial = (modifiers & VSC.TypeSystem.Modifiers.PARTIAL) != 0;
-            IsStatic = (modifiers & VSC.TypeSystem.Modifiers.STATIC) != 0;
-        }
-        public Accessibility? GetAccessibility(VSC.TypeSystem.Modifiers modifiers)
-        {
-            switch (modifiers & VSC.TypeSystem.Modifiers.AccessibilityMask)
-            {
-                case VSC.TypeSystem.Modifiers.PRIVATE:
-                    return Accessibility.Private;
-                case VSC.TypeSystem.Modifiers.INTERNAL:
-                    return Accessibility.Internal;
-                case VSC.TypeSystem.Modifiers.PROTECTED | VSC.TypeSystem.Modifiers.INTERNAL:
-                    return Accessibility.ProtectedOrInternal;
-                case VSC.TypeSystem.Modifiers.PROTECTED:
-                    return Accessibility.Protected;
-                case VSC.TypeSystem.Modifiers.PUBLIC:
-                    return Accessibility.Public;
-                default:
-                    return null;
-            }
-        }
+  
+     
       
         
         public virtual void SetBaseTypes(List<FullNamedExpression> baseTypes)

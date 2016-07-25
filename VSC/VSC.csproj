@@ -356,7 +356,6 @@
     <Compile Include="Context\EmitContext.cs" />
     <Compile Include="Context\FlowAnalysisContext.cs" />
     <Compile Include="AST\Parameters\TypeArguments.cs" />
-    <Compile Include="Context\SymbolResolveContext.cs" />
     <Compile Include="LocatedToken.cs" />
     <Compile Include="Tokenizer.cs" />
     <Compile Include="TypeSystem\Abstract\FreezableHelper.cs" />

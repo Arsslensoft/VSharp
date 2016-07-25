@@ -10,15 +10,6 @@ namespace VSC.AST
         {
             SymbolKind = SymbolKind.Accessor;
             AccessorOwner = p;
-            Accessibility = (accessorModifiers & Modifiers.DEFAULT_ACCESS_MODIFIER) == 0 ?  GetAccessibility(accessorModifiers) ?? Accessibility.None : Accessibility.None ;
-            IsAbstract = p.IsAbstract;
-            IsOverride = p.IsOverride;
-            IsSealed = p.IsSealed;
-            IsStatic = p.IsStatic;
-            IsSynthetic = p.IsSynthetic;
-            IsVirtual = p.IsVirtual;
-
-
 
         }
 

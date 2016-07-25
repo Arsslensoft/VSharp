@@ -66,10 +66,7 @@ namespace VSC.AST
             {
                 case SymbolKind.Constructor:
                     return member.DeclaringType ?? SpecialTypeSpec.UnknownType;
-                case SymbolKind.Field:
-                    if (((IField)member).IsFixed)
-                        return new PointerTypeSpec(member.ReturnType);
-                    break;
+        
             }
             return member.ReturnType;
         }

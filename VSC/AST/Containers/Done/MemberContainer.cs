@@ -90,8 +90,11 @@ namespace VSC.AST
             this.attribs = attrs;
             member_name = name;
             mod_flags = mod;
+     
             mod_flags = ModifiersExtensions.Check(allowed_mod, mod, def_mod, name.Location, Report);
-            ApplyModifiers(mod);
+            if (DeclaringTypeDefinition.Kind == TypeKind.Interface)
+                mod_flags |= Modifiers.PUBLIC | Modifiers.ABSTRACT;
+          
 
             if (attrs != null)
                 foreach (var a in attrs.Attrs)
@@ -116,7 +119,6 @@ namespace VSC.AST
         }
         public void ApplyExplicit(IList<IUnresolvedParameter> parameters)
         {
-            Accessibility = Accessibility.None;
             IsExplicitInterfaceImplementation = true;
             ExplicitInterfaceImplementations.Add(
               CompilerContext.InternProvider.Intern(new MemberReferenceSpec(
@@ -124,43 +126,6 @@ namespace VSC.AST
                       member_name.ExplicitInterface as ITypeReference,
                         member_name.Name, member_name.TypeParameters != null ?member_name.TypeParameters.Count : 0, GetParameterTypes(parameters))));
             
-        }
-        public void ApplyModifiers( VSC.TypeSystem.Modifiers modifiers)
-        {
-            // members from interfaces are always Public+Abstract. (NOTE: 'new' modifier is valid in interfaces as well.)
-            if (DeclaringTypeDefinition.Kind == TypeKind.Interface)
-            {
-                Accessibility = Accessibility.Public;
-                IsAbstract = true;
-                IsShadowing = (modifiers & VSC.TypeSystem.Modifiers.NEW) != 0;
-                return;
-            }
-            Accessibility = GetAccessibility(modifiers) ?? Accessibility.Private;
-            IsAbstract = (modifiers & VSC.TypeSystem.Modifiers.ABSTRACT) != 0;
-            IsOverride = (modifiers & VSC.TypeSystem.Modifiers.OVERRIDE) != 0;
-            IsSealed = (modifiers & VSC.TypeSystem.Modifiers.SEALED) != 0;
-            IsShadowing = (modifiers & VSC.TypeSystem.Modifiers.NEW) != 0;
-            IsStatic = (modifiers & VSC.TypeSystem.Modifiers.STATIC) != 0;
-            IsVirtual = (modifiers & VSC.TypeSystem.Modifiers.VIRTUAL) != 0;
-     
-        }
-        public Accessibility? GetAccessibility(VSC.TypeSystem.Modifiers modifiers)
-        {
-            switch (modifiers & VSC.TypeSystem.Modifiers.AccessibilityMask)
-            {
-                case VSC.TypeSystem.Modifiers.PRIVATE:
-                    return Accessibility.Private;
-                case VSC.TypeSystem.Modifiers.INTERNAL:
-                    return Accessibility.Internal;
-                case VSC.TypeSystem.Modifiers.PROTECTED | VSC.TypeSystem.Modifiers.INTERNAL:
-                    return Accessibility.ProtectedOrInternal;
-                case VSC.TypeSystem.Modifiers.PROTECTED:
-                    return Accessibility.Protected;
-                case VSC.TypeSystem.Modifiers.PUBLIC:
-                    return Accessibility.Public;
-                default:
-                    return null;
-            }
         }
 
  
@@ -364,22 +329,12 @@ namespace VSC.AST
 
         public bool IsVirtual
         {
-            get { return flags[FlagVirtual]; }
-            set
-            {
-                ThrowIfFrozen();
-                flags[FlagVirtual] = value;
-            }
+            get { return (mod_flags & Modifiers.VIRTUAL) != 0; }
         }
 
         public bool IsOverride
         {
-            get { return flags[FlagOverride]; }
-            set
-            {
-                ThrowIfFrozen();
-                flags[FlagOverride] = value;
-            }
+            get { return (mod_flags & Modifiers.OVERRIDE) != 0; }
         }
 
         public bool IsOverridable
@@ -387,7 +342,7 @@ namespace VSC.AST
             get
             {
                 // override or virtual or abstract but not sealed
-                return (flags.Data & (FlagOverride | FlagVirtual | FlagAbstract)) != 0 && !this.IsSealed;
+                return (mod_flags & (Modifiers.OVERRIDE | Modifiers.VIRTUAL | Modifiers.ABSTRACT)) != 0 && !this.IsSealed;
             }
         }
 

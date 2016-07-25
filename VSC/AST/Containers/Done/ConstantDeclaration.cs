@@ -19,22 +19,17 @@ namespace VSC.AST
             : base(parent, type, mods, AllowedModifiers, name, attr, SymbolKind.Field)
         {
             mod_flags |= Modifiers.STATIC;
-            IsStatic = true;
         }
         public ConstantDeclaration(TypeContainer parent, ITypeReference type, Modifiers mods, MemberName name, VSharpAttributes attr)
             : base(parent, new TypeExpression(type, name.Location), mods, AllowedModifiers, name, attr, SymbolKind.Field)
         {
             mod_flags |= Modifiers.STATIC;
-            IsStatic = true;
-          
-
         }
         // For declarators
         public ConstantDeclaration(ConstantDeclaration baseconstant, MemberName name)
             : base(baseconstant, name, AllowedModifiers, SymbolKind.Field)
         {
             mod_flags |= Modifiers.STATIC;
-            IsStatic = true;
         }
         public bool IsConstantCompatible(IType type) {
 	

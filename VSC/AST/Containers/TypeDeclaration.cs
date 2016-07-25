@@ -24,8 +24,6 @@ namespace VSC.AST
                 this.AddAttributes(attr);
             this.mod_flags = mods;
             this.mod_flags = ModifiersExtensions.Check(allowed, mods, Modifiers.INTERNAL, l,Report);
-            ApplyModifiers(mods);
-           
             this.Kind = kind;
         }
         public TypeDeclaration(TypeContainer ns, Modifiers mods, Modifiers allowed, MemberName name, VSharpAttributes attr, Location l, TypeKind kind, CompilationSourceFile file)
@@ -35,7 +33,6 @@ namespace VSC.AST
                 this.AddAttributes(attr);
             this.mod_flags = mods;
             this.mod_flags =ModifiersExtensions.Check(allowed, mods, ns.Name == "default" ? Modifiers.INTERNAL : Modifiers.PRIVATE, l, Report);
-            ApplyModifiers(mods);
             this.Kind = kind;
         }
    

@@ -22,7 +22,6 @@ namespace VSC.AST
             : base(parent, mod, AllowedModifiers, name, attrs, l, TypeKind.Struct,file)
         {
             mod_flags |= Modifiers.SEALED;
-            IsSealed = true;
         }
 
         /*

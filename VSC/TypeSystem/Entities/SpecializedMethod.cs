@@ -99,9 +99,7 @@ namespace VSC.TypeSystem.Implementation
         {
             get { return methodDefinition.IsSupersede; }
         }
-		public bool IsAsync {
-			get { return methodDefinition.IsAsync; }
-		}
+
 		
 		public bool HasBody {
 			get { return methodDefinition.HasBody; }

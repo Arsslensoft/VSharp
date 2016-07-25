@@ -1,1 +1,10 @@
-TYPE PARAMETERS
+Base all boolean assignements Is**** on modifier evaluation
+Auto Accessor Implementation
+Field Expression
+Property Expression
+Indexer Expression
+Event Expression
+Default GLOBAL MEMBER LOOKUP
+
+
+SET ERROR CODES

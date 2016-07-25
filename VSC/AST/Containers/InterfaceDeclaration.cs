@@ -18,7 +18,6 @@ namespace VSC.AST
             : base(parent, mod, AllowedModifiers, name, attrs, l, TypeKind.Interface,file)
         {
             mod_flags |= Modifiers.ABSTRACT;
-            IsAbstract = true;
         }
 
         public override void ResolveWithCurrentContext(ResolveContext rc)

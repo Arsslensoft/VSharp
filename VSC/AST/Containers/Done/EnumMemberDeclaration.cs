@@ -12,8 +12,6 @@ namespace VSC.AST
         public EnumMemberDeclaration(EnumDeclaration parent, MemberName name, VSharpAttributes attrs)
             : base (parent, parent as ITypeReference, Modifiers.PUBLIC, name, attrs)
         {
-            Accessibility = Accessibility.Public;
-          
         }
 
         public override Expression Initializer

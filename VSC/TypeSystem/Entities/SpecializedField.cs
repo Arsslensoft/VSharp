@@ -20,9 +20,7 @@ namespace VSC.TypeSystem.Implementation
 			get { return fieldDefinition.IsReadOnly; }
 		}
 		
-		public bool IsVolatile {
-			get { return fieldDefinition.IsVolatile; }
-		}
+	
 		
 		IType IVariable.Type {
 			get { return this.ReturnType; }
@@ -32,9 +30,7 @@ namespace VSC.TypeSystem.Implementation
 			get { return fieldDefinition.IsConst; }
 		}
 
-		public bool IsFixed {
-			get { return fieldDefinition.IsFixed; }
-		}
+	
 
 		public object ConstantValue {
 			get { return fieldDefinition.ConstantValue; }

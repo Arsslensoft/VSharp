@@ -54,10 +54,7 @@ namespace VSC.TypeSystem
         /// To test if it is a superseded method declaration.
         /// </summary>
         bool IsSupersede { get; }
-		/// <summary>
-		/// Gets whether the method is a V#-style async method.
-		/// </summary>
-		bool IsAsync { get; }
+
 
 		/// <summary>
 		/// Gets whether the method has a body.

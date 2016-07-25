@@ -37,12 +37,7 @@ namespace VSC.AST
             _imports = new List<Import>();
             _containers = new List<TypeContainer>();
             _ncontainers = new List<PackageContainer>();
-            DefaultType = new ClassDeclaration(this, new MemberName("default", Location.Null), 
-               Modifiers.PUBLIC | Modifiers.STATIC, null, Location.Null, file);
-            DefaultType.IsPartial = true;
-            DefaultType.IsSealed = true;
-            DefaultType.IsStatic = true;
-            DefaultType.IsSynthetic = true;
+            DefaultType = new ClassDeclaration(this, new MemberName("default", Location.Null), Modifiers.PUBLIC | Modifiers.STATIC | Modifiers.SEALED | Modifiers.COMPILER_GENERATED, null, Location.Null, file);
             DeclarationFound = false;
            
            DefaultTypesContainers.Add(DefaultType);
@@ -55,11 +50,7 @@ namespace VSC.AST
             _containers = new List<TypeContainer>();
             this.module = module;
             _ncontainers = new List<PackageContainer>();
-            DefaultType = new ClassDeclaration(this, new MemberName("default", Location.Null), Modifiers.PUBLIC | Modifiers.STATIC,null, Location.Null,file);
-            DefaultType.IsPartial = true;
-           DefaultType.IsSealed = true;
-            DefaultType.IsStatic = true;
-            DefaultType.IsSynthetic = true;
+            DefaultType = new ClassDeclaration(this, new MemberName("default", Location.Null), Modifiers.PUBLIC | Modifiers.STATIC  | Modifiers.SEALED | Modifiers.COMPILER_GENERATED,null, Location.Null,file);
             DeclarationFound = false;
            
             DefaultTypesContainers.Add(DefaultType);

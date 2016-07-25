@@ -20,9 +20,7 @@ namespace VSC.TypeSystem.Implementation
 			get { return ((IUnresolvedField)unresolved).IsReadOnly; }
 		}
 		
-		public bool IsVolatile {
-			get { return ((IUnresolvedField)unresolved).IsVolatile; }
-		}
+
 		
 		IType IVariable.Type {
 			get { return this.ReturnType; }
@@ -32,9 +30,6 @@ namespace VSC.TypeSystem.Implementation
 			get { return ((IUnresolvedField)unresolved).IsConst; }
 		}
 
-		public bool IsFixed {
-			get { return ((IUnresolvedField)unresolved).IsFixed; }
-		}
 
 	    public Location ConstantLocation;
 		public object ConstantValue {

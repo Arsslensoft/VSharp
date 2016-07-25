@@ -190,9 +190,7 @@ namespace VSC.TypeSystem.Implementation
 			get { return ((IUnresolvedMethod)unresolved).IsOperator; }
 		}
 	
-		public bool IsAsync {
-			get { return ((IUnresolvedMethod)unresolved).IsAsync; }
-		}
+	
 
 		public bool HasBody {
 			get { return ((IUnresolvedMethod)unresolved).HasBody; }

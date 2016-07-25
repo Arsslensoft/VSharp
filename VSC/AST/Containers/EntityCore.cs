@@ -31,16 +31,10 @@ namespace VSC.AST
 		
 		// 1 byte per enum + 2 bytes for flags
 		SymbolKind symbolKind;
-		Accessibility accessibility;
 		internal BitVector16 flags;
 		
 		// flags for EntityCore:
 		internal const ushort FlagFrozen    = 0x0001;
-		internal const ushort FlagSealed    = 0x0002;
-		internal const ushort FlagAbstract  = 0x0004;
-		internal const ushort FlagShadowing = 0x0008;
-		internal const ushort FlagSynthetic = 0x0010;
-		internal const ushort FlagStatic    = 0x0020;
 		// flags for TypeDefinitionCore/LazyCecilTypeDefinition
 		internal const ushort FlagAddDefaultConstructorIfRequired = 0x0040;
 		internal const ushort FlagHasExtensionMethods = 0x0080;
@@ -48,18 +42,10 @@ namespace VSC.AST
         internal const ushort FlagPartialTypeDefinition = 0x0200;
 		// flags for MemberContainer:
 		internal const ushort FlagExplicitInterfaceImplementation = 0x0040;
-		internal const ushort FlagVirtual = 0x0080;
-		internal const ushort FlagOverride = 0x0100;
-		// flags for DefaultField:
-		internal const ushort FlagFieldIsReadOnly = 0x1000;
-		internal const ushort FlagFieldIsVolatile = 0x2000;
-		internal const ushort FlagFieldIsFixedSize = 0x4000;
 		// flags for DefaultMethod:
 		internal const ushort FlagExtensionMethod = 0x1000;
-        internal const ushort FlagSupersededMethod = 0x2000;
 		internal const ushort FlagHasBody = 0x4000;
-		internal const ushort FlagAsyncMethod = 0x8000;
-		
+
 		public bool IsFrozen {
 			get { return flags[FlagFrozen]; }
 		}
@@ -408,71 +394,66 @@ namespace VSC.AST
 		}
 		
 		public Accessibility Accessibility {
-			get { return accessibility; }
-			set {
-				ThrowIfFrozen();
-				accessibility = value;
-			}
+		    get
+		    {
+	
+                switch (mod_flags & VSC.TypeSystem.Modifiers.AccessibilityMask)
+                {
+                    case VSC.TypeSystem.Modifiers.PRIVATE:
+                        return Accessibility.Private;
+                    case VSC.TypeSystem.Modifiers.INTERNAL:
+                        return Accessibility.Internal;
+                    case VSC.TypeSystem.Modifiers.PROTECTED | VSC.TypeSystem.Modifiers.INTERNAL:
+                        return Accessibility.ProtectedOrInternal;
+                    case VSC.TypeSystem.Modifiers.PROTECTED:
+                        return Accessibility.Protected;
+                    case VSC.TypeSystem.Modifiers.PUBLIC:
+                        return Accessibility.Public;
+                    default:
+                        return Accessibility.None;
+                }
+		    }
 		}
 		
 		public bool IsStatic {
-			get { return flags[FlagStatic]; }
-			set {
-				ThrowIfFrozen();
-				flags[FlagStatic] = value;
-			}
+            get { return (mod_flags & Modifiers.STATIC) != 0; }
+		
 		}
 		
 		public bool IsAbstract {
-			get { return flags[FlagAbstract]; }
-			set {
-				ThrowIfFrozen();
-				flags[FlagAbstract] = value;
-			}
+            get { return (mod_flags & Modifiers.ABSTRACT) != 0; }
 		}
 		
 		public bool IsSealed {
-			get { return flags[FlagSealed]; }
-			set {
-				ThrowIfFrozen();
-				flags[FlagSealed] = value;
-			}
+			get { return (mod_flags & Modifiers.SEALED) != 0; }
 		}
 		
 		public bool IsShadowing {
-			get { return flags[FlagShadowing]; }
-			set {
-				ThrowIfFrozen();
-				flags[FlagShadowing] = value;
-			}
+            get { return (mod_flags & Modifiers.NEW) != 0; }
 		}
 		
 		public bool IsSynthetic {
-			get { return flags[FlagSynthetic]; }
-			set {
-				ThrowIfFrozen();
-				flags[FlagSynthetic] = value;
-			}
+            get { return (mod_flags & Modifiers.COMPILER_GENERATED) != 0; }
 		}
 		
 		bool IHasAccessibility.IsPrivate {
-			get { return accessibility == Accessibility.Private; }
+			get { return Accessibility == Accessibility.Private; }
 		}
 		
 		bool IHasAccessibility.IsPublic {
-			get { return accessibility == Accessibility.Public; }
+            get { return Accessibility == Accessibility.Public; }
 		}
 		
 		bool IHasAccessibility.IsProtected {
-			get { return accessibility == Accessibility.Protected; }
+            get { return Accessibility == Accessibility.Protected; }
 		}
 		
 		bool IHasAccessibility.IsInternal {
-			get { return accessibility == Accessibility.Internal; }
+            get { return Accessibility == Accessibility.Internal; }
 		}
 		
 		bool IHasAccessibility.IsProtectedOrInternal {
-			get { return accessibility == Accessibility.ProtectedOrInternal; }
+            get { return Accessibility == Accessibility.ProtectedOrInternal; }
 		}
 		
 	

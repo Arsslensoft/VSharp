@@ -23,16 +23,6 @@ namespace VSC.TypeSystem
 		/// </summary>
 		bool IsReadOnly { get; }
 		
-		/// <summary>
-		/// Gets whether this field is volatile.
-		/// </summary>
-		bool IsVolatile { get; }
-
-		/// <summary>
-		/// Gets whether this field is a fixed size buffer (V#-like fixed).
-		/// If this is true, then ConstantValue contains the size of the buffer.
-		/// </summary>
-		bool IsFixed { get; }
 		
 		new IMemberReference ToReference(); // solve ambiguity between IMember.ToReference() and IVariable.ToReference()
 	}
